@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>설비 LOSS 보고서</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        :root {
+            --bg-body: #111827;
+            --bg-nav: #1f2937;
+            --bg-card: #2d3748;
+            --bg-input: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --blue: #3b82f6;
+            --border: #4b5563;
+            --purple: #8b5cf6;
+        }
+
+        /* [공통] 레이아웃 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            display: flex;
+            flex-direction: row;
+            /* Changed to Row for Split View */
+            align-items: flex-start;
+            height: 100vh;
+            /* Full Height */
+            overflow: hidden;
+            /* Prevent body scroll, use inner scrolls */
+            color: var(--text-main);
+        }
+
+        /* 컨트롤 바 (Left Panel) */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 15px;
+            left: 15px !important;
+            z-index: 1100;
+            /* Higher than control-bar (1000) */
+            transition: none;
+        }
+
+        .home-btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            border-radius: 20px 0 0 20px;
+            width: 70px;
+            height: 36px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .home-btn:hover {
+            background: #4285F4;
+            color: #fff;
+        }
+
+        .btn-toggle-sidebar {
+            width: 70px;
+            height: 36px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white;
+            background: #334155;
+        }
+
+        /* Full Screen Logic */
+        body.full-screen .control-bar {
+            margin-left: -380px;
+        }
+
+        body.full-screen .sidebar-controls {
+            left: 15px !important;
+        }
+
+        .control-bar {
+            background: var(--bg-nav);
+            color: var(--text-main);
+            padding: 20px;
+            width: 380px;
+            /* Fixed Width */
+            flex-shrink: 0;
+            /* Prevent shrinking */
+            height: 100vh;
+            /* Full Height */
+            overflow-y: auto;
+            /* Scrollable */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            /* Stack items vertically */
+            gap: 15px;
+            border-right: 1px solid var(--border);
+            z-index: 1000;
+        }
+
+        .control-row {
+            display: flex;
+            flex-direction: column;
+            /* Stack items vertically inside row */
+            align-items: stretch;
+            /* Stretch to full width */
+            width: 100%;
+            gap: 10px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            background: var(--bg-card);
+            padding: 10px;
+            border-radius: 6px;
+            flex-wrap: wrap;
+            /* Allow wrapping for narrow width */
+            justify-content: center;
+            border: 1px solid var(--border);
+        }
+
+        .filter-input {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 6px;
+            border-radius: 4px;
+            width: 60px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .filter-input:focus {
+            outline: 2px solid var(--blue);
+            border-color: transparent;
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-weight: bold;
+            color: white;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-load {
+            background: #374151;
+            border: 1px solid #4b5563;
+        }
+
+        .btn-load:hover {
+            background: #4b5563;
+        }
+
+        .btn-cloud {
+            background: #374151;
+            border: 1px solid #4b5563;
+        }
+
+        .btn-cloud:hover {
+            background: #4b5563;
+        }
+
+        .btn-print {
+            background: #374151;
+            border: 1px solid #4b5563;
+        }
+
+        .btn-print:hover {
+            background: #4b5563;
+        }
+
+        .btn-img {
+            background: #374151;
+            border: 1px solid #4b5563;
+        }
+
+        .btn-img:hover {
+            background: #4b5563;
+        }
+
+        .btn-apply {
+            background: #374151;
+            border: 1px solid #4b5563;
+        }
+
+        .btn-apply:hover {
+            background: #4b5563;
+        }
+
+        .btn-config {
+            background: #374151;
+            border: 1px solid #4b5563;
+        }
+
+        .btn-config:hover {
+            background: #4b5563;
+        }
+
+        .btn-reset-data {
+            background: #374151;
+            border: 1px solid #4b5563;
+            font-size: 0.8rem;
+            padding: 5px 10px;
+        }
+
+        .btn-reset-data:hover {
+            background: #4b5563;
+        }
+
+        /* 메뉴 */
+        .col-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 5px;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            color: #333;
+            z-index: 2000;
+            text-align: left;
+        }
+
+        .col-menu.show {
+            display: block;
+        }
+
+        /* 모달 (Cloud) */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #212529;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 450px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #444;
+        }
+
+        .cloud-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex: 1;
+            margin-top: 10px;
+            border-top: 1px solid #555;
+        }
+
+        .cloud-item {
+            padding: 12px;
+            border-bottom: 1px solid #444;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .cloud-item:hover {
+            background: #343a40;
+        }
+
+        .cloud-item.loaded {
+            background: #144426;
+            border-left: 4px solid #28a745;
+        }
+
+        /* 리포트 용지 (Right Panel) */
+        .main-content {
+            flex: 1;
+            /* Take remaining space */
+            height: 100vh;
+            /* Full Height */
+            overflow-y: auto;
+            /* Scrollable */
+            padding: 40px;
+            background-color: #525659;
+            box-sizing: border-box;
+            /* Removed flex centering to avoid clipping */
+            display: block;
+            text-align: center;
+            /* Center inline-block child */
+            position: relative;
+            /* For absolute positioning of toggle button */
+            transition: all 0.3s ease;
+            /* Smooth transition */
+        }
+
+        .report-paper {
+            width: 297mm;
+            min-height: 210mm;
+            height: auto;
+            /* Allow infinite growth */
+            background: white;
+            padding: 15mm;
+            box-sizing: border-box;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            margin: 0 auto;
+            text-align: left;
+            /* Reset text align */
+            display: inline-block;
+            /* Allow it to be centered by text-align */
+        }
+
+        /* Sidebar Controls (Home + Toggle wrapper) */
+        /* Sidebar Controls (Home + Toggle wrapper) */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 15px;
+            left: 320px;
+            z-index: 2001;
+            transition: left 0.3s ease;
+        }
+
+        .control-row h2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .home-btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            border-radius: 20px 0 0 20px;
+            width: 70px;
+            height: 36px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .home-btn:hover {
+            background: #4285F4;
+            color: #fff;
+        }
+
+        .btn-toggle-sidebar {
+            width: 70px;
+            height: 36px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white;
+            background: #334155;
+        }
+
+        /* Full Screen Mode (Sidebar Hidden) */
+        body.full-screen .control-bar {
+            margin-left: -380px;
+            transition: margin-left 0.3s ease;
+        }
+
+        body.full-screen .sidebar-controls {
+            left: 0;
+        }
+
+        .control-bar {
+            transition: margin-left 0.3s ease;
+        }
+
+        /* 헤더 & 섹션 */
+        .header-area {
+            border-bottom: 3px double #333;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .section-box {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+
+        .sec-title {
+            font-size: 16px;
+            font-weight: 800;
+            color: #111827;
+            border-left: 6px solid #374151;
+            /* Unified Dark Blue-Grey */
+            padding-left: 10px;
+            margin-bottom: 12px;
+            background: #f3f4f6;
+            /* Light Grey */
+            padding-top: 6px;
+            padding-bottom: 6px;
+        }
+
+        /* KPI */
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .kpi-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 12px;
+            border-left: 5px solid #ccc;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+            min-height: 110px;
+        }
+
+        .kpi-border-red {
+            border-left-color: #374151;
+            /* Unified */
+        }
+
+        .kpi-border-green {
+            border-left-color: #374151;
+            /* Unified */
+        }
+
+        .kpi-header {
+            font-size: 13px;
+            font-weight: 800;
+            color: #555;
+            display: flex;
+            justify-content: space-between;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .kpi-gray .value {
+            color: #374151;
+        }
+
+        .kpi-split-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px dashed #f0f0f0;
+            padding: 3px 0;
+            font-size: 12px;
+        }
+
+        .kpi-val-big {
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* 테이블 */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+
+        th {
+            background: #e5e7eb;
+            color: #1f2937;
+            padding: 8px;
+            border: 1px solid #495057;
+            font-weight: 600;
+            white-space: nowrap;
+            border-top: 2px solid #333;
+        }
+
+        td {
+            padding: 6px;
+            border: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+
+        .hidden-col {
+            display: none !important;
+        }
+
+        .pivot-machine {
+            font-weight: bold;
+            background: #f8f9fa;
+            text-align: left;
+            padding-left: 8px;
+        }
+
+        .kpi-blue .value {
+            color: #374151;
+        }
+
+        .pivot-part {
+            color: #0d6efd;
+            font-weight: bold;
+            text-align: left;
+            padding-left: 8px;
+        }
+
+        .cell-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .cell-zero {
+            color: #e9ecef;
+            font-size: 9px;
+        }
+
+        tfoot tr {
+            background: #e9ecef;
+            color: #333;
+            font-weight: bold;
+            border-top: 2px solid #333;
+        }
+
+        /* 파레토 참조표 */
+        .pareto-ref-table {
+            width: 100%;
+            margin-top: 10px;
+            border: 1px solid #eee;
+        }
+
+        .pareto-ref-table th {
+            background: #f1f3f5;
+            color: #333;
+            font-weight: bold;
+            font-size: 10px;
+            padding: 4px;
+        }
+
+        .pareto-ref-table td {
+            font-size: 10px;
+            padding: 4px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* 사진 그리드 스타일 */
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .improv-item {
+            width: calc(50% - 5px);
+            border: 1px solid #ddd;
+            padding: 8px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .improv-item .ba-container {
+            display: flex;
+            gap: 4px;
+            height: 220px;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        .pm-item {
+            width: calc(33.33% - 7px);
+            border: 1px solid #ddd;
+            padding: 5px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .pm-item .ba-container {
+            display: flex;
+            gap: 4px;
+            height: 140px;
+            margin-bottom: 5px;
+            flex-shrink: 0;
+        }
+
+        .ba-box {
+            flex: 1;
+            border: 1px solid #eee;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .ba-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            font-size: 9px;
+            padding: 2px 6px;
+        }
+
+        .ba-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .photo-desc {
+            font-size: 11px;
+            padding: 5px;
+            font-weight: 600;
+            color: #444;
+            white-space: normal;
+            word-wrap: break-word;
+            background: #f8f9fa;
+            flex: 1;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .bg-good {
+            background-color: #198754;
+        }
+
+        .bg-neutral {
+            background-color: #adb5bd;
+        }
+
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 5mm;
+            }
+
+            body {
+                display: block;
+                /* Reset Flex */
+                background: white;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                height: auto;
+                overflow: visible;
+            }
+
+            .control-bar,
+            .sidebar-controls {
+                display: none;
+            }
+
+            .main-content {
+                display: block;
+                height: auto;
+                overflow: visible;
+                padding: 0;
+                background: white;
+            }
+
+            .report-paper {
+                box-shadow: none;
+                margin: 0;
+                width: 100%;
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <div id="cloud-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 style="margin:0; color:#34A853;">☁️ 클라우드 분석 데이터 추가</h3>
+                <button onclick="document.getElementById('cloud-modal').style.display='none'"
+                    style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button>
+            </div>
+            <div style="font-size:0.85rem; color:#ccc; margin-top:5px;">
+                원하는 주차를 클릭하면 분석 데이터에 추가됩니다.<br>
+                (Click para agregar datos al análisis)
+            </div>
+            <ul id="cloud-list-ul" class="cloud-list"></ul>
+            <div style="text-align:right; margin-top:10px;">
+                <button class="btn btn-apply" style="width:100%; justify-content:center;"
+                    onclick="document.getElementById('cloud-modal').style.display='none'">닫기 (Cerrar)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-controls">
+        <a class="home-btn" href="index.html">🏠 Home</a>
+        <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+    </div>
+
+    <div class="control-bar">
+        <div class="control-row">
+            <h2>설비 LOSS 보고서
+
+            </h2>
+            <div class="control-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <label class="btn btn-load" style="justify-content:center;">📂 로컬 파일<input type="file" id="fileInput"
+                        multiple accept=".json" style="display:none;" onchange="handleFiles(this)"></label>
+                <button class="btn btn-cloud" style="justify-content:center;" onclick="openCloudModal()">☁️
+                    클라우드</button>
+                <button class="btn btn-print" style="justify-content:center;" onclick="window.print()">🖨️ 인쇄</button>
+                <button class="btn btn-img" style="justify-content:center;" onclick="captureReport()">📸 캡처</button>
+            </div>
+        </div>
+        <div class="control-row" style="background:#3c4043; padding:10px; border-radius:6px; margin-top:5px;">
+            <div style="color:#0dcaf0; font-weight:bold; font-size:0.9rem; margin-right:15px;">
+                현재 로드된 파일: <span id="loaded-count" style="color:white; font-size:1.1rem;">0</span>개
+                <button class="btn btn-reset-data" onclick="clearData()">비우기</button>
+            </div>
+
+            <div class="radio-group" style="color:white; font-weight:bold;">
+                <label><input type="radio" name="mode" value="week" checked onclick="toggleMode()"> 주간 (Weekly)</label>
+                <label><input type="radio" name="mode" value="month" onclick="toggleMode()"> 월간 (Monthly)</label>
+            </div>
+            <div class="filter-group">
+                <label style="color:white">Target:</label>
+                <input type="number" id="target-year" class="filter-input" value="2026"> 년
+                <div id="input-week-area" style="display:inline-flex; align-items:center; gap:5px;">
+                    <input type="number" id="target-week" class="filter-input" value="1"> 주차
+                </div>
+                <div id="input-month-area" style="display:none;">
+                    <input type="number" id="target-month" class="filter-input" value="1"> 월
+                </div>
+                <button class="btn btn-apply" onclick="runAnalysis()">분석 실행 (Run)</button>
+            </div>
+            <div style="position:relative; margin-left:auto;">
+                <button class="btn btn-config" onclick="toggleColMenu()">⚙️ 주차 숨기기</button>
+                <div class="col-menu" id="colMenu"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-controls">
+        <a class="home-btn" href="index.html">🏠 Home</a>
+        <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+    </div>
+
+
+
+    <div class="main-content">
+        <div class="report-paper" id="report-target">
+            <div class="header-area">
+                <div>
+                    <h1 style="margin:0; font-size:26px; font-weight:800; color:#212529;" id="report-title">설비 LOSS 분석
+                        보고서</h1>
+                    <p style="margin:2px 0 0 0; color:#0d6efd; font-size:12px; font-weight:bold;">Equipment Loss
+                        Analysis Report</p>
+                </div>
+                <div style="text-align:right; font-size:11px; line-height:1.4;">
+                    <strong>DEPT:</strong> <span id="out-dept">-</span><br>
+                    <strong>TARGET:</strong> <span id="out-period">-</span><br>
+                    <strong>DATE:</strong> <span id="out-gen-date">-</span>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="sec-title">1. KPI 요약 (Summary)</div>
+                <div class="kpi-container">
+                    <div class="kpi-card kpi-border-red">
+                        <div class="kpi-header">금주 Total Loss <span style="color:#e74c3c; font-size:16px;"
+                                id="kpi-loss-total">0 min</span></div>
+                        <div id="kpi-loss-content" style="display:flex; flex-direction:column; gap:5px;"></div>
+                    </div>
+                    <div class="kpi-card kpi-border-green">
+                        <div class="kpi-header">MTTR (수리 시간) / 가동률</div>
+                        <div style="font-size:28px; font-weight:900; margin-top:10px; color:#333;"><span
+                                id="kpi-mttr">0</span> <span
+                                style="font-size:14px; font-weight:normal; color:#888;">min</span></div>
+                        <div class="kpi-split-row" style="margin-top:10px;"><span>가동률(Avail):</span><span
+                                style="font-weight:bold;" id="kpi-avail">0</span>%</div>
+                    </div>
+                    <div class="kpi-card kpi-border-green">
+                        <div class="kpi-header">MTBF (고장 간격)</div>
+                        <div style="font-size:28px; font-weight:900; margin-top:10px; color:#333;"><span
+                                id="kpi-mtbf">0</span> <span
+                                style="font-size:14px; font-weight:normal; color:#888;">min</span></div>
+                        <div class="kpi-split-row" style="margin-top:10px;"><span>전주 대비:</span><span
+                                id="kpi-trend-text">-</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="sec-title">2. 부품/위치별 Loss 발생 추이 (Loss Trend by Part)</div>
+
+                <!-- [추가] 추세 그래프 영역 -->
+                <div
+                    style="margin-bottom:20px; height:300px; border:1px solid #e0e0e0; padding:10px; border-radius:6px;">
+                    <canvas id="chart-trend"></canvas>
+                </div>
+
+                <div style="overflow-x:auto;">
+                    <table id="pivot-table">
+                        <thead>
+                            <tr id="pivot-header"></tr>
+                        </thead>
+                        <tbody id="pivot-body"></tbody>
+                        <tfoot id="pivot-footer"></tfoot>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-box">
+                <div class="sec-title">3. 항목별 상세 현황 및 대책 (Detail & Countermeasure)</div>
+                <table>
+                    <colgroup>
+                        <col width="5%">
+                        <col width="12%">
+                        <col width="15%">
+                        <col width="20%">
+                        <col width="25%">
+                        <col width="5%">
+                        <col width="8%">
+                        <col width="10%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>순위</th>
+                            <th>설비</th>
+                            <th>부품</th>
+                            <th>원인</th>
+                            <th>대책 (Action)</th>
+                            <th>빈도</th>
+                            <th>시간</th>
+                            <th>상태</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reason-table-body">
+                        <tr>
+                            <td colspan="8" style="padding:20px;">데이터 없음</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="section-box">
+                <div class="sec-title">4. 주요 개선 필요 항목 (Top Active Loss - Pareto)</div>
+                <div style="display:flex; gap:20px; align-items:flex-start;">
+                    <div style="flex:2; height:320px; border:1px solid #e0e0e0; padding:10px; border-radius:6px;">
+                        <canvas id="chart-pareto"></canvas>
+                    </div>
+                    <div
+                        style="flex:1; border:1px solid #e0e0e0; border-radius:6px; padding:10px; background:#f9f9f9; height:320px; overflow-y:auto;">
+                        <h4 style="margin:0 0 10px 0; font-size:12px; color:#333; text-align:center;">📋 상세 항목 참조표
+                            (Reference)</h4>
+                        <table class="pareto-ref-table">
+                            <thead>
+                                <tr>
+                                    <th>No</th>
+                                    <th>항목 (설비-원인)</th>
+                                    <th>Loss</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pareto-ref-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-box" id="sec-improv" style="display:none;">
+                <div class="sec-title">5. 개선 활동 (Improvement Activities)</div>
+                <div id="improv-container" class="photo-grid"></div>
+            </div>
+
+            <div class="section-box" id="sec-pm" style="display:none;">
+                <div class="sec-title">6. 정비 및 PM 활동 (Maintenance & PM)</div>
+                <div id="pm-container" class="photo-grid"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // [중요] 여기에 배포한 구글 웹 앱 URL을 넣으세요!
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyplXRWd-5xW-7tBplQDHWR6fOfSMNlxphIm3bNeiXawkdeBcQnZvuhmNQV5vbxFEhW/exec";
+        // ==========================================
+
+        let rawData = [], processedData = [], chartInstances = {}, weekHeaders = [], colVisibility = [];
+        let loadedWeekIds = new Set();
+        Chart.register(ChartDataLabels);
+
+        // --- Cloud Functions ---
+        async function openCloudModal() {
+            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 URL을 설정해주세요!"); return; }
+
+            const modal = document.getElementById('cloud-modal');
+            const listUl = document.getElementById('cloud-list-ul');
+            listUl.innerHTML = '<li style="text-align:center; padding:10px;">로딩 중...</li>';
+            modal.style.display = 'flex';
+
+            try {
+                const fetchUrl = `${APPS_SCRIPT_URL}?cmd=list&t=${new Date().getTime()}`;
+                const response = await fetch(fetchUrl);
+                const result = await response.json();
+
+                listUl.innerHTML = "";
+                if (result.list && result.list.length > 0) {
+                    result.list.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'cloud-item';
+                        if (loadedWeekIds.has(item.weekId)) li.classList.add('loaded');
+
+                        li.innerHTML = `
+                        <div>
+                            <div style="font-weight:bold; font-size:1.1rem; color:#ffc107;">${item.weekId}</div>
+                            <div style="font-size:0.8rem; color:#aaa;">${item.period}</div>
+                        </div>
+                        <div style="font-size:0.8rem; color:#888;">${item.updated}</div>
+                    `;
+                        li.onclick = () => loadCloudItem(item.weekId, li);
+                        listUl.appendChild(li);
+                    });
+                } else {
+                    listUl.innerHTML = '<li style="text-align:center; padding:10px;">저장된 데이터가 없습니다.</li>';
+                }
+            } catch (e) {
+                console.error('목록 로드 에러:', e);
+                listUl.innerHTML = `<li style="color:red; text-align:center;">로드 실패: ${e.message}</li>`;
+            }
+        }
+
+        async function loadCloudItem(weekId, liElement) {
+            if (loadedWeekIds.has(weekId)) {
+                if (!confirm("이미 로드된 주차입니다. 다시 추가하시겠습니까?")) return;
+            }
+
+            try {
+                liElement.style.opacity = "0.5";
+                const fetchUrl = `${APPS_SCRIPT_URL}?cmd=load&weekId=${weekId}&t=${new Date().getTime()}`;
+                const response = await fetch(fetchUrl);
+                const responseText = await response.text();
+
+                let data;
+                try { data = JSON.parse(responseText); } catch (pe) {
+                    alert('서버 응답 파싱 실패');
+                    console.error('Raw:', responseText);
+                    liElement.style.opacity = "1";
+                    return;
+                }
+
+                if (data.error) {
+                    alert('서버 에러: ' + data.error);
+                    liElement.style.opacity = "1";
+                    return;
+                }
+
+                // 데이터가 .data 안에 감싸져 있다면 꺼냄
+                if (data.data && !data.losses) {
+                    data = data.data;
+                }
+
+                rawData.push(data);
+                loadedWeekIds.add(weekId);
+
+                rawData.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+                updateLoadedCount();
+                liElement.classList.add('loaded');
+                liElement.style.opacity = "1";
+
+                const info = getWeekInfo(data.startDate);
+                document.getElementById('target-year').value = info.y;
+                document.getElementById('target-week').value = info.w;
+                document.getElementById('target-month').value = info.m;
+
+            } catch (e) {
+                alert("데이터 로드 실패: " + e.message);
+                liElement.style.opacity = "1";
+                console.error('Load error:', e);
+            }
+        }
+
+        function clearData() {
+            if (!confirm("로드된 모든 데이터를 비우시겠습니까?")) return;
+            rawData = [];
+            loadedWeekIds.clear();
+            updateLoadedCount();
+            document.getElementById('report-title').innerText = "설비 LOSS 분석 보고서";
+        }
+
+        function updateLoadedCount() {
+            document.getElementById('loaded-count').innerText = rawData.length;
+        }
+
+        // --- Local File Functions ---
+        async function handleFiles(input) {
+            const files = Array.from(input.files);
+            if (files.length === 0) return;
+            const promises = files.map(f => new Promise(res => {
+                const r = new FileReader();
+                r.onload = e => {
+                    try { res(JSON.parse(e.target.result)); }
+                    catch { res(null); }
+                };
+                r.readAsText(f);
+            }));
+            const results = await Promise.all(promises);
+            const validResults = results.filter(d => d !== null);
+
+            validResults.forEach(d => {
+                rawData.push(d);
+                const info = getWeekInfo(d.startDate);
+                const wId = `${info.y}-W${info.w.toString().padStart(2, '0')}`;
+                loadedWeekIds.add(wId);
+            });
+
+            rawData.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+            updateLoadedCount();
+
+            if (validResults.length > 0) {
+                alert(`${validResults.length}개 파일 추가됨.`);
+                const lastData = rawData[rawData.length - 1];
+                const info = getWeekInfo(lastData.startDate);
+                document.getElementById('target-year').value = info.y;
+                document.getElementById('target-week').value = info.w;
+                document.getElementById('target-month').value = info.m;
+            }
+            input.value = "";
+        }
+
+        function toggleMode() {
+            const m = document.querySelector('input[name="mode"]:checked').value;
+            document.getElementById('input-week-area').style.display = m === 'week' ? 'inline-flex' : 'none';
+            document.getElementById('input-month-area').style.display = m === 'week' ? 'none' : 'block';
+        }
+
+        // [수정] 주차 계산 로직을 V40.5(입력 도구)와 동일하게 변경
+        function getWeekInfo(dStr) {
+            const date = new Date(dStr);
+            date.setHours(0, 0, 0, 0);
+            const year = date.getFullYear();
+            const firstDayOfYear = new Date(year, 0, 1);
+            const pastDays = Math.floor((date - firstDayOfYear) / 86400000);
+
+            // V40.5와 동일하게 getDay() 값을 그대로 사용 (일요일=0 기준)
+            const startDay = firstDayOfYear.getDay();
+
+            // [삭제됨] 월요일 시작 보정 로직 제거 
+            // const dayIndex = (startDay + 6) % 7; 
+
+            // startDay를 직접 더해서 계산
+            const w = Math.ceil((pastDays + startDay + 1) / 7);
+
+            return { y: year, m: date.getMonth() + 1, w: w };
+        }
+
+        function runAnalysis() {
+            if (rawData.length === 0) { alert("먼저 데이터를 불러와주세요 (클라우드 or 로컬)"); return; }
+
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const tYear = parseInt(document.getElementById('target-year').value);
+
+            processedData = rawData.map(d => {
+                const info = getWeekInfo(d.startDate);
+                let loss = 0, items = [];
+                if (d.losses) d.losses.forEach(l => {
+                    let min = 0;
+                    if (l.start && l.end) {
+                        let diff = (new Date("2000-01-01 " + l.end) - new Date("2000-01-01 " + l.start)) / 60000;
+                        if (diff < 0) diff += 1440;
+                        min = diff;
+                    }
+                    if (min === 0 && l.min) min = parseFloat(l.min);
+
+                    if (min > 0) { loss += min; items.push({ ...l, min, date: d.startDate }); }
+                });
+                let net = 0;
+                if (d.matrix) d.matrix.forEach(r => r.forEach(v => net += (parseFloat(v) || 0) * 60));
+
+                const cnt = items.length;
+                const kpiAvail = d.kpi && d.kpi.avail ? d.kpi.avail : (net > 0 ? ((net - loss) / net * 100).toFixed(1) : 0);
+                const kpiMttr = d.kpi && d.kpi.mttr ? d.kpi.mttr : (cnt > 0 ? (loss / cnt).toFixed(1) : 0);
+                const kpiMtbf = d.kpi && d.kpi.mtbf ? d.kpi.mtbf : (cnt > 0 ? ((net - loss) / cnt).toFixed(1) : 0);
+
+                return {
+                    ...d, calYear: info.y, calMonth: new Date(d.startDate).getMonth() + 1, calWeek: info.w,
+                    totalLoss: loss, netTime: net, items,
+                    kpi: { avail: kpiAvail, mttr: kpiMttr, mtbf: kpiMtbf, failCount: cnt }
+                };
+            });
+
+            let currGroup = [], prevGroup = [], label = "";
+            let titleText = "";
+
+            if (mode === 'week') {
+                const w = parseInt(document.getElementById('target-week').value);
+                currGroup = processedData.filter(d => d.calYear === tYear && d.calWeek === w);
+                let prevWeek = w - 1; let prevYear = tYear;
+                if (prevWeek < 1) { prevWeek = 52; prevYear--; }
+                prevGroup = processedData.filter(d => d.calYear === prevYear && d.calWeek === prevWeek);
+                label = `${tYear}년 ${w}주차`;
+                titleText = `${tYear}년 ${w}주차 설비 LOSS 분석 보고서`;
+            } else {
+                const m = parseInt(document.getElementById('target-month').value);
+                currGroup = processedData.filter(d => d.calYear === tYear && d.calMonth === m);
+                let prevMonth = m - 1; let prevYear = tYear;
+                if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+                prevGroup = processedData.filter(d => d.calYear === prevYear && d.calMonth === prevMonth);
+                label = `${tYear}년 ${m}월`;
+                titleText = `${tYear}년 ${m}월 설비 LOSS 분석 보고서`;
+            }
+
+            if (currGroup.length === 0) { alert(`해당 기간(${label})의 데이터가 없습니다.`); return; }
+
+            document.getElementById('report-title').innerText = titleText;
+            document.getElementById('out-period').innerText = label;
+            document.getElementById('out-gen-date').innerText = new Date().toISOString().slice(0, 10);
+            document.getElementById('out-dept').innerText = currGroup[0].dept || '-';
+
+            renderKPI(currGroup, prevGroup);
+            // [순서 변경] PivotTable을 먼저 렌더링해야 weekHeaders가 생성됨
+            renderPivotTable(processedData);
+            renderTrendChart(processedData);
+
+            const statusMap = getStatusMap(processedData);
+            renderReason(currGroup, statusMap);
+            renderPareto(currGroup, statusMap);
+            renderImprov(currGroup);
+            renderPM(currGroup);
+        }
+
+        function getStatusMap(allData) {
+            const map = {};
+            const today = new Date();
+            const cutoffDate = new Date();
+            cutoffDate.setDate(today.getDate() - 14);
+
+            allData.forEach(d => {
+                d.items.forEach(i => {
+                    const k = `${i.machine}|${i.sub}|${i.reason}`;
+                    const itemDate = new Date(i.date);
+                    if (!map[k] || itemDate > map[k]) map[k] = itemDate;
+                });
+            });
+            const result = {};
+            for (let k in map) result[k] = map[k] < cutoffDate;
+            return result;
+        }
+
+        function renderKPI(curr, prev) {
+            let loss = 0, avail = 0, mttr = 0, mtbf = 0;
+            let cA = 0, cB = 0, cC = 0, cE = 0;
+
+            const regexA = /PRESS[\s\-_]*A/i;
+            const regexB = /PRESS[\s\-_]*B/i;
+            const regexC = /PRESS[\s\-_]*C/i;
+            const regexEsp = /ESP|ESPUMADO/i;
+
+            curr.forEach(d => {
+                loss += d.totalLoss;
+                avail += parseFloat(d.kpi.avail);
+                mttr += parseFloat(d.kpi.mttr);
+                mtbf += parseFloat(d.kpi.mtbf);
+                d.items.forEach(i => {
+                    const m = i.machine;
+                    if (regexA.test(m)) cA += i.min;
+                    else if (regexB.test(m)) cB += i.min;
+                    else if (regexC.test(m)) cC += i.min;
+                    else if (regexEsp.test(m)) cE += i.min;
+                    else cE += i.min;
+                });
+            });
+            const cnt = curr.length || 1;
+
+            const avgAvail = (avail / cnt).toFixed(1);
+            const avgMttr = (mttr / cnt).toFixed(1);
+            const avgMtbf = (mtbf / cnt).toFixed(0);
+
+            document.getElementById('kpi-loss-total').innerText = loss.toLocaleString() + " min";
+            document.getElementById('kpi-loss-content').innerHTML = `
+            <div class="kpi-split-row"><span>PRESS A</span><span class="kpi-val-big">${cA.toLocaleString()}</span></div>
+            <div class="kpi-split-row"><span>PRESS B</span><span class="kpi-val-big">${cB.toLocaleString()}</span></div>
+            <div class="kpi-split-row"><span>PRESS C</span><span class="kpi-val-big">${cC.toLocaleString()}</span></div>
+            <div class="kpi-split-row"><span>ESPUMADO</span><span class="kpi-val-big">${cE.toLocaleString()}</span></div>
+        `;
+
+            document.getElementById('kpi-mttr').innerText = avgMttr;
+            document.getElementById('kpi-avail').innerText = avgAvail;
+            document.getElementById('kpi-mtbf').innerText = avgMtbf;
+
+            let pMtbf = 0;
+            prev.forEach(d => pMtbf += parseFloat(d.kpi.mtbf));
+            const prevAvgMtbf = prev.length ? pMtbf / prev.length : 0;
+
+            const diff = parseFloat(avgMtbf) - prevAvgMtbf;
+            document.getElementById('kpi-trend-text').innerHTML = diff > 0 ? `<span style="color:green; font-weight:bold;">▲ ${diff.toFixed(0)}</span>` : (diff < 0 ? `<span style="color:red; font-weight:bold;">▼ ${Math.abs(diff).toFixed(0)}</span>` : `-`);
+        }
+
+        function renderPivotTable(data) {
+            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+
+            weekHeaders = weeks.map(w => {
+                const [y, wk] = w.split('-');
+                return { label: `${wk}W`, key: w };
+            });
+
+            if (colVisibility.length !== weekHeaders.length) colVisibility = new Array(weekHeaders.length).fill(true);
+
+            const menu = document.getElementById('colMenu');
+            menu.innerHTML = "";
+            weekHeaders.forEach((h, i) => {
+                menu.innerHTML += `<div class="col-item"><input type="checkbox" id="chk-${i}" ${colVisibility[i] ? 'checked' : ''} onchange="toggleCol(${i})"> <label for="chk-${i}">${h.label}</label></div>`;
+            });
+
+            const head = document.getElementById('pivot-header');
+            const body = document.getElementById('pivot-body');
+            const foot = document.getElementById('pivot-footer');
+
+            let hHtml = `<th style="width:100px;">설비</th><th style="width:120px;">부품</th>`;
+            weekHeaders.forEach((h, i) => hHtml += `<th class="col-wk-${i}" style="${colVisibility[i] ? '' : 'display:none'}">${h.label}</th>`);
+            hHtml += `<th style="background:#333;">Total</th>`;
+            head.innerHTML = hHtml;
+
+            const map = {}, totals = new Array(weekHeaders.length).fill(0);
+
+            data.forEach(d => {
+                const weekKey = `${d.calYear}-${d.calWeek}`;
+                const weekIdx = weekHeaders.findIndex(wh => wh.key === weekKey);
+
+                if (weekIdx !== -1) {
+                    d.items.forEach(it => {
+                        const k = `${it.machine}|${it.sub}`;
+                        if (!map[k]) map[k] = new Array(weekHeaders.length).fill(0);
+                        map[k][weekIdx] += it.min;
+                        totals[weekIdx] += it.min;
+                    });
+                }
+            });
+
+            body.innerHTML = "";
+            Object.keys(map).sort().forEach(k => {
+                const [m, p] = k.split('|');
+                const vals = map[k];
+                let r = `<tr><td class="pivot-machine">${m}</td><td class="pivot-part">${p}</td>`;
+                vals.forEach((v, i) => {
+                    r += `<td class="col-wk-${i} ${v > 0 ? 'cell-value' : 'cell-zero'}" style="${colVisibility[i] ? '' : 'display:none'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
+                });
+                r += `<td style="font-weight:bold; background:#fff0f6; color:#d63384;">${vals.reduce((a, b) => a + b, 0).toLocaleString()}</td></tr>`;
+                body.innerHTML += r;
+            });
+
+            let f = `<tr><td colspan="2">Total</td>`;
+            totals.forEach((v, i) => f += `<td class="col-wk-${i}" style="${colVisibility[i] ? '' : 'display:none'}">${v.toLocaleString()}</td>`);
+            f += `<td>${totals.reduce((a, b) => a + b, 0).toLocaleString()}</td></tr>`;
+            foot.innerHTML = f;
+        }
+
+        function renderReason(data, statusMap) {
+            const map = {};
+            data.forEach(d => d.items.forEach(i => {
+                const cm = i.countermeasure || i.action || i.measure || "-";
+                const k = `${i.machine}|${i.sub}|${i.reason}|${cm}`;
+                const statusKey = `${i.machine}|${i.sub}|${i.reason}`;
+                if (!map[k]) map[k] = { m: i.machine, p: i.sub, r: i.reason, cm: cm, c: 0, t: 0, isImproved: statusMap[statusKey] };
+                map[k].c++; map[k].t += i.min;
+            }));
+            const sorted = Object.keys(map).map(k => map[k]).sort((a, b) => b.t - a.t).slice(0, 15);
+            document.getElementById('reason-table-body').innerHTML = sorted.map((d, i) => `<tr><td>${i + 1}</td><td style="text-align:left">${d.m}</td><td style="text-align:left;color:#0d6efd;">${d.p}</td><td style="text-align:left">${d.r}</td><td style="text-align:left; color:#555; font-size:10px;">${d.cm}</td><td>${d.c}</td><td style="font-weight:bold">${d.t}</td><td>${d.isImproved ? '<span class="badge bg-good">개선 (Done)</span>' : '<span class="badge bg-neutral">-</span>'}</td></tr>`).join('');
+        }
+
+        function renderPareto(curr, statusMap) {
+            const map = {};
+            curr.forEach(d => d.items.forEach(i => {
+                const k = `${i.machine} - ${i.reason || 'Etc'}`;
+                map[k] = (map[k] || 0) + i.min;
+            }));
+
+            let sorted = Object.keys(map).map(k => ({ k, v: map[k] })).sort((a, b) => b.v - a.v);
+            if (sorted.length === 0) { createChart('chart-pareto', { type: 'bar', data: { labels: [], datasets: [] } }); return; }
+
+            sorted = sorted.slice(0, 12);
+            const total = sorted.reduce((a, b) => a + b.v, 0);
+            let acc = 0;
+
+            const chartLabels = sorted.map((_, i) => `#${i + 1}`);
+            const barData = sorted.map(d => d.v);
+            const lineData = sorted.map(d => { acc += d.v; return (acc / total * 100).toFixed(1); });
+
+            const refBody = document.getElementById('pareto-ref-body');
+            refBody.innerHTML = "";
+            sorted.forEach((d, i) => {
+                refBody.innerHTML += `<tr><td style="text-align:center; font-weight:bold; color:#0d6efd;">#${i + 1}</td><td>${d.k}</td><td style="text-align:center; font-weight:bold;">${d.v}</td></tr>`;
+            });
+
+            const maxVal = sorted.length > 0 ? sorted[0].v : 0;
+            const yAxisMax = Math.ceil(maxVal * 1.15);
+
+            const ctx = document.getElementById('chart-pareto').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(13, 110, 253, 0.9)');
+            gradient.addColorStop(1, 'rgba(13, 110, 253, 0.4)');
+
+            createChart('chart-pareto', {
+                type: 'bar',
+                data: {
+                    labels: chartLabels,
+                    datasets: [
+                        {
+                            type: 'line', label: 'Cumulative %', data: lineData,
+                            borderColor: '#343a40', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#fff',
+                            yAxisID: 'y1', datalabels: { display: false }, tension: 0.3
+                        },
+                        {
+                            label: 'Loss (min)', data: barData,
+                            backgroundColor: gradient, borderRadius: 6, barPercentage: 0.6,
+                            yAxisID: 'y', datalabels: { anchor: 'end', align: 'top', color: '#333', font: { weight: 'bold' } }
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'left', labels: { boxWidth: 12, font: { size: 11 } } },
+                        title: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            position: 'left',
+                            max: yAxisMax,
+                            title: { display: true, text: 'Loss (min)' },
+                            grid: { borderDash: [2, 2] }
+                        },
+                        y1: { position: 'right', min: 0, max: 110, title: { display: true, text: 'Cum. %' }, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderImprov(data) {
+            const div = document.getElementById('improv-container');
+            div.innerHTML = "";
+            let has = false;
+            data.forEach(d => {
+                if (d.improv) {
+                    d.improv.forEach(i => {
+                        if (i.desc) {
+                            has = true;
+                            div.innerHTML += `
+                        <div class="improv-item">
+                            <div class="ba-container">
+                                <div class="ba-box">
+                                    <div class="ba-label">Before</div>
+                                    <img class="ba-img" src="${i.imgBefore || ''}">
+                                </div>
+                                <div class="ba-box">
+                                    <div class="ba-label">After</div>
+                                    <img class="ba-img" src="${i.imgAfter || ''}">
+                                </div>
+                            </div>
+                            <div class="photo-desc">${i.desc}</div>
+                        </div>`;
+                        }
+                    });
+                }
+            });
+            document.getElementById('sec-improv').style.display = has ? 'block' : 'none';
+        }
+
+        function renderPM(data) {
+            const div = document.getElementById('pm-container');
+            div.innerHTML = "";
+            let has = false;
+            data.forEach(d => {
+                const list = d.maint || d.pm;
+                if (list && Array.isArray(list)) {
+                    list.forEach(i => {
+                        const desc = i.desc || i.content || "";
+                        const img = i.imgSrc || i.img || "";
+                        if (desc || img) {
+                            has = true;
+                            div.innerHTML += `
+                        <div class="pm-item">
+                            <div class="ba-container">
+                                <div class="ba-box">
+                                    <div class="ba-label">Activity</div>
+                                    <img class="ba-img" src="${img}">
+                                </div>
+                            </div>
+                            <div class="photo-desc">${desc}</div>
+                        </div>`;
+                        }
+                    });
+                }
+            });
+            document.getElementById('sec-pm').style.display = has ? 'block' : 'none';
+        }
+
+        // [추가] 설비별 주간 Trend Chart 렌더링
+        function renderTrendChart(data) {
+            // [변경] weekHeaders와 colVisibility를 사용하여 테이블과 동기화
+            if (!weekHeaders || weekHeaders.length === 0) return;
+
+            // 1. 표시할 주차 필터링
+            const visibleIndices = [];
+            weekHeaders.forEach((h, i) => {
+                if (colVisibility[i]) visibleIndices.push(i);
+            });
+
+            const labels = visibleIndices.map(i => weekHeaders[i].label);
+            const keys = visibleIndices.map(i => weekHeaders[i].key); // "YYYY-W"
+
+            // 데이터셋 초기화 & 스타일 설정 (직선 그래프 + 구분 가능한 포인트 스타일)
+            const datasets = {
+                'A': {
+                    label: 'Press A', data: new Array(keys.length).fill(0),
+                    borderColor: '#0d6efd', backgroundColor: '#0d6efd',
+                    pointStyle: 'circle', pointRadius: 5, pointHoverRadius: 7
+                },
+                'B': {
+                    label: 'Press B', data: new Array(keys.length).fill(0),
+                    borderColor: '#198754', backgroundColor: '#198754',
+                    pointStyle: 'rect', pointRadius: 5, pointHoverRadius: 7
+                },
+                'C': {
+                    label: 'Press C', data: new Array(keys.length).fill(0),
+                    borderColor: '#dc3545', backgroundColor: '#dc3545',
+                    pointStyle: 'triangle', pointRadius: 5, pointHoverRadius: 7
+                },
+                'E': {
+                    label: 'Espumado', data: new Array(keys.length).fill(0),
+                    borderColor: '#ffc107', backgroundColor: '#ffc107',
+                    pointStyle: 'rectRot', pointRadius: 5, pointHoverRadius: 7
+                }
+            };
+
+            const regexA = /PRESS[\s\-_]*A/i;
+            const regexB = /PRESS[\s\-_]*B/i;
+            const regexC = /PRESS[\s\-_]*C/i;
+            const regexEsp = /ESP|ESPUMADO/i;
+
+            // 2. 데이터 집계
+            data.forEach(d => {
+                const wKey = `${d.calYear}-${d.calWeek}`; // renderPivotTable과 동일한 키 생성 방식
+                const idx = keys.indexOf(wKey);
+                if (idx === -1) return; // 숨겨진 주차는 스킵
+
+                d.items.forEach(i => {
+                    const m = i.machine;
+                    if (regexA.test(m)) datasets['A'].data[idx] += i.min;
+                    else if (regexB.test(m)) datasets['B'].data[idx] += i.min;
+                    else if (regexC.test(m)) datasets['C'].data[idx] += i.min;
+                    else if (regexEsp.test(m)) datasets['E'].data[idx] += i.min;
+                    else datasets['E'].data[idx] += i.min;
+                });
+            });
+
+            // 3. Chart.js 데이터셋 변환 (직선 설정 tension: 0)
+            const chartData = {
+                labels: labels,
+                datasets: [
+                    { ...datasets['A'], tension: 0, fill: false, borderWidth: 2 },
+                    { ...datasets['B'], tension: 0, fill: false, borderWidth: 2 },
+                    { ...datasets['C'], tension: 0, fill: false, borderWidth: 2 },
+                    { ...datasets['E'], tension: 0, fill: false, borderWidth: 2 }
+                ]
+            };
+
+            // 4. 차트 생성
+            createChart('chart-trend', {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        title: { display: true, text: 'Weekly Loss Trend by Equipment (설비별 주간 Loss 추이)' },
+                        tooltip: { position: 'nearest' },
+                        datalabels: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Loss (min)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createChart(id, cfg) { if (chartInstances[id]) chartInstances[id].destroy(); chartInstances[id] = new Chart(document.getElementById(id), cfg); }
+
+        window.toggleColMenu = () => document.getElementById('colMenu').classList.toggle('show');
+        window.toggleCol = (i) => {
+            colVisibility[i] = document.getElementById(`chk-${i}`).checked;
+            document.querySelectorAll(`.col-wk-${i}`).forEach(el => el.style.display = colVisibility[i] ? '' : 'none');
+            // [추가] 차트 업데이트
+            if (typeof renderTrendChart === 'function') renderTrendChart(processedData);
+        };
+
+        function toggleSidebar() {
+            document.body.classList.toggle('full-screen');
+            const btn = document.getElementById('btn-toggle-sidebar');
+            if (document.body.classList.contains('full-screen')) {
+                btn.innerText = "▶";
+                btn.title = "Show Sidebar";
+            } else {
+                btn.innerText = "◀";
+                btn.title = "Hide Sidebar";
+            }
+        }
+
+        function captureReport() { html2canvas(document.getElementById('report-target'), { scale: 2 }).then(c => { const a = document.createElement('a'); a.download = 'Report.png'; a.href = c.toDataURL(); a.click(); }); }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>설비 Loss</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #111827;
+            --bg-nav: #1f2937;
+            --bg-card: #2d3748;
+            --bg-input: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --blue: #3b82f6;
+            --border: #4b5563;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            display: flex;
+            height: 100vh;
+            font-family: 'Segoe UI', sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .input-panel {
+            width: 650px;
+            min-width: 400px;
+            max-width: 900px;
+            background: var(--bg-nav);
+            color: var(--text-main);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .input-panel h2 {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            font-size: 1.4rem;
+            color: var(--blue);
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Resizer removed - using toggle button instead */
+
+        .form-section {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .form-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 1rem;
+            color: #17a2b8;
+            border-bottom: 1px solid #6c757d;
+            padding-bottom: 5px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-input);
+            color: var(--text-main);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: 2px solid var(--blue);
+            border-color: transparent;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+        }
+
+        .matrix-table th {
+            background: #495057;
+            color: #ffc107;
+            font-size: 0.75rem;
+            padding: 4px;
+            text-align: center;
+            border: 1px solid #6c757d;
+        }
+
+        .matrix-table td {
+            padding: 2px;
+            border: 1px solid #6c757d;
+        }
+
+        .matrix-table input {
+            width: 100%;
+            margin: 0;
+            text-align: center;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 4px 0;
+            border: none;
+        }
+
+        .matrix-machine {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #eee;
+            padding-left: 5px;
+            background: #212529;
+        }
+
+        .matrix-sum {
+            font-size: 0.8rem;
+            color: #0d6efd;
+            text-align: center;
+            font-weight: bold;
+            background: #212529;
+        }
+
+        .file-upload-btn {
+            display: inline-block;
+            background: #6c757d;
+            color: white;
+            padding: 8px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-align: center;
+            width: 100%;
+            font-weight: bold;
+            border: 1px solid #999;
+        }
+
+        .file-upload-btn:hover {
+            background: #5a6268;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .btn-add {
+            background: #374151;
+            border: 1px solid #4b5563;
+            padding: 10px;
+            color: #f9fafb;
+            width: 100%;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #4b5563;
+        }
+
+        .btn-add:hover {
+            background: #2563eb;
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 5px;
+            margin-left: auto;
+        }
+
+        .btn-sm {
+            padding: 2px 6px;
+            font-size: 0.7rem;
+            border-radius: 3px;
+            cursor: pointer;
+            border: 1px solid #4b5563;
+            background: #374151;
+            /* Unified Dark Blue-Grey */
+            color: white;
+            font-weight: bold;
+        }
+
+        .btn-sm:hover {
+            background: #4b5563;
+        }
+
+        .btn-del {
+            background: #dc3545;
+        }
+
+        .btn-del:hover {
+            background: #bb2d3b;
+        }
+
+        .btn-copy {
+            background: #6f42c1;
+        }
+
+        .btn-copy:hover {
+            background: #59359a;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: #adb5bd;
+            font-size: 1.2rem;
+            margin-right: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+            color: #fff;
+        }
+
+        .input-item {
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .sortable-ghost {
+            opacity: 0.5;
+            background: #495057 !important;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-print {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 50px;
+            font-size: 1.1rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-print:hover {
+            background: #4b5563;
+        }
+
+        .btn-capture {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 50px;
+            font-size: 1.1rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-capture:hover {
+            background: #4b5563;
+        }
+
+        .btn-excel {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 50px;
+            font-size: 1.1rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-excel:hover {
+            background: #4b5563;
+        }
+
+        .btn-save {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 40px;
+            font-size: 0.9rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-save:hover {
+            background: #4b5563;
+        }
+
+        .btn-load {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 40px;
+            font-size: 0.9rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .btn-load:hover {
+            background: #4b5563;
+        }
+
+        .btn-reset {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 40px;
+            font-size: 0.9rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-reset:hover {
+            background: #4b5563;
+        }
+
+        .btn-cloud-save {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 40px;
+            font-size: 0.9rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-cloud-save:hover {
+            background: #4b5563;
+        }
+
+        .btn-cloud-load {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 40px;
+            font-size: 0.9rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-cloud-load:hover {
+            background: #4b5563;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #212529;
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 400px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #444;
+        }
+
+        .cloud-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .cloud-item {
+            padding: 12px;
+            border-bottom: 1px solid #444;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #e0e0e0;
+        }
+
+        .cloud-item:hover {
+            background: #343a40;
+        }
+
+        .cloud-item:last-child {
+            border-bottom: none;
+        }
+
+        .cloud-week {
+            font-weight: bold;
+            color: #ffc107;
+            font-size: 1.1rem;
+        }
+
+        .cloud-date {
+            font-size: 0.8rem;
+            color: #ccc;
+        }
+
+        .preview-panel {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: #e9ecef;
+            color: #333;
+            /* Explicitly set text color for white background */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .report-container {
+            width: 297mm;
+            min-height: 210mm;
+            height: auto;
+            margin: 0 auto;
+            background: white;
+            color: #333;
+            /* Explicitly set text color for white background */
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+            padding: 20px;
+            padding-bottom: 50px;
+        }
+
+        .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 3px double #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header-logo {
+            width: 200px;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .header-logo img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .header-logo-placeholder {
+            width: 100%;
+            height: 100%;
+            border: 2px dashed #ddd;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            /* Visible grey */
+            font-size: 11px;
+            text-align: center;
+            background: #f3f4f6;
+        }
+
+        .header-title-area {
+            text-align: center;
+            flex: 1;
+        }
+
+        .header-title h1 {
+            font-size: 24px;
+            margin: 0;
+            color: #333;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+        }
+
+        .header-title p {
+            font-size: 12px;
+            color: #374151;
+            /* Dark Blue-Grey */
+            margin: 5px 0 0 0;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-info {
+            text-align: right;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #555;
+            width: 220px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 25px;
+            margin-bottom: 8px;
+            border-left: 6px solid #333;
+            padding-left: 10px;
+            background: #f8f9fa;
+            padding-top: 4px;
+            padding-bottom: 4px;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-bottom: 10px;
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            border: 1px solid #ccc;
+            padding: 5px;
+            text-align: center;
+            vertical-align: middle;
+            word-wrap: break-word;
+        }
+
+        th {
+            background: #e5e7eb;
+            /* Light Grey for print friendly */
+            color: #111827;
+            /* Dark text for contrast */
+            font-weight: bold;
+            border-top: 2px solid #333;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .kpi-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-left-width: 5px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 70px;
+        }
+
+        .kpi-card h4 {
+            margin: 0 0 5px 0;
+            font-size: 10px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .kpi-card .value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #333;
+            line-height: 1.1;
+        }
+
+        .kpi-card .unit {
+            font-size: 12px;
+            color: #374151;
+            /* Dark text */
+            font-weight: normal;
+            margin-left: 2px;
+        }
+
+        .kpi-sub {
+            font-size: 9px;
+            color: #4b5563;
+            /* Dark text */
+            margin-top: 4px;
+        }
+
+        .kpi-blue {
+            border-left-color: #0d6efd;
+        }
+
+        .kpi-blue .value {
+            color: #374151;
+            /* Unified Dark Blue-Grey */
+        }
+
+        .kpi-red {
+            border-left-color: #dc3545;
+        }
+
+        .kpi-red .value {
+            color: #374151;
+            /* Unified Dark Blue-Grey */
+        }
+
+        .kpi-green {
+            border-left-color: #198754;
+        }
+
+        .kpi-green .value {
+            color: #374151;
+            /* Unified Dark Blue-Grey */
+        }
+
+        .kpi-gray {
+            border-left-color: #6c757d;
+        }
+
+        .kpi-gray .value {
+            color: #374151;
+            /* Unified Dark Blue-Grey */
+        }
+
+        .kpi-info {
+            border-left-color: #0dcaf0;
+        }
+
+        .kpi-info .value {
+            color: #374151;
+            /* Unified Dark Blue-Grey */
+        }
+
+        .trend-up {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .trend-down {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .trend-flat {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .pie-chart-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+        }
+
+        .pie-chart-svg {
+            width: 150px;
+            height: 150px;
+            flex-shrink: 0;
+        }
+
+        .pie-legend {
+            flex: 1;
+            padding-left: 15px;
+            font-size: 10px;
+            overflow-y: auto;
+            max-height: 150px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+            border-radius: 2px;
+        }
+
+        .legend-text {
+            flex: 1;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .legend-value {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .photo-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .photo-item {
+            width: calc(50% - 10px);
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 8px;
+            background: #f8f9fa;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: auto;
+        }
+
+        .photo-img-box {
+            width: 100%;
+            height: 180px;
+            background: #fff;
+            border: 1px solid #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .photo-img-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .photo-desc {
+            font-size: 11px;
+            color: #333;
+            font-weight: bold;
+            line-height: 1.4;
+            padding: 4px;
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 3px;
+            word-break: break-all;
+        }
+
+        .ba-container {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            height: 180px;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+
+        .ba-box {
+            flex: 1;
+            border: 1px solid #ccc;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .ba-label {
+            font-size: 9px;
+            background: #374151;
+            /* Unified Dark Blue-Grey */
+            color: white;
+            text-align: center;
+            padding: 2px 0;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .ba-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        .ba-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+            /* Visible grey */
+            font-size: 10px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(33, 37, 41, 0.95);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 9999;
+            display: none;
+            font-weight: bold;
+            border: 1px solid #0d6efd;
+        }
+
+        @media print {
+
+            .input-panel,
+            .resizer,
+            .modal-overlay,
+            .btn-toggle-sidebar {
+                display: none;
+            }
+
+            .preview-panel {
+                padding: 0;
+                overflow: visible;
+                background: white;
+            }
+
+            .report-container {
+                max-width: 100%;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border: none;
+            }
+
+            body {
+                height: auto;
+                overflow: visible;
+                background: white;
+            }
+
+            @page {
+                size: landscape;
+                margin: 0;
+            }
+        }
+
+        /* Sidebar Controls (Home + Toggle wrapper) */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 15px;
+            left: 15px !important;
+            z-index: 1001;
+            transition: none;
+        }
+
+        .home-btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            border-radius: 20px 0 0 20px;
+            width: 70px;
+            height: 36px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .home-btn:hover {
+            background: #4285F4;
+            color: #fff;
+        }
+
+        .btn-toggle-sidebar {
+            width: 70px;
+            height: 36px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white;
+            background: #334155;
+        }
+
+        body.full-screen .input-panel {
+            display: none !important;
+        }
+
+        body.full-screen .resizer {
+            display: none !important;
+        }
+
+        body.full-screen .sidebar-controls {
+            left: 15px !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="cloud-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px solid #555; padding-bottom:10px;">
+                <h3 style="margin:0; color:#0dcaf0;">☁️ 클라우드 저장 목록</h3>
+                <button onclick="document.getElementById('cloud-modal').style.display='none'"
+                    style="background:none; border:none; color:white; font-size:20px; cursor:pointer;">&times;</button>
+            </div>
+            <ul id="cloud-list-ul" class="cloud-list"></ul>
+            <div style="text-align:center; margin-top:10px; color:#aaa; font-size:0.8rem;">선택하면 데이터가 덮어씌워집니다.</div>
+        </div>
+    </div>
+
+    <datalist id="common-reasons"></datalist>
+
+    <div id="toast" class="toast">✔️ 알림</div>
+
+    <div class="input-panel" id="inputPanel">
+        <h2>
+        </h2>
+
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <button class="btn-print" onclick="window.print()" style="flex:1;">PDF 변환 (PDF)</button>
+            <button class="btn-capture" onclick="captureImage()" style="flex:1;">스크린샷 (Captura)</button>
+        </div>
+
+        <div class="form-section" style="border-color:#fd7e14;">
+            <h3 style="color:#fd7e14; border-color:#fd7e14;">💾 데이터 관리 (Gestión de Datos)</h3>
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <button class="btn-cloud-save" onclick="saveToCloud()">📤 클라우드 저장 (Guardar Nube)</button>
+                <button class="btn-cloud-load" onclick="openCloudModal()">📥 클라우드 불러오기 (Cargar Nube)</button>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn-save" onclick="manualSaveFile()">💾 로컬 저장 (Guardar Local)</button>
+                <label class="btn-load">
+                    📂 파일 열기 (PC)
+                    <input type="file" accept=".json" onchange="loadFile(this)">
+                </label>
+                <button class="btn-reset" onclick="resetData()">↻ 초기화</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>1. 기본 정보 & 기간 (Básica y Período)</h3>
+            <div
+                style="background:#495057; padding:10px; border-radius:4px; margin-bottom:10px; border:1px solid #6c757d;">
+                <label style="color:#ffc107; font-weight:bold;">🏢 로고 설정 (Configurar Logo)</label>
+                <label class="file-upload-btn">📁 파일 선택 (Seleccionar Archivo)<input type="file" accept="image/*"
+                        onchange="handleLogoUpload(this)"></label>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;"><label>시작일 (Fecha Inicio)</label><input type="date" id="in-start-date"
+                        onchange="renderReport(); autoSave();"></div>
+                <div style="flex:1;"><label>종료일 (Fecha Fin)</label><input type="date" id="in-end-date"
+                        onchange="renderReport(); autoSave();"></div>
+            </div>
+            <label>작성자 (Autor)</label> <input type="text" id="in-writer" value="Manager"
+                onkeyup="renderReport(); autoSave();">
+        </div>
+
+        <div class="form-section">
+            <h3>2. 요일별 가동 계획 (Plan Diario por Día)</h3>
+            <div
+                style="background:#2b3035; padding:8px; border-radius:4px; margin-bottom:10px; border:1px solid #6c757d; display:flex; gap:5px; align-items:center; flex-wrap:wrap;">
+                <span style="font-size:11px; color:#ffc107;">⚡ 일괄 (Lote):</span>
+                <span style="font-size:10px;">평일(Lun-Vie)</span><input type="number" id="batch-week" value="24"
+                    style="width:40px; margin:0; height:20px; font-size:11px;">
+                <span style="font-size:10px;">토(Sáb)</span><input type="number" id="batch-sat" value="0"
+                    style="width:40px; margin:0; height:20px; font-size:11px;">
+                <button class="btn-add" style="margin-top:0; width:auto; padding:2px 8px;"
+                    onclick="applyBatchMatrix()">적용 (Aplicar)</button>
+            </div>
+            <div id="matrix-container">
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th style="width:25%">설비 (Mq)</th>
+                            <th>월(Lun)</th>
+                            <th>화(Mar)</th>
+                            <th>수(Mié)</th>
+                            <th>목(Jue)</th>
+                            <th>금(Vie)</th>
+                            <th style="color:#dc3545">토(Sáb)</th>
+                            <th>합(Total)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="matrix-body"></tbody>
+                </table>
+            </div>
+            <div style="text-align:right; margin-top:8px; font-size:11px; color:#fff;">Total Net Time: <span
+                    id="input-total-net" style="font-weight:bold; color:#0d6efd; font-size:14px;">0</span> min</div>
+            <label style="margin-top:15px;">지난주 총 Loss (Pérdida Anterior)</label><input type="number" id="in-last-loss"
+                placeholder="min" onkeyup="renderReport(); autoSave();">
+        </div>
+
+        <div class="form-section">
+            <h3>3. Loss 상세 기록 (Detalles de Pérdida)</h3>
+            <div id="loss-inputs"></div>
+            <button class="btn-add" onclick="addLossRow(); autoSave();">+ Loss 추가 (Agregar Pérdida)</button>
+        </div>
+
+        <div class="form-section" style="border: 1px solid #28a745;">
+            <h3 style="color:#28a745; border-color:#28a745;">5. 정비 및 PM (Mantenimiento / PM)</h3>
+            <div id="maint-inputs"></div>
+            <button class="btn-add" style="background:#28a745;" onclick="addActivityRow('maint'); autoSave();">+ 정비 활동
+                추가 (Agregar Actividad)</button>
+        </div>
+
+        <div class="form-section" style="border: 1px solid #17a2b8;">
+            <h3 style="color:#17a2b8; border-color:#17a2b8;">6. 개선 활동 (Mejora: Before/After)</h3>
+            <div id="improv-inputs"></div>
+            <button class="btn-add" style="background:#17a2b8;" onclick="addActivityRow('improv'); autoSave();">+ 개선 활동
+                추가 (Agregar Mejora)</button>
+        </div>
+    </div>
+
+    <div class="sidebar-controls">
+        <a class="home-btn" href="index.html">🏠 Home</a>
+        <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+    </div>
+
+    <div class="resizer" id="dragHandle"></div>
+
+
+
+    <div class="preview-panel">
+        <h2 style="margin: 0 0 15px 0; color: #333; font-size: 24px; font-weight: bold;">
+            <i class="fa-solid fa-wrench"></i> 설비 Loss
+        </h2>
+        <div class="report-container" id="capture-target">
+            <div class="header-box">
+                <div class="header-logo" id="out-logo-container">
+                    <div class="header-logo-placeholder">Logo Area<br>(Sin Logo)</div>
+                </div>
+                <div class="header-title-area">
+                    <h1 id="out-title">2026년 OO주차 설비 Loss 분석</h1>
+                    <p>Weekly Loss Analysis / Análisis Semanal de Pérdidas</p>
+                </div>
+                <div class="header-info">
+                    <strong>DEPT:</strong> <span id="out-dept-name">설비팀 (Equipo)</span><br>
+                    <strong>PERIOD:</strong> <span id="out-period-str" style="font-size:10px;">-</span><br>
+                    <strong>WRITER:</strong> <span id="out-writer"></span>
+                </div>
+            </div>
+
+            <div class="section-title">1. 주간 KPI 요약 (Resumen Semanal KPI)</div>
+            <div class="kpi-container">
+                <div class="kpi-card kpi-blue">
+                    <h4>총 순 부하 시간 (Net Time)</h4>
+                    <div><span id="out-net-time" class="value">-</span><span class="unit">min</span></div>
+                </div>
+                <div class="kpi-card kpi-red">
+                    <h4>금주 총 Loss (Pérdida Total)</h4>
+                    <div><span id="out-total-loss" class="value">0</span><span class="unit">min</span></div>
+                </div>
+                <div class="kpi-card kpi-gray">
+                    <h4>전주 대비 증감 (Tendencia)</h4>
+                    <div id="out-trend" style="margin-top:2px;"><span style="color:#aaa;">-</span></div>
+                </div>
+                <div class="kpi-card kpi-green">
+                    <h4>실 가동률 (Disponibilidad)</h4>
+                    <div><span id="out-avail-rate" class="value">100%</span></div>
+                </div>
+                <div class="kpi-card kpi-info" style="grid-column: span 2;">
+                    <h4>MTTR (평균 수리 시간)</h4>
+                    <div><span id="out-mttr" class="value">0</span><span class="unit">min</span></div>
+                    <div class="kpi-sub">Total Loss / 건수 (Fallas)</div>
+                </div>
+                <div class="kpi-card kpi-green" style="grid-column: span 2;">
+                    <h4>MTBF (평균 고장 간격)</h4>
+                    <div><span id="out-mtbf" class="value">0</span><span class="unit">min</span></div>
+                    <div class="kpi-sub">(Net Time - Loss) / 건수 (Fallas)</div>
+                </div>
+            </div>
+
+            <div id="machine-detail-title" class="section-title">1.1 설비별 상세 가동 현황 (Detalles por Equipo)</div>
+            <div id="machine-detail-table" style="margin-bottom:15px;"></div>
+
+            <div class="section-title">2. Loss 발생 상세 현황 (Detalles de Pérdida)</div>
+            <table>
+                <colgroup>
+                    <col width="5%">
+                    <col width="12%">
+                    <col width="18%">
+                    <col width="15%">
+                    <col width="13%">
+                    <col width="7%">
+                    <col width="30%">
+                </colgroup>
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>발생일 (Fecha)</th>
+                        <th id="th-machine">설비 (Máquina)</th>
+                        <th id="th-detail">상세 (Detalle)</th>
+                        <th>시간 (Hora)</th>
+                        <th>Min</th>
+                        <th>현상 및 원인 (Fenómeno y Causa)</th>
+                    </tr>
+                </thead>
+                <tbody id="out-loss-body"></tbody>
+                <tfoot>
+                    <tr style="background:#eee; font-weight:bold; color:black;">
+                        <td colspan="5">Total Loss Time (Tiempo Total de Pérdida)</td>
+                        <td id="out-loss-sum">-</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div style="display:flex; gap:20px;">
+                <div style="flex:1;">
+                    <div class="section-title" style="margin-top:10px;">3. 항목별 Loss 비중 (Gráfico Circular)</div>
+                    <div id="out-chart-area"
+                        style="padding:10px; border:1px solid #ccc; border-radius:4px; height:150px;"></div>
+                </div>
+                <div style="flex:1.2;">
+                    <div class="section-title" style="margin-top:10px;">4. Top 5 개선 대책 (Top 5 Contramedidas)</div>
+                    <table>
+                        <colgroup>
+                            <col width="8%">
+                            <col width="42%">
+                            <col width="10%">
+                            <col width="40%">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>항목 (Item)</th>
+                                <th>Loss</th>
+                                <th>대책 (Acción)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="out-top5-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="section-title">5. 정비 및 PM 활동 (Mantenimiento y PM)</div>
+            <div id="out-maint-area" class="photo-grid"></div>
+
+            <div class="section-title">6. 개선 활동 (Mejora Continua: Antes y Después)</div>
+            <div id="out-improv-area" class="photo-grid"></div>
+            <div style="margin-top: 15px; font-size:11px; color:#666; text-align:right;">* 순 부하 시간 (Net Time) = (Plan
+                Diario Total) × 60min | K = 1,000 unit</div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // [중요] 여기에 배포한 구글 웹 앱 URL을 넣으세요!
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyplXRWd-5xW-7tBplQDHWR6fOfSMNlxphIm3bNeiXawkdeBcQnZvuhmNQV5vbxFEhW/exec";
+        // ==========================================
+
+        // Resizer removed - using toggle button instead
+
+        // Mutation observer removed - manual resizing not needed
+
+        function toggleSidebar() {
+            document.body.classList.toggle('full-screen');
+            const btn = document.getElementById('btn-toggle-sidebar');
+
+            if (document.body.classList.contains('full-screen')) {
+                btn.innerText = "▶";
+                btn.title = "Show Sidebar";
+            } else {
+                btn.innerText = "◀";
+                btn.title = "Hide Sidebar";
+            }
+        }
+
+        // 설비팀 고정
+        const currentDept = 'EQUIP';
+        const equipMachines = ["PRESS_A", "PRESS_B", "PRESS_C", "ICE_ROOM", "ESPUMADO"];
+        const equipSubData = {
+            "PRESS_A": ["#1", "#2", "#3", "#4", "#5", "TRANSFER", "기타 (Otros)"],
+            "PRESS_B": ["#1", "#2", "#3", "#4", "#5", "TRANSFER", "기타 (Otros)"],
+            "PRESS_C": ["#1", "#2", "#3", "#4", "#5", "TRANSFER", "기타 (Otros)"],
+            "ICE_ROOM": ["CAVEZA", "SERVO", "기타 (Otros)"],
+            "ESPUMADO": ["Cabeza #1", "Cabeza #2", "Cabeza #3", "Opener", "Closer", "MOLD C/V", "Ensamble C/V", "Lift", "기타 (Otros)"]
+        };
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => t.style.display = 'none', 3000);
+        }
+
+        // --- 이미지 압축 유틸리티 (base64 → 압축 base64) ---
+        const CLOUD_IMG_LIMIT = 49000; // 구글 시트 셀 한계
+
+        function compressBase64ForCloud(base64Str) {
+            return new Promise((resolve) => {
+                if (!base64Str || base64Str.length < 100) { resolve(""); return; }
+                if (base64Str.length <= CLOUD_IMG_LIMIT) { resolve(base64Str); return; }
+
+                const img = new Image();
+                img.onload = function () {
+                    // 점진적 압축: 크기와 품질을 낮추면서 한계에 맞출 때까지 반복
+                    const steps = [
+                        { maxW: 600, q: 0.5 },
+                        { maxW: 400, q: 0.4 },
+                        { maxW: 300, q: 0.3 },
+                        { maxW: 200, q: 0.2 }
+                    ];
+
+                    for (const step of steps) {
+                        let w = img.width, h = img.height;
+                        if (w > step.maxW) { h *= step.maxW / w; w = step.maxW; }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        const result = canvas.toDataURL('image/jpeg', step.q);
+                        if (result.length <= CLOUD_IMG_LIMIT) { resolve(result); return; }
+                    }
+                    // 최소 압축으로도 안 되면 빈 문자열
+                    resolve("");
+                };
+                img.onerror = () => resolve("");
+                img.src = base64Str;
+            });
+        }
+
+        async function compressDataForCloud(data) {
+            let compressed = 0;
+
+            // 로고 압축
+            if (data.logo && data.logo.length > CLOUD_IMG_LIMIT) {
+                data.logo = await compressBase64ForCloud(data.logo);
+                compressed++;
+            }
+
+            // 정비 활동 이미지 압축
+            if (data.maint) {
+                for (let i = 0; i < data.maint.length; i++) {
+                    if (data.maint[i].imgSrc && data.maint[i].imgSrc.length > CLOUD_IMG_LIMIT) {
+                        data.maint[i].imgSrc = await compressBase64ForCloud(data.maint[i].imgSrc);
+                        compressed++;
+                    }
+                }
+            }
+
+            // 개선 활동 이미지 압축
+            if (data.improv) {
+                for (let i = 0; i < data.improv.length; i++) {
+                    if (data.improv[i].imgBefore && data.improv[i].imgBefore.length > CLOUD_IMG_LIMIT) {
+                        data.improv[i].imgBefore = await compressBase64ForCloud(data.improv[i].imgBefore);
+                        compressed++;
+                    }
+                    if (data.improv[i].imgAfter && data.improv[i].imgAfter.length > CLOUD_IMG_LIMIT) {
+                        data.improv[i].imgAfter = await compressBase64ForCloud(data.improv[i].imgAfter);
+                        compressed++;
+                    }
+                }
+            }
+
+            return compressed;
+        }
+
+        // --- Cloud Functions ---
+        async function saveToCloud() {
+            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 URL을 설정해주세요!"); return; }
+
+            const data = gatherData();
+            if (!data.startDate) { alert("시작일을 입력해주세요."); return; }
+
+            // 주차 ID 계산 (예: 2026-W05)
+            const d = new Date(data.startDate);
+            const weekId = `${d.getFullYear()}-W${getWeekNumber(d).toString().padStart(2, '0')}`;
+
+            if (!confirm(`[${weekId}] 주차로 데이터를 저장하시겠습니까?\n(이미 존재하는 주차라면 덮어씁니다)`)) return;
+
+            const btn = document.querySelector('.btn-cloud-save');
+            btn.innerText = "이미지 압축 중..."; btn.disabled = true;
+
+            try {
+                // ★ 클라우드 저장 전 이미지 자동 압축
+                const compressedCount = await compressDataForCloud(data);
+                if (compressedCount > 0) {
+                    console.log(`☁️ ${compressedCount}개 이미지 압축 완료`);
+                }
+
+                btn.innerText = "업로드 중...";
+
+                const payload = {
+                    weekId: weekId,
+                    startDate: data.startDate,
+                    endDate: data.endDate,
+                    data: data
+                };
+
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+
+                showToast(`☁️ [${weekId}] 저장 완료! (이미지 ${compressedCount}개 압축)`);
+            } catch (error) {
+                alert("오류: " + error.message);
+            } finally {
+                btn.innerText = "📤 클라우드 저장"; btn.disabled = false;
+            }
+        }
+
+        // 2. 목록 불러오기 (Open Modal)
+        async function openCloudModal() {
+            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 URL을 설정해주세요!"); return; }
+
+            const modal = document.getElementById('cloud-modal');
+            const listUl = document.getElementById('cloud-list-ul');
+            const btn = document.querySelector('.btn-cloud-load');
+
+            btn.innerText = "로딩 중..."; btn.disabled = true;
+            listUl.innerHTML = '<li class="cloud-item" style="justify-content:center;">로딩 중...</li>';
+            modal.style.display = 'flex';
+
+            try {
+                const fetchUrl = `${APPS_SCRIPT_URL}?cmd=list&t=${new Date().getTime()}`;
+                const response = await fetch(fetchUrl);
+                const result = await response.json();
+
+                listUl.innerHTML = "";
+                if (result.list && result.list.length > 0) {
+                    result.list.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'cloud-item';
+                        li.innerHTML = `
+                        <div>
+                            <div class="cloud-week">${item.weekId}</div>
+                            <div class="cloud-date">${item.period}</div>
+                        </div>
+                        <div style="font-size:0.8rem; color:#888;">${item.updated}</div>
+                    `;
+                        li.onclick = () => loadCloudData(item.weekId);
+                        listUl.appendChild(li);
+                    });
+                } else {
+                    listUl.innerHTML = '<li class="cloud-item" style="justify-content:center;">저장된 데이터가 없습니다.</li>';
+                }
+            } catch (e) {
+                console.error('목록 로드 에러:', e);
+                listUl.innerHTML = `<li class="cloud-item" style="color:red; justify-content:center;">목록 로드 실패<br><small>${e.message || e}</small></li>`;
+            } finally {
+                btn.innerText = "📥 클라우드 불러오기"; btn.disabled = false;
+            }
+        }
+
+        // 3. 클라우드 데이터 로드 (덮어쓰기)
+        async function loadCloudData(weekId) {
+            if (!confirm(`[${weekId}] 데이터를 불러오시겠습니까?\n현재 작업 중인 내용은 사라집니다.`)) return;
+
+            document.getElementById('cloud-modal').style.display = 'none';
+
+            try {
+                const fetchUrl = `${APPS_SCRIPT_URL}?cmd=load&weekId=${weekId}&t=${new Date().getTime()}`;
+                const response = await fetch(fetchUrl);
+                const responseText = await response.text();
+                console.log('Cloud response:', responseText.substring(0, 500));
+
+                let fetchedData;
+                try {
+                    fetchedData = JSON.parse(responseText);
+                } catch (parseErr) {
+                    alert('서버 응답 파싱 실패. 콘솔을 확인하세요.');
+                    console.error('Raw response:', responseText);
+                    return;
+                }
+
+                // 에러 체크
+                if (fetchedData.error) {
+                    alert('서버 에러: ' + fetchedData.error);
+                    return;
+                }
+
+                // 데이터가 .data 안에 감싸져 있다면 꺼냄
+                if (fetchedData.data && !fetchedData.losses) {
+                    fetchedData = fetchedData.data;
+                }
+
+                restoreDataToForm(fetchedData);
+                showToast(`☁️ [${weekId}] 불러오기 완료!`);
+
+            } catch (e) {
+                alert("데이터 로드 실패: " + e.message);
+                console.error('Load error:', e);
+            }
+        }
+
+
+        window.onload = function () {
+            loadCustomReasons();
+            initSortable();
+
+            if (localStorage.getItem('loss_report_autosave')) {
+                restoreDataToForm(JSON.parse(localStorage.getItem('loss_report_autosave')));
+                showToast("자동 저장된 내용을 불러왔습니다.");
+            } else {
+                const today = new Date();
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay() + 1);
+                const endOfWeek = new Date(today);
+                endOfWeek.setDate(startOfWeek.getDate() + 5);
+                document.getElementById('in-start-date').valueAsDate = startOfWeek;
+                document.getElementById('in-end-date').valueAsDate = endOfWeek;
+                initTable(); // 초기화
+            }
+        }
+
+        // 초기 테이블 렌더링 함수 추가
+        function initTable() {
+            renderMatrix();
+            addLossRow();
+            renderReport();
+        }
+
+        function initSortable() {
+            const containers = ['loss-inputs', 'maint-inputs', 'improv-inputs'];
+            containers.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    new Sortable(el, {
+                        handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
+                        onEnd: function () { renderReport(); autoSave(); }
+                    });
+                }
+            });
+        }
+
+        function validateDate(dateInput) {
+            if (!dateInput.value) return;
+            const inputDate = new Date(dateInput.value);
+            const startDate = new Date(document.getElementById('in-start-date').value);
+            const endDate = new Date(document.getElementById('in-end-date').value);
+
+            if (inputDate.getFullYear() < 2000) {
+                const targetYear = startDate.getFullYear() || new Date().getFullYear();
+                inputDate.setFullYear(targetYear);
+                dateInput.value = inputDate.toISOString().split('T')[0];
+                showToast(`⚠️ 연도 오타 보정: ${targetYear}년`);
+            }
+            if (inputDate < startDate || inputDate > endDate) {
+                if (inputDate < startDate || inputDate > endDate) {
+                    dateInput.style.backgroundColor = "#ffcccc";
+                    dateInput.style.color = "black";
+                } else {
+                    dateInput.style.backgroundColor = "white";
+                    dateInput.style.color = "black";
+                }
+            }
+        }
+
+        function updateReasonList(input) {
+            const val = input.value.trim();
+            if (!val) return;
+            let stored = JSON.parse(localStorage.getItem('custom_reasons')) || [];
+            if (!stored.includes(val)) {
+                stored.push(val);
+                localStorage.setItem('custom_reasons', JSON.stringify(stored));
+                const dl = document.getElementById('common-reasons');
+                const opt = document.createElement('option'); opt.value = val; dl.appendChild(opt);
+            }
+            renderReport(); autoSave();
+        }
+
+        function loadCustomReasons() {
+            let stored = JSON.parse(localStorage.getItem('custom_reasons')) || [];
+            const dl = document.getElementById('common-reasons');
+            stored.forEach(r => {
+                let exists = false;
+                for (let i = 0; i < dl.options.length; i++) { if (dl.options[i].value === r) exists = true; }
+                if (!exists) { const opt = document.createElement('option'); opt.value = r; dl.appendChild(opt); }
+            });
+        }
+
+        function duplicateRow(btn) {
+            const row = btn.closest('.input-item');
+            const clone = row.cloneNode(true);
+            const selects = row.querySelectorAll('select');
+            const cloneSelects = clone.querySelectorAll('select');
+            selects.forEach((s, i) => cloneSelects[i].value = s.value);
+            const inputs = row.querySelectorAll('input');
+            const cloneInputs = clone.querySelectorAll('input');
+            inputs.forEach((inp, i) => cloneInputs[i].value = inp.value);
+            row.parentNode.insertBefore(clone, row.nextSibling);
+            renderReport(); autoSave();
+            showToast("행 복제됨");
+        }
+
+        function compressImage(file, maxWidth, quality, callback) {
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = function (event) {
+                const img = new Image(); img.src = event.target.result;
+                img.onload = function () {
+                    let width = img.width; let height = img.height;
+                    if (width > maxWidth) { height *= maxWidth / width; width = maxWidth; }
+                    const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality); callback(dataUrl);
+                }
+            }
+        }
+
+        function gatherData() {
+            const data = {
+                dept: currentDept, startDate: document.getElementById('in-start-date').value, endDate: document.getElementById('in-end-date').value,
+                writer: document.getElementById('in-writer').value, lastLoss: document.getElementById('in-last-loss').value,
+                matrix: [], losses: [], maint: [], improv: [], logo: localStorage.getItem('my_report_logo') || ""
+            };
+            document.querySelectorAll('#matrix-body tr').forEach(row => { const rowVals = []; row.querySelectorAll('.mat-inp').forEach(inp => rowVals.push(inp.value)); data.matrix.push(rowVals); });
+            const lossRows = document.getElementById('loss-inputs').children;
+            for (let row of lossRows) {
+                data.losses.push({
+                    date: row.querySelector('.l-date').value, machine: row.querySelector('.l-machine').value, sub: row.querySelector('.l-sub').value,
+                    start: row.querySelector('.l-start').value, end: row.querySelector('.l-end').value,
+                    reason: row.querySelector('.l-reason').value,
+                    action: row.querySelector('.l-action').value
+                });
+            }
+            const maintRows = document.getElementById('maint-inputs').children;
+            for (let row of maintRows) { data.maint.push({ desc: row.querySelector('.act-desc').value, imgSrc: row.querySelector('.hidden-img-data').src }); }
+            const improvRows = document.getElementById('improv-inputs').children;
+            for (let row of improvRows) { data.improv.push({ desc: row.querySelector('.act-desc').value, imgBefore: row.querySelector('.hidden-img-before').src, imgAfter: row.querySelector('.hidden-img-after').src }); }
+            return data;
+        }
+
+        function autoSave() { try { localStorage.setItem('loss_report_autosave', JSON.stringify(gatherData())); } catch (e) { console.error(e); } }
+
+        function resetData() { if (confirm("초기화?")) { localStorage.removeItem('loss_report_autosave'); location.reload(); } }
+
+        function manualSaveFile() {
+            const data = gatherData();
+
+            // 주차 계산 (startDate 기준)
+            let weekStr = 'Temp';
+            if (data.startDate) {
+                const d = new Date(data.startDate);
+                const weekNum = getWeekNumber(d);
+                weekStr = `${weekNum}W`;
+            }
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `Loss_Data_EQUIP_${weekStr}.json`);
+            document.body.appendChild(downloadAnchorNode); downloadAnchorNode.click(); downloadAnchorNode.remove();
+        }
+
+        function loadFile(input) {
+            const file = input.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                restoreDataToForm(JSON.parse(e.target.result));
+                alert("📂 로컬 파일 로드 완료!");
+            };
+            reader.readAsText(file); input.value = "";
+        }
+
+        // --- 🛠️ 공통 데이터 복구 로직 (로컬/클라우드 겸용) ---
+        function restoreDataToForm(data) {
+            try {
+                // 기본 정보
+                if (data.startDate) document.getElementById('in-start-date').value = data.startDate;
+                if (data.endDate) document.getElementById('in-end-date').value = data.endDate;
+                if (data.writer) document.getElementById('in-writer').value = data.writer;
+                if (data.lastLoss) document.getElementById('in-last-loss').value = data.lastLoss;
+                if (data.logo) { document.getElementById('out-logo-container').innerHTML = `<img src="${data.logo}" alt="Logo">`; localStorage.setItem('my_report_logo', data.logo); }
+
+                // 매트릭스
+                renderMatrix();
+                const matrixRows = document.querySelectorAll('#matrix-body tr');
+                if (data.matrix && data.matrix.length === matrixRows.length) {
+                    matrixRows.forEach((row, idx) => {
+                        const inputs = row.querySelectorAll('.mat-inp');
+                        inputs.forEach((inp, i) => inp.value = data.matrix[idx][i]);
+                    });
+                }
+
+                // Loss 상세 (덮어쓰기 모드)
+                document.getElementById('loss-inputs').innerHTML = "";
+                if (data.losses && data.losses.length > 0) {
+                    data.losses.forEach(lossData => {
+                        addLossRow();
+                        const newRow = document.getElementById('loss-inputs').lastElementChild;
+                        const dateInput = newRow.querySelector('.l-date');
+                        dateInput.value = lossData.date || "";
+                        validateDate(dateInput);
+                        newRow.querySelector('.l-machine').value = lossData.machine;
+                        updateSub(newRow.querySelector('.l-machine')); // Sub update 필수
+                        newRow.querySelector('.l-sub').value = lossData.sub;
+                        newRow.querySelector('.l-start').value = lossData.start;
+                        newRow.querySelector('.l-end').value = lossData.end;
+                        newRow.querySelector('.l-reason').value = lossData.reason;
+                        newRow.querySelector('.l-action').value = lossData.action || "";
+                        calcTimeDiff(newRow.querySelector('.l-start'));
+                    });
+                } else {
+                    addLossRow();
+                }
+
+                // 정비 활동
+                document.getElementById('maint-inputs').innerHTML = "";
+                if (data.maint) {
+                    data.maint.forEach(d => {
+                        addActivityRow('maint');
+                        const row = document.getElementById('maint-inputs').lastElementChild;
+                        row.querySelector('.act-desc').value = d.desc;
+                        row.querySelector('.hidden-img-data').src = d.imgSrc;
+                    });
+                }
+
+                // 개선 활동
+                document.getElementById('improv-inputs').innerHTML = "";
+                if (data.improv) {
+                    data.improv.forEach(d => {
+                        addActivityRow('improv');
+                        const row = document.getElementById('improv-inputs').lastElementChild;
+                        row.querySelector('.act-desc').value = d.desc;
+                        row.querySelector('.hidden-img-before').src = d.imgBefore;
+                        row.querySelector('.hidden-img-after').src = d.imgAfter;
+                    });
+                }
+
+                renderReport(); autoSave();
+            } catch (err) {
+                alert("데이터 복구 중 오류 발생: " + err.message);
+                console.error(err);
+            }
+        }
+
+
+
+        function captureImage() { const target = document.getElementById('capture-target'); html2canvas(target, { scale: 2, useCORS: true }).then(canvas => { const link = document.createElement('a'); const dateStr = document.getElementById('in-end-date').value || 'Report'; link.download = `Loss_Report_${dateStr}.png`; link.href = canvas.toDataURL("image/png"); link.click(); }); }
+        function handleImage(input, targetClass) { if (input.files && input.files[0]) { compressImage(input.files[0], 800, 0.7, function (dataUrl) { const targetImg = input.parentElement.parentElement.querySelector(`.${targetClass}`) || input.closest('div').parentElement.querySelector(`.${targetClass}`); if (targetImg) { targetImg.src = dataUrl; renderReport(); autoSave(); } }); } }
+        function handleLogoUpload(input) { if (input.files && input.files[0]) { compressImage(input.files[0], 300, 0.8, function (dataUrl) { document.getElementById('out-logo-container').innerHTML = `<img src="${dataUrl}" alt="Logo">`; localStorage.setItem('my_report_logo', dataUrl); autoSave(); }); } }
+        function formatK(num) { if (num >= 1000) { return (num / 1000).toFixed(1) + "k"; } return num; }
+        function applyBatchMatrix() { const weekH = document.getElementById('batch-week').value; const satH = document.getElementById('batch-sat').value; document.querySelectorAll('#matrix-body tr').forEach(row => { const inputs = row.querySelectorAll('input'); for (let i = 0; i < 5; i++) inputs[i].value = weekH; inputs[5].value = satH; }); calcTotalTime(); renderReport(); autoSave(); }
+
+        function renderMatrix() {
+            const tbody = document.getElementById('matrix-body');
+            tbody.innerHTML = "";
+            const machines = equipMachines;
+            machines.forEach(m => {
+                const tr = document.createElement('tr');
+                let cols = `<td class="matrix-machine">${m}</td>`;
+                for (let i = 0; i < 6; i++) cols += `<td><input type="number" class="mat-inp" value="24" onkeyup="calcTotalTime(); renderReport(); autoSave();"></td>`;
+                cols += `<td class="matrix-sum" id="sum-${m}">0</td>`;
+                tr.innerHTML = cols;
+                tbody.appendChild(tr);
+            });
+            calcTotalTime();
+        }
+
+        function calcTotalTime() { let grandTotalMin = 0; document.querySelectorAll('#matrix-body tr').forEach(row => { let rowSumH = 0; row.querySelectorAll('.mat-inp').forEach(inp => { rowSumH += parseFloat(inp.value) || 0; }); row.querySelector('.matrix-sum').innerText = rowSumH; grandTotalMin += (rowSumH * 60); }); document.getElementById('input-total-net').innerText = formatK(grandTotalMin); return grandTotalMin; }
+
+        function getWeekNumber(date) {
+            const target = new Date(date);
+            target.setHours(0, 0, 0, 0);
+            const yearStart = new Date(target.getFullYear(), 0, 1);
+            const diffDays = Math.floor((target - yearStart) / 86400000);
+            const startDayOffset = yearStart.getDay();
+            return Math.ceil((diffDays + startDayOffset + 1) / 7);
+        }
+
+        function removeRow(btn) { if (confirm("삭제하시겠습니까?")) { btn.closest('.input-item').remove(); renderReport(); autoSave(); } }
+
+        function addLossRow() {
+            const div = document.createElement('div');
+            div.className = 'input-item';
+            div.style.background = "#2c3034"; div.style.padding = "8px"; div.style.marginBottom = "5px"; div.style.borderRadius = "4px"; div.style.border = "1px solid #444";
+
+            let primaryOpts = `<option value="">-- 설비 (Máquina) --</option>`;
+            equipMachines.forEach(m => { primaryOpts += `<option value="${m}">${m}</option>`; });
+            let subOpts = `<option value="-">-- 부품 (Parte) --</option>`;
+
+            div.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px; align-items:center;">
+                <div style="display:flex; align-items:center;">
+                    <span class="drag-handle">☰</span>
+                    <div style="color:#ddd; font-size:0.8rem;">📅 <input type="date" class="l-date" onchange="validateDate(this); renderReport(); autoSave();" style="width:auto; display:inline-block;"></div>
+                </div>
+                <div class="btn-action-group">
+                    <button class="btn-sm btn-copy" onclick="duplicateRow(this)">📑 복사</button>
+                    <button class="btn-sm btn-del" onclick="removeRow(this)">🗑️ 삭제</button>
+                </div>
+            </div>
+            <select class="l-machine" onchange="updateSub(this); renderReport(); autoSave();" style="width:100%; margin-bottom:5px; background:#0d6efd; color:white; font-weight:bold;">${primaryOpts}</select>
+            <select class="l-sub" onchange="renderReport(); autoSave();" style="width:100%;">${subOpts}</select>
+            <div style="display:flex; gap:5px; margin-top:5px;">
+                <input type="time" class="l-start" onchange="calcTimeDiff(this); renderReport(); autoSave();">
+                <input type="time" class="l-end" onchange="calcTimeDiff(this); renderReport(); autoSave();">
+                <input type="number" class="l-min" placeholder="min" readonly style="width:50px; background:#eee; font-weight:bold; color:black;">
+            </div>
+            <input type="text" class="l-reason" list="common-reasons" placeholder="현상 및 원인 (Fenómeno y Causa)" onchange="updateReasonList(this)" onkeyup="renderReport(); autoSave();" style="margin-top:5px;">
+            <input type="text" class="l-action" placeholder="대책 및 조치 (Acción / Medida)" onkeyup="renderReport(); autoSave();" style="margin-top:5px; background:#e9ecef; font-weight:bold; color:black;">
+        `;
+            document.getElementById('loss-inputs').appendChild(div);
+        }
+
+        function addActivityRow(type) {
+            const container = document.getElementById(type + '-inputs');
+            const div = document.createElement('div');
+            div.className = 'input-item';
+            div.style.background = "#2c3034"; div.style.padding = "8px"; div.style.marginBottom = "5px"; div.style.borderRadius = "4px"; div.style.border = "1px solid #666";
+
+            const headerHtml = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                <span class="drag-handle">☰</span>
+                <div class="btn-action-group">
+                    <button class="btn-sm btn-copy" onclick="duplicateRow(this)">📑 복사</button>
+                    <button class="btn-sm btn-del" onclick="removeRow(this)">🗑️ 삭제</button>
+                </div>
+            </div>`;
+
+            if (type === 'maint') {
+                div.innerHTML = `
+                ${headerHtml}
+                <input type="text" class="act-desc" placeholder="정비 내용 (Descripción)" onkeyup="renderReport(); autoSave();">
+                <label class="file-upload-btn">📷 사진 (Foto)<input type="file" accept="image/*" onchange="handleImage(this, 'hidden-img-data')"></label>
+                <img class="hidden-img-data" style="display:none;" src="">
+            `;
+            } else {
+                div.innerHTML = `
+                ${headerHtml}
+                <input type="text" class="act-desc" placeholder="개선 내용 (Descripción)" onkeyup="renderReport(); autoSave();">
+                <div style="display:flex; gap:5px;">
+                    <label class="file-upload-btn" style="flex:1; background:#dc3545;">📷 전 (Before)<input type="file" accept="image/*" onchange="handleImage(this, 'hidden-img-before')"></label>
+                    <label class="file-upload-btn" style="flex:1; background:#0d6efd;">📷 후 (After)<input type="file" accept="image/*" onchange="handleImage(this, 'hidden-img-after')"></label>
+                </div>
+                <img class="hidden-img-before" style="display:none;" src="">
+                <img class="hidden-img-after" style="display:none;" src="">
+            `;
+            }
+            container.appendChild(div);
+        }
+
+        function updateSub(selectObj) {
+            const machine = selectObj.value; const subSelect = selectObj.parentElement.querySelector('.l-sub');
+            subSelect.innerHTML = '<option value="-">-- 부품 (Parte) --</option>';
+            if (equipSubData[machine]) { equipSubData[machine].forEach(item => { subSelect.innerHTML += `<option value="${item}">${item}</option>`; }); }
+        }
+        function calcTimeDiff(inputObj) {
+            const timeContainer = inputObj.parentElement;
+            const start = timeContainer.querySelector('.l-start').value;
+            const end = timeContainer.querySelector('.l-end').value;
+            if (start && end) {
+                let s = new Date("2000-01-01 " + start);
+                let e = new Date("2000-01-01 " + end);
+                let diff = (e - s) / 60000;
+                if (diff < 0) diff += 1440;
+                timeContainer.querySelector('.l-min').value = diff;
+            }
+        }
+        function drawPieChart(data, elementId) {
+            const container = document.getElementById(elementId); container.innerHTML = "";
+            if (data.length === 0) { container.innerHTML = "<div style='text-align:center; width:100%; color:#aaa; font-size:11px;'>No Data</div>"; return; }
+            const colors = ['#0d6efd', '#dc3545', '#198754', '#ffc107', '#0dcaf0', '#6610f2', '#fd7e14', '#20c997', '#d63384', '#6c757d'];
+            let total = data.reduce((sum, item) => sum + item.value, 0); let cumulativePercent = 0;
+            let svgHtml = `<svg viewBox="-1 -1 2 2" class="pie-chart-svg" style="transform: rotate(-90deg);">`;
+            data.forEach((item, index) => {
+                const percent = item.value / total; const startPercent = cumulativePercent; const endPercent = cumulativePercent + percent; cumulativePercent += percent;
+                const x1 = Math.cos(2 * Math.PI * startPercent); const y1 = Math.sin(2 * Math.PI * startPercent);
+                const x2 = Math.cos(2 * Math.PI * endPercent); const y2 = Math.sin(2 * Math.PI * endPercent);
+                const largeArcFlag = percent > 0.5 ? 1 : 0; const color = colors[index % colors.length];
+                const pathData = `M 0 0 L ${x1} ${y1} A 1 1 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+                svgHtml += `<path d="${pathData}" fill="${color}" stroke="white" stroke-width="0.02"></path>`;
+            });
+            svgHtml += `<circle cx="0" cy="0" r="0.5" fill="white"></circle></svg>`;
+            let legendHtml = `<div class="pie-legend">`;
+            data.forEach((item, index) => { const color = colors[index % colors.length]; const percent = ((item.value / total) * 100).toFixed(1); legendHtml += `<div class="legend-item"><div class="legend-color" style="background:${color};"></div><div class="legend-text" title="${item.label}">${item.label}</div><div class="legend-value">${percent}%</div></div>`; });
+            legendHtml += `</div>`; container.innerHTML = `<div class="pie-chart-container">${svgHtml}${legendHtml}</div>`;
+        }
+        function renderMachineStatusTable() {
+            const tableContainer = document.getElementById('machine-detail-table'); const titleContainer = document.getElementById('machine-detail-title');
+            if (!tableContainer) return;
+            // 설비팀이므로 항상 표시
+            titleContainer.style.display = 'block'; tableContainer.style.display = 'block';
+
+            const machineData = {}; const matrixRows = document.querySelectorAll('#matrix-body tr');
+            matrixRows.forEach(row => {
+                const machineName = row.cells[0].innerText.trim(); let weeklyPlanMin = 0;
+                row.querySelectorAll('.mat-inp').forEach(input => { if (!input.disabled && !input.readOnly && input.value) { weeklyPlanMin += (parseFloat(input.value) || 0) * 60; } });
+                machineData[machineName] = { plan: weeklyPlanMin, loss: 0 };
+            });
+            const lossContainer = document.getElementById('loss-inputs');
+            if (lossContainer) { Array.from(lossContainer.children).forEach(row => { const select = row.querySelector('.l-machine'); const minInput = row.querySelector('.l-min'); if (select && minInput && select.value) { const machine = select.value; const time = parseFloat(minInput.value) || 0; if (machineData[machine]) { machineData[machine].loss += time; } else { machineData[machine] = { plan: 0, loss: time }; } } }); }
+            let html = `<table style="width:100%; border-collapse: collapse; text-align: center; font-size: 11px; margin-bottom: 10px;"><colgroup><col width="30%"><col width="20%"><col width="20%"><col width="30%"></colgroup><thead><tr style="background-color: #f1f3f5; border-bottom: 2px solid #333;"><th style="padding:6px; background:#f8f9fa;">설비 (Machine)</th><th style="padding:6px; background:#f8f9fa;">총 부하 (Total Load)</th><th style="padding:6px; background:#f8f9fa;">Loss 시간 (Loss Time)</th><th style="padding:6px; background:#f8f9fa;">가동률 (Availability)</th></tr></thead><tbody>`;
+            const sortedMachines = Object.keys(machineData).sort();
+            sortedMachines.forEach(machine => {
+                const data = machineData[machine]; let availText = "-"; let colorStyle = "color:#333;";
+                if (data.plan > 0) { const avail = ((data.plan - data.loss) / data.plan) * 100; availText = avail.toFixed(1) + "%"; if (avail >= 90) colorStyle = "color:#198754; font-weight:bold;"; else if (avail < 80) colorStyle = "color:#dc3545; font-weight:bold;"; }
+                else if (data.loss > 0) { availText = "Error (No Plan)"; colorStyle = "color:#dc3545; font-weight:bold;"; }
+                html += `<tr style="border-bottom: 1px solid #eee;"><td style="padding:5px; background:#fcfcfc; font-weight:bold; text-align:left;">${machine}</td><td style="padding:5px;">${data.plan > 0 ? formatK(data.plan) + ' min' : '-'}</td><td style="padding:5px;">${data.loss > 0 ? formatK(data.loss) + ' min' : '-'}</td><td style="padding:5px; ${colorStyle}">${availText}</td></tr>`;
+            });
+            html += `</tbody></table>`; tableContainer.innerHTML = html;
+        }
+        function renderReport() {
+            const sVal = document.getElementById('in-start-date').value; const eVal = document.getElementById('in-end-date').value;
+            if (sVal && eVal) { const parts = sVal.split("-"); const d = new Date(parts[0], parts[1] - 1, parts[2]); document.getElementById('out-title').innerText = `${d.getFullYear()}년 ${getWeekNumber(d)}주차 설비(Instalaciones) Loss 분석`; document.getElementById('out-period-str').innerText = `${sVal} ~ ${eVal}`; }
+            document.getElementById('out-writer').innerText = document.getElementById('in-writer').value;
+            const totalNetMin = calcTotalTime(); document.getElementById('out-net-time').innerText = formatK(totalNetMin);
+            const tbody = document.getElementById('out-loss-body'); tbody.innerHTML = ""; let totalLoss = 0; let lossCount = 0;
+            let itemDetailMap = {};
+
+            Array.from(document.getElementById('loss-inputs').children).forEach((row, idx) => {
+                const date = row.querySelector('.l-date').value || "-";
+                const machTxt = row.querySelector('.l-machine').options[row.querySelector('.l-machine').selectedIndex]?.text || "-";
+                const subTxt = row.querySelector('.l-sub').options[row.querySelector('.l-sub').selectedIndex]?.text || "-";
+                const min = parseFloat(row.querySelector('.l-min').value) || 0;
+                const reason = row.querySelector('.l-reason').value || "";
+                const action = row.querySelector('.l-action').value || "";
+
+                if (min > 0 || reason) {
+                    totalLoss += min;
+                    if (row.querySelector('.l-machine').value) {
+                        const key = `${machTxt} [${subTxt}]`;
+                        if (!itemDetailMap[key]) itemDetailMap[key] = { value: 0, actions: [] };
+                        itemDetailMap[key].value += min;
+                        if (action) itemDetailMap[key].actions.push(action);
+                        lossCount++;
+                    }
+                    tbody.innerHTML += `<tr><td>${idx + 1}</td><td>${date}</td><td style="font-weight:bold;">${machTxt}</td><td>${subTxt}</td><td>${row.querySelector('.l-start').value}~${row.querySelector('.l-end').value}</td><td>${min}</td><td class="text-left">${reason}<br><span style='color:#0056b3; font-size:9px;'>↳ ${action}</span></td></tr>`;
+                }
+            });
+
+            document.getElementById('out-loss-sum').innerText = formatK(totalLoss); document.getElementById('out-total-loss').innerText = formatK(totalLoss);
+            document.getElementById('out-avail-rate').innerText = totalNetMin > 0 ? (((totalNetMin - totalLoss) / totalNetMin) * 100).toFixed(1) + "%" : "0%";
+            const lastLoss = parseFloat(document.getElementById('in-last-loss').value) || 0; const diff = totalLoss - lastLoss;
+            document.getElementById('out-trend').innerHTML = lastLoss > 0 ? (diff > 0 ? `<span class="trend-up">▲ ${formatK(Math.abs(diff))} (Bad)</span>` : (diff < 0 ? `<span class="trend-down">▼ ${formatK(Math.abs(diff))} (Good)</span>` : `<span class="trend-flat">-</span>`)) : `<span style="font-size:12px; color:#aaa;">-</span>`;
+            const mttr = lossCount > 0 ? (totalLoss / lossCount).toFixed(1) : 0; const mtbf = lossCount > 0 ? ((totalNetMin - totalLoss) / lossCount).toFixed(1) : (totalNetMin > 0 ? "∞" : 0);
+            document.getElementById('out-mttr').innerText = mttr; document.getElementById('out-mtbf').innerText = mtbf;
+            renderMachineStatusTable();
+
+            const sortedItems = Object.keys(itemDetailMap).map(key => ({ label: key, value: itemDetailMap[key].value, actions: itemDetailMap[key].actions })).sort((a, b) => b.value - a.value);
+            drawPieChart(sortedItems, 'out-chart-area');
+
+            const top5Body = document.getElementById('out-top5-body');
+            top5Body.innerHTML = "";
+            for (let i = 0; i < 5; i++) {
+                if (i < sortedItems.length) {
+                    const item = sortedItems[i];
+                    const actionStr = item.actions.length > 0 ? item.actions[0] : "-";
+                    top5Body.innerHTML += `<tr><td style="font-weight:bold; color:red;">${i + 1}</td><td style="font-weight:bold; color:#333;">${item.label}</td><td>${formatK(item.value)}</td><td class="text-left" style="color:#0056b3; font-weight:bold;">${actionStr}</td></tr>`;
+                } else {
+                    top5Body.innerHTML += `<tr><td>${i + 1}</td><td style="color:#eee;">-</td><td>-</td><td></td></tr>`;
+                }
+            }
+            renderActivity('maint', 'out-maint-area'); renderActivity('improv', 'out-improv-area');
+        }
+        function renderActivity(inputId, outputId) {
+            const container = document.getElementById(outputId); container.innerHTML = ""; const inputs = document.getElementById(inputId + '-inputs').children;
+            for (let row of inputs) {
+                const desc = row.querySelector('.act-desc').value;
+                if (inputId === 'maint') { const img = row.querySelector('.hidden-img-data').src; if (desc || (img && img.length > 100)) { container.innerHTML += `<div class="photo-item"><div class="photo-img-box">${img && img.length > 100 ? `<img src="${img}">` : '<span style="color:#ccc;">No Image</span>'}</div><div class="photo-desc">${desc}</div></div>`; } }
+                else { const imgBefore = row.querySelector('.hidden-img-before').src; const imgAfter = row.querySelector('.hidden-img-after').src; if (desc || (imgBefore.length > 100 || imgAfter.length > 100)) { container.innerHTML += `<div class="photo-item"><div class="ba-container"><div class="ba-box"><div class="ba-label">Before (전)</div><div class="ba-img">${imgBefore && imgBefore.length > 100 ? `<img src="${imgBefore}" style="width:100%; height:100%; object-fit:cover; object-position: center;">` : `<div class="ba-placeholder">No Image</div>`}</div></div><div class="ba-box"><div class="ba-label">After (후)</div><div class="ba-img">${imgAfter && imgAfter.length > 100 ? `<img src="${imgAfter}" style="width:100%; height:100%; object-fit:cover; object-position: center;">` : `<div class="ba-placeholder">No Image</div>`}</div></div></div><div class="photo-desc">${desc}</div></div>`; } }
+            }
+        }
+    </script>
+</body>
+
+</html>

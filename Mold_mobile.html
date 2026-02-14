@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>금형 Spare Scanner</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        :root {
+            --bg-body: #111827;
+            --bg-card: #1f2937;
+            --text-main: #f9fafb;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --border: #374151;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background: var(--bg-card);
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: black;
+            border: none;
+            font-weight: bold;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            border: none;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px;
+            border: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            background: #374151;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: black;
+            margin-bottom: 20px;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal {
+            background: var(--bg-body);
+            width: 90%;
+            max-width: 400px;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--accent);
+        }
+
+        .loading {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        /* File Input Wrapper */
+        .file-input-wrapper {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <i class="fa-solid fa-qrcode" style="color:var(--accent)"></i>
+            <span>Mold Mobile Scanner</span>
+            <span style="font-size:12px; color:#aaa;">V2.0</span>
+            <a href="index.html"
+                style="margin-left:auto; background:#334155; color:#e2e8f0; border:1px solid #475569; border-radius:6px; padding:4px 10px; text-decoration:none; font-size:12px; font-weight:700;">🏠</a>
+        </header>
+
+        <!-- Loading Overlay -->
+        <div v-if="loading" class="loading">
+            <i class="fa-solid fa-spinner fa-spin fa-3x" style="color:var(--accent); margin-bottom:20px;"></i>
+            <div style="font-size:18px;">{{ loadingMsg }}</div>
+        </div>
+
+        <!-- MAIN SCREEN -->
+        <div class="container" v-if="!currentProject">
+            <!-- Global QR Scanner -->
+            <div class="card" style="text-align:center; border-color:var(--accent);">
+                <i class="fa-solid fa-camera fa-3x" style="color:var(--accent); margin-bottom:15px;"></i>
+                <h3>QR 스캔으로 시작하기</h3>
+                <p style="color:#aaa; font-size:14px; margin-bottom:20px;">
+                    프로젝트 자동 로드 & 수정<br>
+                    (Auto Load Project & Edit)
+                </p>
+                <button class="btn btn-primary" @click="startGlobalScanner">
+                    <i class="fa-solid fa-qrcode"></i> 카메라 스캔 (Camera)
+                </button>
+                <div style="margin-top:10px; color:#aaa; font-size:12px;">
+                    * 보안을 위해 실시간 카메라 스캔만 허용됩니다.<br>
+                    (Only real-time camera scan allowed for security)
+                </div>
+            </div>
+
+            <div v-if="isGlobalScanning" class="modal-overlay" @click.self="stopScanner">
+                <div class="modal" style="width:90%;">
+                    <div id="reader-global" style="width:100%;"></div>
+                    <button class="btn btn-danger" @click="stopScanner">닫기 (Close)</button>
+                </div>
+            </div>
+
+            <!-- Manual Selection -->
+            <div class="card" style="text-align:center;">
+                <h3>또는 수동 선택</h3>
+
+                <div v-if="cloudProjects.length === 0" style="margin-bottom:20px;">
+                    <button class="btn" @click="loadCloudProjects">
+                        <i class="fa-solid fa-sync"></i> 프로젝트 목록 불러오기
+                    </button>
+                </div>
+                <div v-else>
+                    <select v-model="selectedProjectName" @change="loadProjectData">
+                        <option value="" disabled>프로젝트 선택 (Select Project)...</option>
+                        <option v-for="p in cloudProjects" :value="p.name">
+                            {{ p.name }} ({{ p.count }} items)
+                        </option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" v-else>
+            <!-- Project Header -->
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <div style="font-weight:bold; color:var(--accent);">
+                    <i class="fa-solid fa-folder-open"></i> {{ currentProject }}
+                </div>
+                <button
+                    style="background:none; border:1px solid #666; color:#aaa; padding:5px 10px; border-radius:4px; cursor:pointer;"
+                    @click="exitProject">
+                    나가기 (Exit)
+                </button>
+            </div>
+
+            <!-- SCANNER AREA -->
+            <div v-if="isScanning" style="flex:1; display:flex; flex-direction:column;">
+                <div id="reader"></div>
+                <button class="btn btn-danger" @click="stopScanner">스캔 중지 (Stop)</button>
+            </div>
+
+            <!-- DASHBOARD / ACTION AREA -->
+            <div v-else>
+                <button class="btn btn-primary" style="height:80px; font-size:20px;" @click="startScanner">
+                    <i class="fa-solid fa-qrcode fa-2x"></i> QR 스캔 (Scan)
+                </button>
+
+
+                <div class="card" style="margin-top:20px;">
+                    <h4>최근 스캔 (Recientes)</h4>
+                    <div v-if="recentScans.length === 0" style="color:#666; text-align:center; padding:20px;">
+                        기록 없음 (No history)
+                    </div>
+                    <div v-for="item in recentScans" :key="item.id"
+                        style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #444; align-items:center;"
+                        @click="editItem(item)">
+                        <div>
+                            <div style="font-weight:bold;">{{ item.moldCode }}</div>
+                            <div style="font-size:12px; color:#aaa;">{{ item.spareCode }}</div>
+                        </div>
+                        <div style="color:var(--accent); font-weight:bold;">{{ item.stock }} ea</div>
+                    </div>
+                </div>
+
+                <button class="btn" @click="syncToCloud" style="background:#3b82f6; margin-top:auto;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> 클라우드 저장 (Save to Cloud)
+                </button>
+            </div>
+        </div>
+
+        <!-- EDIT MODAL -->
+
+        <div v-if="editingItem" class="modal-overlay">
+            <div class="modal">
+                <div style="display:flex; justify-content:space-between; margin-bottom:15px; align-items:center;">
+                    <h3 style="margin:0;">재고 조사 (Stock Check)</h3>
+                    <button @click="editingItem=null" class="btn"
+                        style="background:transparent; color:#fff; padding:5px;">
+                        <i class="fa-solid fa-times" style="font-size:24px;"></i>
+                    </button>
+                </div>
+
+                <!-- 1. Read-Only Info Panel -->
+                <div
+                    style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:20px; border:1px solid #444;">
+                    <div style="font-size:18px; font-weight:bold; color:#fbbf24; margin-bottom:5px;">
+                        {{ editingItem.moldName || 'No Name' }}
+                    </div>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; font-size:13px; color:#ccc;">
+                        <div>
+                            <span style="color:#888;">Code:</span> {{ editingItem.moldCode }}
+                        </div>
+                        <div>
+                            <span style="color:#888;">Spare:</span> {{ editingItem.spareCode }}
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <span style="color:#888;">Spec:</span> {{ editingItem.model }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Stock Control (Main Focus) -->
+                <div
+                    style="background:rgba(59, 130, 246, 0.1); padding:20px; border-radius:12px; margin-bottom:20px; text-align:center; border:1px solid rgba(59, 130, 246, 0.3);">
+                    <label style="color:#93c5fd; font-weight:bold; display:block; margin-bottom:10px;">
+                        현재 재고 (Current Stock)
+                    </label>
+
+                    <div
+                        style="display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:15px;">
+                        <button class="btn" style="width:50px; height:50px; background:#ef4444; font-size:18px;"
+                            @click="adjustStock(-1)">
+                            <i class="fa-solid fa-minus"></i>
+                        </button>
+
+                        <input type="number" v-model="editingItem.stock"
+                            style="width:100px; text-align:center; font-size:32px; font-weight:bold; background:transparent; border:none; border-bottom:2px solid #fff; color:#fff; padding:5px;">
+
+                        <button class="btn" style="width:50px; height:50px; background:#22c55e; font-size:18px;"
+                            @click="adjustStock(1)">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div style="display:flex; justify-content:center; gap:10px;">
+                        <button class="btn" style="background:#4b5563; padding:5px 15px; font-size:14px;"
+                            @click="adjustStock(-5)">-5</button>
+                        <button class="btn" style="background:#4b5563; padding:5px 15px; font-size:14px;"
+                            @click="adjustStock(-10)">-10</button>
+                        <button class="btn" style="background:#4b5563; padding:5px 15px; font-size:14px;"
+                            @click="adjustStock(5)">+5</button>
+                        <button class="btn" style="background:#4b5563; padding:5px 15px; font-size:14px;"
+                            @click="adjustStock(10)">+10</button>
+                    </div>
+                </div>
+
+                <!-- 3. Location Control -->
+                <div style="margin-bottom:25px;">
+                    <label style="color:#aaa; font-size:12px; margin-bottom:5px; display:block;">위치 (Ubicación)</label>
+                    <div style="position:relative;">
+                        <i class="fa-solid fa-location-dot"
+                            style="position:absolute; left:12px; top:12px; color:#aaa;"></i>
+                        <input v-model="editingItem.loc"
+                            style="width:100%; padding:10px 10px 10px 35px; background:#1f2937; border:1px solid #4b5563; color:#fff; border-radius:6px;">
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" style="width:100%; height:50px; font-size:18px;" @click="saveItem">
+                    <i class="fa-solid fa-check"></i> 저장 (Confirmar)
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxb8Th7X8XkZACfEdg9EW6lJdpD_gp5qZ1Gs8FolNyP2T-iyCY48_im-902fkCBBblZVw/exec";
+        const { createApp, ref, reactive, nextTick } = Vue;
+
+        createApp({
+            setup() {
+                const loading = ref(false);
+                const loadingMsg = ref('');
+                const cloudProjects = ref([]);
+                const currentProject = ref(null);
+                const selectedProjectName = ref("");
+                const parts = ref([]); // All parts in current project
+
+                const isScanning = ref(false);
+                const isGlobalScanning = ref(false); // For initial screen
+                const scanner = ref(null);
+
+
+                const pendingScanId = ref(null); // For legacy QR support
+
+                const editingItem = ref(null);
+                const recentScans = ref([]);
+
+                const adjustStock = (amount) => {
+                    if (!editingItem.value) return;
+                    let current = parseInt(editingItem.value.stock) || 0;
+                    current += amount;
+                    if (current < 0) current = 0;
+                    editingItem.value.stock = current;
+                };
+
+                // 1. Load Project List
+                const loadCloudProjects = async () => {
+                    loading.value = true;
+                    loadingMsg.value = "목록 불러오는 중...";
+                    try {
+                        const r = await fetch(CLOUD_URL + "?action=load");
+                        const d = await r.json();
+                        if (d.result === 'error') throw new Error(d.message);
+
+                        // Group by project name
+                        const counts = {};
+                        d.parts.forEach(p => {
+                            const name = (p.project || p.model || 'Unknown').trim();
+                            counts[name] = (counts[name] || 0) + 1;
+                        });
+                        cloudProjects.value = Object.keys(counts).map(k => ({ name: k, count: counts[k] }));
+                    } catch (e) {
+                        console.error(e);
+                        // alert("Error: " + e.message);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                // Auto load list on mount
+                loadCloudProjects();
+
+                // 2. Load Specific Project Data
+                const loadProjectData = async (targetProjectName) => {
+                    const pName = targetProjectName || selectedProjectName.value;
+                    if (!pName) return;
+
+                    loading.value = true;
+                    loadingMsg.value = `'${pName}' 불러오는 중...`;
+                    try {
+                        const r = await fetch(CLOUD_URL + "?action=load"); // Inefficient but simple (gets all)
+                        const d = await r.json();
+
+                        // Find latest batch for this project
+                        const allParts = d.parts.filter(p => (p.project || p.model || 'Unknown').trim() === pName);
+                        if (allParts.length === 0) throw new Error("데이터 없음");
+
+                        const latestBatchId = allParts.reduce((max, p) => Math.max(max, p.batchId || 0), 0);
+                        const latestParts = allParts.filter(p => (p.batchId || 0) === latestBatchId);
+
+                        parts.value = latestParts.map(p => ({ ...p })); // Clone
+                        currentProject.value = pName;
+                        selectedProjectName.value = pName;
+
+                        // Check Pending Scan
+                        if (pendingScanId.value) {
+                            const found = parts.value.find(p => p.id === pendingScanId.value);
+                            if (found) {
+                                editItem(found);
+                                pendingScanId.value = null; // Clear
+                            } else {
+                                alert(`선택한 프로젝트에 해당 부품(ID: ${pendingScanId.value})이 없습니다.\n(Part not found in this project)`);
+                                pendingScanId.value = null;
+                            }
+                        }
+                    } catch (e) {
+                        alert("Load Failed: " + e.message);
+                        selectedProjectName.value = "";
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const exitProject = () => {
+                    if (confirm("프로젝트를 닫으시겠습니까? 저장하지 않은 내용은 사라집니다.")) {
+                        currentProject.value = null;
+                        selectedProjectName.value = "";
+                        parts.value = [];
+                        recentScans.value = [];
+                    }
+                };
+
+                // 3. Scanner Logic
+                const startScanner = () => {
+                    // Check logic moved to initScanner
+                    isScanning.value = true;
+                    nextTick(() => initScanner("reader"));
+                };
+
+                const startGlobalScanner = () => {
+                    // Check logic moved to initScanner
+                    isGlobalScanning.value = true;
+                    nextTick(() => initScanner("reader-global"));
+                };
+
+                const initScanner = (elementId) => {
+                    const html5QrCode = new Html5Qrcode(elementId);
+                    scanner.value = html5QrCode;
+                    html5QrCode.start(
+                        { facingMode: "environment" },
+                        { fps: 10, qrbox: { width: 250, height: 250 } },
+                        (decodedText) => {
+                            handleScan(decodedText);
+                        },
+                        (errorMessage) => {
+                            // ignore
+                        }
+                    ).catch(err => {
+                        console.error(err);
+                        alert("카메라 실행 실패 (Camera Error).\n\n[중요/Critical]\n이 앱은 보안상 'HTTPS' 또는 'localhost' 환경에서만 작동합니다.\n(This app requires HTTPS for camera security.)\n\nError: " + err);
+                        stopScanner();
+                    });
+                };
+
+                const stopScanner = () => {
+                    if (scanner.value) {
+                        scanner.value.stop().then(() => {
+                            scanner.value.clear();
+                            isScanning.value = false;
+                            isGlobalScanning.value = false;
+                            scanner.value = null;
+                            console.error(err);
+                            // isScanning.value = false; // Don't reset immediately if partial error
+                            // isGlobalScanning.value = false;
+                        });
+                    } else {
+                        isScanning.value = false;
+                        isGlobalScanning.value = false;
+                    }
+                };
+
+
+
+                const handleScan = async (text) => {
+                    // STOP scanner first
+                    stopScanner();
+
+                    try {
+                        // Expected: {"id": 12345, "project": "Name", "mode": "edit"}
+                        const data = JSON.parse(text);
+
+                        if (!data.id) return alert("잘못된 QR 코드입니다.");
+
+                        const targetProject = data.project;
+
+                        // Scenario 1: Project not loaded (Global Scan)
+                        if (!currentProject.value) {
+                            if (targetProject) {
+                                const ok = confirm(`'${targetProject}' 프로젝트를 로드하시겠습니까?`);
+                                if (ok) {
+                                    await loadProjectData(targetProject);
+                                    // After load, try to find item
+                                    findAndEdit(data.id);
+                                }
+                            } else {
+                                // alert("구버전 QR 코드입니다. 프로젝트를 먼저 선택해주세요.");
+                                handleLegacyQR(data.id);
+                            }
+                        }
+                        // Scenario 2: Project loaded, check match
+                        else {
+                            if (targetProject && targetProject !== currentProject.value) {
+                                const switchProj = confirm(`현재 프로젝트와 다릅니다. '${targetProject}'로 전환하시겠습니까?\n(Switch Project?)`);
+                                if (switchProj) {
+                                    await loadProjectData(targetProject);
+                                    findAndEdit(data.id);
+                                }
+                            } else {
+                                findAndEdit(data.id);
+                            }
+                        }
+
+                    } catch (e) {
+                        console.error(e);
+                        alert("QR Parse Error: " + text);
+                    }
+                };
+
+                const handleLegacyQR = (id) => {
+                    if (currentProject.value) {
+                        // Project already loaded, assume it belongs here
+                        findAndEdit(id);
+                    } else {
+                        // No project loaded
+                        alert("구버전 QR 코드입니다 (프로젝트 정보 없음).\n수동으로 프로젝트를 선택해주세요.\n(Legacy QR. Please select project manually to proceed.)");
+                        pendingScanId.value = id;
+                        // Optional: trigger project load dropdown focus?
+                    }
+                };
+
+                const findAndEdit = (id) => {
+                    const found = parts.value.find(p => p.id === id);
+                    if (found) {
+                        editItem(found);
+                    } else {
+                        // Fallback: search by ID only if project matches (sometimes legacy data)
+                        alert("현재 프로젝트에 없는 부품입니다. (Part not found)");
+                    }
+                };
+
+                // 4. Edit & Save Logic
+                const editItem = (item) => {
+                    editingItem.value = item; // Reactive reference
+                };
+
+                const saveItem = () => {
+                    // Update recent scans list (move to top)
+                    const idx = recentScans.value.findIndex(x => x.id === editingItem.value.id);
+                    if (idx >= 0) recentScans.value.splice(idx, 1);
+                    recentScans.value.unshift(editingItem.value);
+
+                    editingItem.value = null;
+                };
+
+                const syncToCloud = async () => {
+                    if (!confirm("변경사항을 클라우드에 저장하시겠습니까? (Save to Cloud?)")) return;
+
+                    loading.value = true;
+                    loadingMsg.value = "저장 중 (Saving)...";
+                    try {
+                        const payload = {
+                            action: 'save',
+                            project: currentProject.value,
+                            parts: parts.value
+                        };
+
+                        const r = await fetch(CLOUD_URL, { id: 'saveRequest', method: 'POST', body: JSON.stringify(payload) });
+                        const res = await r.json();
+                        if (res.result === 'error') throw new Error(res.message);
+
+                        alert("저장 성공! (Saved Successfully)");
+                        recentScans.value = [];
+                    } catch (e) {
+                        alert("Save Error: " + e.message);
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                return {
+                    loading, loadingMsg, cloudProjects, currentProject, selectedProjectName,
+                    loadCloudProjects, loadProjectData, exitProject,
+
+                    isScanning, isGlobalScanning, startScanner, startGlobalScanner, stopScanner,
+                    editingItem, recentScans, editItem, saveItem, syncToCloud, adjustStock
+                };
+            }
+        }).mount('#app');
+    </script>
+    <div id="reader-hidden" style="display:none;"></div>
+</body>
+
+</html>

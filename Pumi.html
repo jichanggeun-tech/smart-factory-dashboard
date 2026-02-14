@@ -1,0 +1,2197 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>품의서</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #111827;
+            --bg-nav: #1f2937;
+            --bg-card: #2d3748;
+            --bg-input: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --blue: #3b82f6;
+            --border: #4b5563;
+        }
+
+        /* [공통] 레이아웃 */
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            display: flex;
+            height: 100vh;
+            font-family: 'Malgun Gothic', 'Segoe UI', sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        /* [좌측] 입력 패널 */
+        .input-panel {
+            width: 450px;
+            min-width: 350px;
+            max-width: 900px;
+            background: var(--bg-nav);
+            color: var(--text-main);
+            padding: 20px;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+
+        .input-panel h2 {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            font-size: 1.2rem;
+            color: var(--blue);
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .save-status {
+            font-size: 0.7rem;
+            color: #28a745;
+            font-weight: normal;
+        }
+
+
+
+        .form-section {
+            background: var(--bg-card);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .form-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 0.95rem;
+            color: #ffc107;
+            border-bottom: 1px solid #6c757d;
+            padding-bottom: 5px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        input,
+        textarea,
+        select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-input);
+            color: var(--text-main);
+            margin-bottom: 8px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: 2px solid var(--blue);
+            border-color: transparent;
+        }
+
+        ::placeholder {
+            color: #aaa;
+            font-style: italic;
+            font-size: 0.85rem;
+        }
+
+        textarea {
+            height: 60px;
+            resize: none;
+        }
+
+        /* Visibility Toggle Style */
+        .visibility-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .visibility-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #495057;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .visibility-item:hover {
+            background: #6c757d;
+        }
+
+        .visibility-item input {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .visibility-item span {
+            font-size: 0.8rem;
+            color: #fff;
+        }
+
+        /* 입력 그룹 스타일 */
+        .cost-input-group,
+        .compare-input-box,
+        .history-input-box,
+        .schedule-box {
+            background: #2c3034;
+            padding: 8px;
+            border-radius: 4px;
+            border: 1px solid #555;
+            margin-bottom: 5px;
+        }
+
+        .cost-row,
+        .compare-row,
+        .history-row {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 3px;
+        }
+
+        .cmp-label {
+            font-size: 0.75rem;
+            color: #aaa;
+            width: 45px;
+        }
+
+        .btn-action {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-save {
+            flex: 1;
+            background: #0d6efd;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-load {
+            flex: 1;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-reset {
+            flex: 0.5;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Cloud Buttons */
+        .btn-cloud-save {
+            flex: 1;
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-cloud-load {
+            flex: 1;
+            background: #34A853;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            background: #374151;
+            color: #f9fafb;
+            border: 1px solid #4b5563;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
+        }
+
+        .btn-cloud-load:hover {
+            background: #4b5563;
+        }
+
+        .btn-add {
+            background: #374151;
+            border: 1px solid #4b5563;
+            color: #f9fafb;
+            padding: 8px 12px;
+            width: 100%;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #4b5563;
+        }
+
+        .btn-del-mini {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 2px 6px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            margin-left: 5px;
+        }
+
+        .btn-output-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .btn-output-group button {
+            flex: 1;
+            background: #374151;
+            border: 1px solid #4b5563;
+            height: 50px;
+            font-size: 1.1rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-output-group button:hover {
+            background: #4b5563;
+        }
+
+        .budget-tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .budget-tab {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            background: #495057;
+            color: #ccc;
+        }
+
+        .budget-tab.active {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .budget-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .budget-container {
+            display: none;
+        }
+
+        .budget-container.active {
+            display: block;
+        }
+
+        /* [우측] 미리보기 패널 */
+        .preview-panel {
+            flex: 1;
+            padding: 40px;
+            overflow: auto;
+            background: #555;
+            display: block;
+            min-width: 300px;
+        }
+
+        .report-container {
+            width: 297mm;
+            min-height: 210mm;
+            height: auto;
+            margin: 0 auto;
+            background: white;
+            color: #333;
+            /* Explicitly set text color for white background */
+            box-sizing: border-box;
+            padding: 15mm;
+            padding-bottom: 30mm;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* [Header] */
+        .modern-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            border-bottom: 3px solid black;
+            padding-bottom: 15px;
+            margin-bottom: 30px;
+        }
+
+        .header-left {
+            flex: 1;
+        }
+
+        .doc-title {
+            font-size: 32px;
+            font-weight: 900;
+            color: #000;
+            margin: 0;
+            line-height: 1;
+            text-decoration: underline;
+            text-underline-offset: 5px;
+        }
+
+        .doc-subtitle {
+            font-size: 14px;
+            color: #555;
+            margin-top: 8px;
+            font-weight: bold;
+        }
+
+        .header-right {
+            text-align: right;
+        }
+
+        .info-table {
+            border-collapse: collapse;
+            display: inline-table;
+        }
+
+        .info-table td {
+            padding: 3px 0 3px 15px;
+            text-align: right;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #000;
+        }
+
+        .category-badge {
+            font-weight: bold;
+            color: #374151;
+            /* Unified Dark Blue-Grey */
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #111827;
+            /* Dark text */
+            margin-top: 30px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            border-left: 6px solid #374151;
+            /* Unified Accent */
+            padding-left: 10px;
+            background: #f8f9fa;
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
+
+        .section-sub {
+            font-size: 11px;
+            color: #666;
+            margin-left: auto;
+            font-weight: normal;
+        }
+
+        table.styled-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            margin-bottom: 15px;
+            table-layout: fixed;
+        }
+
+        .styled-table th,
+        .styled-table td {
+            border: 1px solid #444;
+            padding: 6px 4px;
+            vertical-align: middle;
+        }
+
+        .styled-table th {
+            background-color: #e5e7eb;
+            /* Light Grey */
+            color: #111827;
+            /* Dark Text */
+            text-align: center;
+            font-weight: bold;
+            border-top: 2px solid #333;
+        }
+
+        .styled-table tr:nth-child(even) {
+            background-color: transparent;
+        }
+
+        .photo-img {
+            max-width: 98%;
+            max-height: 130px;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        .total-row td {
+            background-color: #f8f9fa !important;
+            font-weight: bold;
+        }
+
+        .grand-total-row td {
+            background-color: #e2e6ea !important;
+            color: #000 !important;
+            font-size: 12px;
+            font-weight: bold;
+            border-top: 2px solid #000;
+        }
+
+        .cost-header-mxn {
+            background-color: #d1ecf1;
+            font-weight: bold;
+            color: #374151;
+            /* Unified */
+        }
+
+        .cost-header-krw {
+            background-color: #fff3cd;
+            font-weight: bold;
+            color: #374151;
+            /* Unified */
+        }
+
+        .diff-plus {
+            color: #374151;
+            /* Unified */
+            font-weight: bold;
+        }
+
+        .diff-minus {
+            color: #374151;
+            /* Unified */
+            font-weight: bold;
+        }
+
+        .compare-sel {
+            background-color: #e3f2fd;
+        }
+
+        .compare-cmp {
+            background-color: #f8f9fa;
+        }
+
+        .price-up {
+            color: #374151;
+            /* Unified */
+            font-weight: bold;
+        }
+
+        .price-down {
+            color: #374151;
+            /* Unified */
+            font-weight: bold;
+        }
+
+        .price-same {
+            color: #6b7280;
+            /* Muted Grey */
+        }
+
+        .bar-bg {
+            width: 100%;
+            background: #e9ecef;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 3px;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: #28a745;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .bar-fill.warning {
+            background: #ffc107;
+        }
+
+        .bar-fill.danger {
+            background: #dc3545;
+        }
+
+        .budget-month-table th {
+            background: #eee;
+        }
+
+        .budget-month-table td {
+            text-align: right;
+        }
+
+        #out-overview-box {
+            border: 1px solid #444;
+            padding: 10px;
+            min-height: 40px;
+            color: #000;
+        }
+
+        #out-overview-text {
+            font-size: 11px;
+            white-space: pre-wrap;
+            margin-bottom: 5px;
+        }
+
+        #out-overview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .overview-img-item {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            border: 1px solid #eee;
+            background: #fff;
+            padding: 2px;
+        }
+
+        /* Schedule CSS */
+        .sch-btn-small {
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            color: white;
+        }
+
+        .copy {
+            background: #2980b9;
+        }
+
+        .del {
+            background: #c0392b;
+        }
+
+        .sch-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            table-layout: fixed;
+        }
+
+        .sch-table th {
+            font-size: 9px;
+            padding: 4px 2px;
+            border: 1px solid #ccc;
+            background: #fff;
+        }
+
+        .sch-table td {
+            padding: 0;
+            height: 24px;
+            border: 1px solid #ddd;
+            position: relative;
+            vertical-align: middle;
+        }
+
+        .sch-bar-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sch-bar-middle {
+            width: 100%;
+            height: 8px;
+            background: #2980b9;
+            display: block;
+        }
+
+        .sch-end-box {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+        }
+
+        .sch-line-end {
+            flex-grow: 1;
+            height: 8px;
+            background: #2980b9;
+        }
+
+        .sch-arrow {
+            width: 0;
+            height: 0;
+            border-top: 8px solid transparent;
+            border-bottom: 8px solid transparent;
+            border-left: 10px solid #2980b9;
+        }
+
+        .sch-dot {
+            width: 10px;
+            height: 10px;
+            background: #2980b9;
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+
+        .row-flex {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(33, 37, 41, 0.95);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid #444;
+            font-weight: bold;
+        }
+
+        /* [추가됨] 클라우드 파일 목록 팝업 스타일 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-box {
+            background: #2c3e50;
+            width: 500px;
+            max-height: 80vh;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            color: white;
+        }
+
+        .modal-header {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #555;
+            padding-bottom: 10px;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+
+        .file-list-container {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            background: #34495e;
+            padding: 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 1px solid #444;
+            transition: 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item:hover {
+            background: #0d6efd;
+            border-color: #0d6efd;
+        }
+
+        .file-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .f-title {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #fff;
+        }
+
+        .f-meta {
+            font-size: 0.8rem;
+            color: #ccc;
+        }
+
+        .f-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        @media print {
+
+            .input-panel,
+            .resizer,
+            .toast,
+            .modal-overlay,
+            .btn-toggle-sidebar {
+                display: none !important;
+            }
+
+            .preview-panel {
+                padding: 0;
+                background: white;
+            }
+
+            .report-container {
+                width: 100%;
+                margin: 0;
+                padding: 0;
+                box-shadow: none;
+                border: none;
+            }
+
+            body {
+                background: white;
+                height: auto;
+                overflow: visible;
+            }
+        }
+
+        /* Sidebar Controls (Home + Toggle wrapper) */
+        /* Sidebar Controls (Home + Toggle wrapper) */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 15px;
+            left: 15px !important;
+            z-index: 1001;
+            transition: none;
+        }
+
+        .home-btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            border-radius: 20px 0 0 20px;
+            width: 70px;
+            height: 36px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .home-btn:hover {
+            background: #4285F4;
+            color: #fff;
+        }
+
+        .btn-toggle-sidebar {
+            width: 70px;
+            height: 36px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white;
+            background: #334155;
+        }
+
+        body.full-screen .input-panel {
+            display: none !important;
+        }
+
+        body.full-screen .resizer {
+            display: none !important;
+        }
+
+        body.full-screen .sidebar-controls {
+            position: fixed;
+            left: 15px !important;
+            top: 15px;
+            z-index: 101;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="cloudToast" class="toast">☁️ 알림</div>
+
+    <div id="cloudModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>☁️ 클라우드 저장 목록 (Cloud List)</span>
+                <span class="modal-close" onclick="closeCloudModal()">X</span>
+            </div>
+            <div id="cloudFileList" class="file-list-container">
+                <div style="text-align:center; padding:20px; color:#aaa;">로딩 중...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="input-panel" id="inputPanel">
+        <h2>
+        </h2>
+
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <button class="btn-print" onclick="window.print()" style="flex:1;">PDF 변환 (PDF)</button>
+            <button class="btn-capture" onclick="captureImage()" style="flex:1;">스크린샷 (Captura)</button>
+        </div>
+
+        <div class="btn-action">
+            <button class="btn-cloud-save" onclick="saveToCloud()">☁️ 클라우드 저장 (Cloud Save)</button>
+            <button class="btn-cloud-load" onclick="loadFromCloud()">☁️ 선택 불러오기 (Cloud Load)</button>
+        </div>
+        <div class="btn-action">
+            <button class="btn-save" onclick="saveData()">💾 파일 저장</button>
+            <button class="btn-load" onclick="document.getElementById('file-load').click()">📂 파일 열기</button>
+            <button class="btn-reset" onclick="resetForm()">🗑️ 초기화</button>
+            <input type="file" id="file-load" style="display:none;" accept=".json" onchange="loadDataFile(this)">
+        </div>
+
+        <div class="form-section">
+            <h3>👁️ 출력 항목 설정 (Visibilidad)</h3>
+            <div class="visibility-group">
+                <label class="visibility-item"><input type="checkbox" id="chk-overview" checked
+                        onchange="toggleSection('sec-overview', this.checked)"><span>1. 개요/목적</span></label>
+                <label class="visibility-item"><input type="checkbox" id="chk-issue" checked
+                        onchange="toggleSection('sec-issue', this.checked)"><span>2. 자재 목록</span></label>
+                <label class="visibility-item"><input type="checkbox" id="chk-cost" checked
+                        onchange="toggleSection('sec-cost', this.checked)"><span>3. 비용 산출</span></label>
+                <label class="visibility-item"><input type="checkbox" id="chk-compare" checked
+                        onchange="toggleSection('sec-compare', this.checked)"><span>4. 비교 견적</span></label>
+                <label class="visibility-item"><input type="checkbox" id="chk-budget" checked
+                        onchange="toggleSection('sec-budget', this.checked)"><span>5. 예산 관리</span></label>
+                <label class="visibility-item"><input type="checkbox" id="chk-schedule" checked
+                        onchange="toggleSection('sec-schedule', this.checked)"><span>6. 수리 일정</span></label>
+            </div>
+            <div style="font-size:0.7rem; color:#aaa; margin-top:5px;">* 체크 해제 시 출력 화면에서 완전히 숨겨집니다.</div>
+        </div>
+
+        <div class="form-section">
+            <h3>1. 기본 정보 (Información Básica)</h3>
+
+            <label style="color:#0dcaf0; font-weight:bold;">대상 공장 (Planta)</label>
+            <select id="in-plant" onchange="updateView()" style="background:#e7f1ff; font-weight:bold;">
+                <option value="1공장">1공장 (Planta 1)</option>
+                <option value="3공장">3공장 (Planta 3)</option>
+            </select>
+
+            <label style="color:#d63384; font-weight:bold;">품의 구분 (Categoría)</label>
+            <select id="in-category" onchange="updateView()" style="background:#fff0f6; font-weight:bold;">
+                <option value="수선 (Reparación)">수선 (Reparación)</option>
+                <option value="투자 (Inversión)">투자 (Inversión)</option>
+                <option value="소모 (Consumibles)">소모 (Consumibles)</option>
+                <option value="시설물 보수 (Reparación de Instalaciones)">시설물 보수 (Reparación de Instalaciones)</option>
+            </select>
+
+            <label>일자 (Fecha)</label> <input type="date" id="in-date" onchange="updateView()">
+            <label>부서 (Departamento)</label> <input type="text" id="in-dept" value="" placeholder="Departamento (부서명)"
+                onkeyup="updateView()">
+            <label>문서 제목 (Título del Documento)</label> <input type="text" id="in-doc-name" value=""
+                placeholder="Título del Documento (문서 제목)" onkeyup="updateView()">
+            <label>환율 (Tipo de Cambio: 1 MXN)</label> <input type="number" id="in-rate" value=""
+                placeholder="Tipo de Cambio (예: 75)" onkeyup="updateView()">
+        </div>
+
+        <div class="form-section">
+            <h3>2. 개요 및 목적 (Resumen y Propósito)</h3>
+            <textarea id="in-overview" onkeyup="updateView()"
+                placeholder="Resumen y Propósito de la reparación (수리 개요 및 목적 입력)"></textarea>
+
+            <div style="margin-top:8px; border-top:1px dashed #666; padding-top:8px;">
+                <label style="color:#ffc107;">📷 개요 사진 (Fotos del Resumen)</label>
+                <div id="overview-img-list"></div>
+                <button class="btn-add" style="margin-top:5px;" onclick="addOverviewImgInput()">+ 개요 사진 추가 (Agregar
+                    Foto)</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>3. 점검 결과 (Fotos de Inspección)</h3>
+            <div id="issue-inputs"></div>
+            <button class="btn-add" onclick="addIssueRow(); updateView()">+ 사진 추가 (Agregar Foto)</button>
+        </div>
+
+        <div class="form-section">
+            <h3>4. 비용 산출 (Cálculo de Costos)</h3>
+            <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 재고/이력 포함 (Incluir Stock/Historial)</div>
+            <div style="margin-bottom:10px;">
+                <div id="mxn-inputs"></div>
+                <button class="btn-add" onclick="addCostRow('MXN'); updateView()">+ MXN 추가 (Agregar MXN)</button>
+            </div>
+            <div>
+                <div id="krw-inputs"></div>
+                <button class="btn-add" style="background:#e0a800;" onclick="addCostRow('KRW'); updateView()">+ KRW 추가
+                    (Agregar KRW)</button>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>5. 비교 견적 및 단가 이력 (Comparación)</h3>
+            <label style="color:#17a2b8;">5-1. 업체 간 비교 (Comparación de Proveedores)</label>
+            <div id="compare-mxn-inputs"></div>
+            <button class="btn-add" onclick="addCompareRow('MXN'); updateView()">+ 비교 추가 MXN (Agregar Comp.)</button>
+            <div style="margin-top:5px;" id="compare-krw-inputs"></div>
+            <button class="btn-add" style="background:#e0a800;" onclick="addCompareRow('KRW'); updateView()">+ 비교 추가 KRW
+                (Agregar Comp.)</button>
+
+            <label style="color:#20c997; margin-top:20px; border-top:1px dashed #666; padding-top:10px;">5-2. 단가 변동 이력
+                (Historial de Precios)</label>
+            <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 금번/이전 단가 및 일자 비교</div>
+            <div id="history-inputs"></div>
+            <button class="btn-add" style="background:#20c997;" onclick="addHistoryRow(); updateView()">+ 이력 추가 (Agregar
+                Historial)</button>
+        </div>
+
+        <div class="form-section">
+            <h3>6. 예산 관리 (Presupuesto)</h3>
+            <div class="budget-tabs">
+                <button class="budget-tab active" onclick="switchBudgetTab('P1')">1공장 (P1)</button>
+                <button class="budget-tab" onclick="switchBudgetTab('P3')">3공장 (P3)</button>
+            </div>
+            <div id="budget-input-p1" class="budget-container active">
+                <div class="budget-grid" id="budget-plan-p1"></div>
+                <div class="budget-grid" id="budget-act-p1"></div>
+            </div>
+            <div id="budget-input-p3" class="budget-container">
+                <div class="budget-grid" id="budget-plan-p3"></div>
+                <div class="budget-grid" id="budget-act-p3"></div>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3>7. 일정 관리 (Cronograma)</h3>
+            <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 기간 및 작업 내용 입력 (Periodo y Actividad)</div>
+            <div id="schedule-inputs"></div>
+            <button class="btn-add" style="background:#8e44ad;" onclick="addScheduleRow(); updateView()">+ 일정 추가
+                (Agregar Tarea)</button>
+        </div>
+
+
+    </div>
+
+    <div class="sidebar-controls">
+        <a class="home-btn" href="index.html">🏠 Home</a>
+        <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+    </div>
+
+
+
+    <div class="preview-panel">
+        <h2 style="margin: 0 0 15px 0; color: #fff; font-size: 24px; font-weight: bold;">
+            📝 품의 (Pumi)
+            <span id="save-status" class="save-status" style="font-size:14px; margin-left:10px;"></span>
+        </h2>
+        <div class="report-container" id="capture-target">
+
+            <div class="modern-header">
+                <div class="header-left">
+                    <h1 class="doc-title" id="out-title">1공장 설비 수리 품의서</h1>
+                    <div class="doc-subtitle" id="out-subtitle">Repair Request Form & Cost Analysis</div>
+                </div>
+                <div class="header-right">
+                    <table class="info-table">
+                        <tr>
+                            <td class="info-label">Date (일자):</td>
+                            <td class="info-value" id="out-date"></td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Type (구분):</td>
+                            <td class="info-value category-badge" id="out-category"></td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Dept (부서):</td>
+                            <td class="info-value" id="out-dept"></td>
+                        </tr>
+                        <tr>
+                            <td class="info-label">Ex.Rate (환율):</td>
+                            <td class="info-value">1 MXN = <span id="out-rate"></span> KRW</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div id="sec-overview">
+                <div class="section-title">1. 개요 및 목적 <span class="section-sub">Resumen y Propósito</span></div>
+                <div id="out-overview-box">
+                    <div id="out-overview-text"></div>
+                    <div id="out-overview-grid"></div>
+                </div>
+            </div>
+
+            <div id="sec-issue">
+                <div class="section-title">2. 필요 자재 목록 <span class="section-sub">Lista de Materiales Necesarios</span>
+                </div>
+                <table class="styled-table">
+                    <colgroup>
+                        <col width="8%">
+                        <col width="30%">
+                        <col width="62%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>사진 (Foto)</th>
+                            <th>설명 (Explicación)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="out-issue-body"></tbody>
+                </table>
+            </div>
+
+            <div id="sec-cost">
+                <div class="section-title">3. 비용 산출 <span class="section-sub">Detalle de Costos</span></div>
+                <table class="styled-table">
+                    <colgroup>
+                        <col width="20%">
+                        <col width="15%">
+                        <col width="15%">
+                        <col width="10%">
+                        <col width="5%">
+                        <col width="15%">
+                        <col width="20%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>내역 (Item)</th>
+                            <th>업체명 (Prov.)</th>
+                            <th>재고/이력 (Stock)</th>
+                            <th>수량 (Cant.)</th>
+                            <th>단위 (U.)</th>
+                            <th>단가 (Precio)</th>
+                            <th>합계 (Total)</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="cost-header-mxn">■ 현지 구입 비용 (Costo Local - MXN)</td>
+                        </tr>
+                    </tbody>
+                    <tbody id="out-mxn-body"></tbody>
+                    <tr class="total-row">
+                        <td colspan="6" style="text-align:right;">Subtotal (MXN)</td>
+                        <td style="text-align:right;" id="out-total-mxn">0.00</td>
+                    </tr>
+
+                    <tbody>
+                        <tr>
+                            <td colspan="7" class="cost-header-krw">■ 국내 구입 비용 (Costo Importación - KRW)</td>
+                        </tr>
+                    </tbody>
+                    <tbody id="out-krw-body"></tbody>
+                    <tr class="total-row">
+                        <td colspan="6" style="text-align:right;">Subtotal (KRW)</td>
+                        <td style="text-align:right;" id="out-total-krw">0</td>
+                    </tr>
+
+                    <tr class="grand-total-row">
+                        <td colspan="6" style="text-align:center;">총 합계 (Grand Total / MXN 환산)</td>
+                        <td style="text-align:right;" id="out-grand-total-mxn">0.00</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div id="sec-compare">
+                <div class="section-title">4. 업체 선정 및 비교 견적 <span class="section-sub">Comparación de Cotizaciones</span>
+                </div>
+
+                <div style="font-size:11px; font-weight:bold; margin-bottom:4px; color:#333;">4-1. 업체 간 비교 (Vendor
+                    Comparison)</div>
+                <table class="styled-table">
+                    <colgroup>
+                        <col width="20%">
+                        <col width="20%">
+                        <col width="15%">
+                        <col width="20%">
+                        <col width="15%">
+                        <col width="10%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th rowspan="2">내역 (Item)</th>
+                            <th colspan="2" class="compare-sel">선정 업체 (Seleccionado)</th>
+                            <th colspan="2" class="compare-cmp">비교 업체 (Comparación)</th>
+                            <th rowspan="2">차액 (Diferencia)</th>
+                        </tr>
+                        <tr>
+                            <th class="compare-sel">업체명 (Prov.)</th>
+                            <th class="compare-sel">단가 (Precio)</th>
+                            <th class="compare-cmp">업체명 (Prov.)</th>
+                            <th class="compare-cmp">단가 (Precio)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="out-compare-body"></tbody>
+                </table>
+
+                <div style="font-size:11px; font-weight:bold; margin-bottom:4px; margin-top:15px; color:#20c997;">4-2.
+                    단가 변동 이력 (Price History)</div>
+                <table class="styled-table">
+                    <colgroup>
+                        <col width="25%">
+                        <col width="20%">
+                        <col width="20%">
+                        <col width="20%">
+                        <col width="15%">
+                    </colgroup>
+                    <thead>
+                        <tr>
+                            <th>품목 (Item)</th>
+                            <th style="background:#f1f8ff;">금번 단가 (Actual)</th>
+                            <th style="background:#fff5f5;">이전 단가 (Anterior)</th>
+                            <th>이전 구매일 (Fecha)</th>
+                            <th>변동 (Dif.)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="out-history-body"></tbody>
+                </table>
+            </div>
+
+            <div id="sec-budget">
+                <div class="section-title">5. 예산 관리 <span class="section-sub">Control Presupuestario (MXN)</span></div>
+
+                <div
+                    style="font-size:12px; font-weight:bold; color:#28a745; border-bottom:1px solid #28a745; margin-bottom:5px;">
+                    Planta 1</div>
+                <table class="styled-table" style="margin-bottom:2px;">
+                    <thead>
+                        <tr>
+                            <th>구분 (Div.)</th>
+                            <th>년 계획 (Plan)</th>
+                            <th>년 누적 (Acum.)</th>
+                            <th>금번 품의 (Esta Sol.)</th>
+                            <th>잔여 예산 (Saldo)</th>
+                            <th>집행률 (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="text-align: center;">
+                            <td><strong>Total</strong></td>
+                            <td id="p1-year-plan">-</td>
+                            <td id="p1-year-used">-</td>
+                            <td id="p1-this-req" style="font-weight:bold; color:blue;">-</td>
+                            <td id="p1-bal" style="font-weight:bold;">-</td>
+                            <td style="width:130px;">
+                                <div id="p1-rate-text">-</div>
+                                <div class="bar-bg">
+                                    <div id="p1-bar" class="bar-fill"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="styled-table budget-month-table">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">P1</th>
+                            <th>1월</th>
+                            <th>2월</th>
+                            <th>3월</th>
+                            <th>4월</th>
+                            <th>5월</th>
+                            <th>6월</th>
+                            <th>7월</th>
+                            <th>8월</th>
+                            <th>9월</th>
+                            <th>10월</th>
+                            <th>11월</th>
+                            <th>12월</th>
+                        </tr>
+                    </thead>
+                    <tbody id="out-month-p1"></tbody>
+                </table>
+
+                <div
+                    style="font-size:12px; font-weight:bold; color:#17a2b8; border-bottom:1px solid #17a2b8; margin-bottom:5px; margin-top:20px;">
+                    Planta 3</div>
+                <table class="styled-table" style="margin-bottom:2px;">
+                    <thead>
+                        <tr>
+                            <th>구분 (Div.)</th>
+                            <th>년 계획 (Plan)</th>
+                            <th>년 누적 (Acum.)</th>
+                            <th>금번 품의 (Esta Sol.)</th>
+                            <th>잔여 예산 (Saldo)</th>
+                            <th>집행률 (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="text-align: center;">
+                            <td><strong>Total</strong></td>
+                            <td id="p3-year-plan">-</td>
+                            <td id="p3-year-used">-</td>
+                            <td id="p3-this-req" style="font-weight:bold; color:blue;">-</td>
+                            <td id="p3-bal" style="font-weight:bold;">-</td>
+                            <td style="width:130px;">
+                                <div id="p3-rate-text">-</div>
+                                <div class="bar-bg">
+                                    <div id="p3-bar" class="bar-fill"></div>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <table class="styled-table budget-month-table">
+                    <thead>
+                        <tr>
+                            <th style="width:50px;">P3</th>
+                            <th>1월</th>
+                            <th>2월</th>
+                            <th>3월</th>
+                            <th>4월</th>
+                            <th>5월</th>
+                            <th>6월</th>
+                            <th>7월</th>
+                            <th>8월</th>
+                            <th>9월</th>
+                            <th>10월</th>
+                            <th>11월</th>
+                            <th>12월</th>
+                        </tr>
+                    </thead>
+                    <tbody id="out-month-p3"></tbody>
+                </table>
+            </div>
+
+            <div id="sec-schedule">
+                <div class="section-title">6. 수리 일정 <span class="section-sub">Calendario de Reparación</span></div>
+                <div style="text-align:right; font-size:10px; margin-bottom:5px;">
+                    <span style="color:#2980b9; font-weight:bold;">범례: ● 시작(Start) ━━▶ 진행/완료(Process/End)</span>
+                </div>
+                <div style="overflow-x:auto;">
+                    <table class="sch-table" id="schedule-table-view"></table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // [중요] 여기에 배포한 구글 웹 앱 URL을 붙여넣으세요
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHbtYU9931Ju1-bUJsNUdkzUJT2DOBNcmXDlfdlGtuzskzTNZi9XE2S-uZ8MRzNhh3/exec";
+        // ==========================================
+
+        let subTotalMXN = 0; let subTotalKRW = 0;
+        const SAVE_KEY = "pumi_autosave_v2";
+
+        // --- Cloud Functions ---
+
+        // [헬퍼] base64 이미지를 재압축 (클라우드 저장용)
+        function compressBase64Image(base64Str, maxW = 800, maxH = 800, quality = 0.5) {
+            return new Promise((resolve) => {
+                if (!base64Str || !base64Str.startsWith('data:image')) { resolve(base64Str); return; }
+                const img = new Image();
+                img.onload = function () {
+                    let w = img.width, h = img.height;
+                    if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
+                    else { if (h > maxH) { w *= maxH / h; h = maxH; } }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = w; canvas.height = h;
+                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                    resolve(canvas.toDataURL('image/jpeg', quality));
+                };
+                img.onerror = () => resolve(''); // 손상된 이미지는 빈 문자열로
+                img.src = base64Str;
+            });
+        }
+
+        // [헬퍼] collectData의 모든 이미지 필드를 압축
+        async function compressDataImages(data) {
+            // 1) overviewImages 압축
+            if (data.overviewImages && data.overviewImages.length > 0) {
+                data.overviewImages = await Promise.all(
+                    data.overviewImages.map(src => compressBase64Image(src))
+                );
+            }
+            // 2) issues 내 img 압축
+            if (data.issues && data.issues.length > 0) {
+                for (let issue of data.issues) {
+                    if (issue.img) issue.img = await compressBase64Image(issue.img);
+                }
+            }
+            return data;
+        }
+
+        // 1. 클라우드 저장 (docName 기반 시트별 저장)
+        async function saveToCloud() {
+            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 APPS_SCRIPT_URL을 설정해주세요!"); return; }
+
+            const data = collectData();
+            const docName = data.docName || "";
+            if (!docName.trim()) { alert("제목(건명)을 입력해주세요! (Title is required)"); return; }
+
+            if (!confirm(`"${docName}" 을(를) 클라우드에 저장하시겠습니까?\n(같은 제목이 있으면 덮어쓰기됩니다)`)) return;
+
+            const btn = event.target; const orgTxt = btn.innerText;
+            btn.innerText = "📦 이미지 압축 중..."; btn.disabled = true;
+
+            try {
+                // 이미지 자동 압축
+                const compressedData = await compressDataImages(data);
+                btn.innerText = "☁️ 업로드 중...";
+
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(compressedData)
+                });
+                showToast(`☁️ "${docName}" 저장 완료!`);
+            } catch (error) {
+                alert("오류: " + error.message);
+            } finally {
+                btn.innerText = orgTxt; btn.disabled = false;
+            }
+        }
+
+        // 2. 클라우드 목록 불러오기 (모달)
+        async function loadFromCloud() {
+            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 APPS_SCRIPT_URL을 설정해주세요!"); return; }
+
+            const modal = document.getElementById('cloudModal');
+            const listContainer = document.getElementById('cloudFileList');
+
+            modal.style.display = 'flex';
+            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">☁️ 목록 로딩 중...</div>';
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL + "?cmd=list");
+                const result = await response.json();
+
+                listContainer.innerHTML = "";
+
+                if (!result.list || result.list.length === 0) {
+                    listContainer.innerHTML = '<div style="text-align:center; padding:20px;">저장된 문서가 없습니다.</div>';
+                    return;
+                }
+
+                result.list.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'file-item';
+                    div.innerHTML = `
+                    <div class="file-info" style="cursor:pointer;" onclick="loadSpecificCloudData('${item.docName.replace(/'/g, "\\'")}')">
+                        <div class="f-title">${item.docName || '(제목 없음)'}</div>
+                        <div class="f-meta">📅 ${item.date || '-'} | 📂 ${item.category || '-'} | 🕐 ${item.updated || '-'}</div>
+                    </div>
+                    <div style="display:flex; gap:4px;">
+                        <button class="f-btn" onclick="loadSpecificCloudData('${item.docName.replace(/'/g, "\\'")}')">불러오기</button>
+                        <button class="f-btn" style="background:#dc3545;" onclick="deleteFromCloud('${item.docName.replace(/'/g, "\\'")}')">삭제</button>
+                    </div>
+                    `;
+                    listContainer.appendChild(div);
+                });
+
+            } catch (error) {
+                listContainer.innerHTML = `<div style="text-align:center; color:#ff6b6b;">목록 로드 실패<br>${error.message}</div>`;
+            }
+        }
+
+        // 3. 특정 문서 로드 (docName 기반)
+        async function loadSpecificCloudData(docName) {
+            if (!confirm(`"${docName}" 을(를) 불러오시겠습니까?\n(현재 작성 중인 내용은 사라집니다)`)) return;
+
+            closeCloudModal();
+            showToast("☁️ 데이터 다운로드 중...");
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL + `?cmd=load&docName=${encodeURIComponent(docName)}`);
+                const result = await response.json();
+                if (result.error) { alert("로드 실패: " + result.error); return; }
+                applyDataToForm(result.data);
+                showToast(`☁️ "${docName}" 불러오기 완료!`);
+            } catch (error) {
+                alert("데이터 로드 실패: " + error.message);
+            }
+        }
+
+        // 4. 문서 삭제
+        async function deleteFromCloud(docName) {
+            if (!confirm(`"${docName}" 을(를) 클라우드에서 삭제하시겠습니까?\n(이 작업은 되돌릴 수 없습니다)`)) return;
+
+            try {
+                const response = await fetch(APPS_SCRIPT_URL + `?cmd=delete&docName=${encodeURIComponent(docName)}`);
+                const result = await response.json();
+                if (result.error) { alert("삭제 실패: " + result.error); return; }
+                showToast(`🗑️ "${docName}" 삭제 완료!`);
+                loadFromCloud(); // 목록 새로고침
+            } catch (error) {
+                alert("삭제 실패: " + error.message);
+            }
+        }
+
+        function closeCloudModal() {
+            document.getElementById('cloudModal').style.display = 'none';
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('cloudToast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 2500);
+        }
+
+        // --- Logic ---
+
+        window.onload = function () {
+            document.getElementById('in-date').valueAsDate = new Date();
+            initForm();
+            setTimeout(checkAutoSave, 500);
+        };
+
+        function toggleSection(id, isChecked) {
+            const el = document.getElementById(id);
+            if (el) el.style.display = isChecked ? 'block' : 'none';
+            performAutoSave();
+        }
+
+        function fmt(num, currency) {
+            if (isNaN(num)) return "0";
+            if (currency === 'KRW') {
+                return Math.round(num).toLocaleString('ko-KR');
+            } else {
+                return num.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            }
+        }
+
+        function toggleSidebar() {
+            document.body.classList.toggle('full-screen');
+            const btn = document.getElementById('btn-toggle-sidebar');
+            const panel = document.getElementById('inputPanel');
+
+            if (document.body.classList.contains('full-screen')) {
+                btn.innerText = "▶";
+                btn.title = "Show Sidebar";
+            } else {
+                btn.innerText = "◀";
+                btn.title = "Hide Sidebar";
+                btn.style.left = "450px";
+            }
+        }
+
+        function initForm() {
+            addIssueRow();
+            addCostRow('MXN'); addCostRow('KRW');
+            addCompareRow('MXN'); addCompareRow('KRW');
+            addHistoryRow();
+            createBudgetInputs('p1'); createBudgetInputs('p3');
+            addScheduleRow();
+            updateView();
+        }
+
+        function captureImage() {
+            const target = document.getElementById('capture-target');
+            const originalOverflow = target.style.overflow;
+            target.style.overflow = "visible";
+
+            html2canvas(target, {
+                scale: 2,
+                useCORS: true,
+                scrollY: -window.scrollY,
+                windowWidth: document.documentElement.offsetWidth,
+                height: target.scrollHeight + 50
+            }).then(canvas => {
+                target.style.overflow = originalOverflow;
+                const link = document.createElement('a');
+                const dateStr = document.getElementById('in-date').value;
+                link.download = `Repair_Report_${dateStr}.jpg`;
+                link.href = canvas.toDataURL("image/jpeg", 0.85);
+                link.click();
+            });
+        }
+
+        function compressImage(file, callback) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const img = new Image();
+                img.onload = function () {
+                    const MAX_WIDTH = 1200;
+                    const MAX_HEIGHT = 1200;
+                    let width = img.width;
+                    let height = img.height;
+                    if (width > height) {
+                        if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    } else {
+                        if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                    }
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    callback(dataUrl);
+                }
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function addOverviewImgInput() {
+            const container = document.getElementById('overview-img-list');
+            const div = document.createElement('div');
+            div.className = 'overview-img-row';
+            div.style.marginBottom = "5px";
+            div.style.display = "flex";
+            div.style.alignItems = "center";
+
+            div.innerHTML = `
+            <input type="file" accept="image/*" onchange="processOverviewImage(this)" style="font-size:0.8rem; width:80%;">
+            <input type="hidden" class="ov-img-data">
+            <button class="btn-del-mini" onclick="this.parentElement.remove(); updateView()">삭제</button>
+        `;
+            container.appendChild(div);
+        }
+
+        function processOverviewImage(input) {
+            if (input.files && input.files[0]) {
+                compressImage(input.files[0], (base64) => {
+                    input.parentElement.querySelector('.ov-img-data').value = base64;
+                    updateView();
+                });
+            }
+        }
+
+        function addIssueRow() {
+            const div = document.createElement('div');
+            div.style.marginBottom = "5px"; div.style.background = "#2c3034"; div.style.padding = "5px"; div.style.borderRadius = "4px";
+            div.innerHTML = `<input type="file" accept="image/*" onchange="handleImage(this)" style="font-size:0.8rem"><input type="text" class="issue-loc" placeholder="위치 (Ubicación)" onkeyup="updateView()"><input type="text" class="issue-desc" placeholder="설명 (Descripción)" onkeyup="updateView()"><img class="temp-img" style="display:none;" src="">`;
+            document.getElementById('issue-inputs').appendChild(div);
+        }
+
+        function handleImage(input) {
+            if (input.files && input.files[0]) {
+                compressImage(input.files[0], (base64) => {
+                    input.parentElement.querySelector('.temp-img').src = base64;
+                    updateView();
+                });
+            }
+        }
+
+        function addCostRow(type) {
+            const div = document.createElement('div');
+            div.className = "cost-input-group";
+            div.innerHTML = `
+            <div class="cost-row">
+                <input type="text" class="c-name-${type}" placeholder="품명 (Item)" style="flex:2" onkeyup="updateView()">
+                <input type="text" class="c-vendor-${type}" placeholder="업체명 (Proveedor)" style="flex:2" onkeyup="updateView()">
+            </div>
+            <div class="cost-row">
+                <input type="text" class="c-stock-${type}" placeholder="재고/이력 (Stock)" style="flex:2" onkeyup="updateView()">
+                <input type="number" class="c-qty-${type}" placeholder="수량 (Cant.)" style="flex:1" onchange="updateView()" onkeyup="updateView()">
+                <input type="number" class="c-price-${type}" placeholder="단가 (Precio)" style="flex:1" onchange="updateView()" onkeyup="updateView()">
+            </div>
+        `;
+            document.getElementById(type === 'MXN' ? 'mxn-inputs' : 'krw-inputs').appendChild(div);
+        }
+
+        function addCompareRow(type) {
+            const div = document.createElement('div');
+            div.className = "compare-input-box";
+            div.innerHTML = `
+            <div class="compare-row"><input type="text" class="cmp-desc-${type}" placeholder="${type} 품목명 (Item)" style="width:100%" onkeyup="updateView()"></div>
+            <div class="compare-row"><span class="cmp-label" style="color:#28a745;">선정</span><input type="text" class="cmp-sel-vendor-${type}" placeholder="선정 업체 (Prov.)" style="flex:1" onkeyup="updateView()"><input type="number" class="cmp-sel-price-${type}" placeholder="금액 (Monto)" style="flex:1" onkeyup="updateView()"></div>
+            <div class="compare-row"><span class="cmp-label" style="color:#dc3545;">비교</span><input type="text" class="cmp-cmp-vendor-${type}" placeholder="비교 업체 (Comp.)" style="flex:1" onkeyup="updateView()"><input type="number" class="cmp-cmp-price-${type}" placeholder="금액 (Monto)" style="flex:1" onkeyup="updateView()"></div>
+        `;
+            document.getElementById(type === 'MXN' ? 'compare-mxn-inputs' : 'compare-krw-inputs').appendChild(div);
+        }
+
+        function addHistoryRow() {
+            const div = document.createElement('div');
+            div.className = "history-input-box";
+            div.innerHTML = `
+            <div class="history-row">
+                <input type="text" class="h-name" placeholder="품목명 (Item)" style="flex:2" onkeyup="updateView()">
+                <input type="number" class="h-curr" placeholder="금번 단가 (Precio Actual)" style="flex:1" onkeyup="updateView()">
+            </div>
+            <div class="history-row">
+                <input type="date" class="h-date" placeholder="이전 일자" style="flex:1" onchange="updateView()">
+                <input type="number" class="h-prev" placeholder="이전 단가 (Precio Ant.)" style="flex:1" onkeyup="updateView()">
+            </div>
+        `;
+            document.getElementById('history-inputs').appendChild(div);
+        }
+
+        function parseLocalDate(str) {
+            if (!str) return null;
+            const [y, m, d] = str.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        function addScheduleRow(data = null) {
+            const container = document.getElementById('schedule-inputs');
+            const div = document.createElement('div');
+            div.className = "schedule-box";
+            const s = data ? data.start : '';
+            const e = data ? data.end : '';
+            const t = data ? data.desc : '';
+
+            div.innerHTML = `
+            <div class="row-flex">
+                <input type="date" class="s-start" value="${s}" onchange="updateView()" style="flex:1">
+                <span style="color:#aaa">~</span>
+                <input type="date" class="s-end" value="${e}" onchange="updateView()" style="flex:1">
+            </div>
+            <div class="row-flex">
+                <input type="text" class="s-desc" value="${t}" placeholder="작업 내용 (Description)" onkeyup="updateView()" style="flex:2">
+                <button class="sch-btn-small copy" onclick="copyRow(this)">C</button>
+                <button class="sch-btn-small del" onclick="delRow(this)">D</button>
+            </div>
+        `;
+            container.appendChild(div);
+            if (!data) updateView();
+        }
+
+        function copyRow(btn) {
+            const box = btn.closest('.schedule-box');
+            addScheduleRow({
+                start: box.querySelector('.s-start').value,
+                end: box.querySelector('.s-end').value,
+                desc: box.querySelector('.s-desc').value
+            });
+        }
+
+        function delRow(btn) {
+            if (confirm("일정 항목을 삭제하시겠습니까?")) {
+                btn.closest('.schedule-box').remove();
+                updateView();
+            }
+        }
+
+        function renderSchedule() {
+            const table = document.getElementById('schedule-table-view');
+            table.innerHTML = "";
+
+            const inputs = document.getElementById('schedule-inputs').children;
+            let minDate = null;
+            let maxDate = null;
+            let validRows = [];
+
+            for (let i = 0; i < inputs.length; i++) {
+                const sVal = inputs[i].querySelector('.s-start').value;
+                const eVal = inputs[i].querySelector('.s-end').value;
+                const desc = inputs[i].querySelector('.s-desc').value;
+
+                if (sVal && eVal && desc) {
+                    const sd = parseLocalDate(sVal);
+                    const ed = parseLocalDate(eVal);
+                    if (sd && ed && sd <= ed) {
+                        if (!minDate || sd < minDate) minDate = sd;
+                        if (!maxDate || ed > maxDate) maxDate = ed;
+                        validRows.push({ start: sd, end: ed, desc: desc });
+                    }
+                }
+            }
+
+            if (validRows.length === 0) {
+                table.innerHTML = `<thead><tr><th style="background:#f8f9fa;">일정 데이터 없음 (Sin Datos de Cronograma)</th></tr></thead><tbody><tr><td style="padding:10px; text-align:center; color:#666;">기간과 내용을 입력해주세요.</td></tr></tbody>`;
+                return;
+            }
+
+            let hRow = `<thead><tr><th style="width:30%; background:#f1f3f5;">작업 내용 (Activity)</th>`;
+            let loopDate = new Date(minDate);
+            const dates = [];
+            let safety = 0;
+            while (loopDate <= maxDate && safety < 100) {
+                const m = loopDate.getMonth() + 1;
+                const d = loopDate.getDate();
+                const dy = loopDate.getDay();
+                const bg = (dy === 0 || dy === 6) ? '#eee' : '#fff';
+                hRow += `<th style="background:${bg};">${m}/${d}</th>`;
+                dates.push(new Date(loopDate));
+                loopDate.setDate(loopDate.getDate() + 1);
+                safety++;
+            }
+            hRow += `</tr></thead>`;
+            table.innerHTML += hRow;
+
+            const tbody = document.createElement('tbody');
+            validRows.forEach(row => {
+                let tr = `<tr><td style="text-align:left; padding-left:5px; font-weight:bold; height:24px;">${row.desc}</td>`;
+                dates.forEach(colDate => {
+                    const cTime = colDate.getTime();
+                    const sTime = row.start.getTime();
+                    const eTime = row.end.getTime();
+                    const dy = colDate.getDay();
+                    const bg = (dy === 0 || dy === 6) ? '#f8f9fa' : '#fff';
+                    let content = "";
+                    if (cTime >= sTime && cTime <= eTime) {
+                        if (cTime === sTime && cTime === eTime) {
+                            content = `<div class="sch-bar-container"><div class="sch-dot"></div></div>`;
+                        } else if (cTime === eTime) {
+                            content = `<div class="sch-end-box"><div class="sch-line-end"></div><div class="sch-arrow"></div></div>`;
+                        } else {
+                            content = `<div class="sch-bar-container"><div class="sch-bar-middle"></div></div>`;
+                        }
+                    }
+                    tr += `<td style="background:${bg}; padding:0;">${content}</td>`;
+                });
+                tr += `</tr>`;
+                tbody.innerHTML += tr;
+            });
+            table.appendChild(tbody);
+        }
+
+        function updateView() {
+            const plantName = document.getElementById('in-plant').value;
+            const docName = document.getElementById('in-doc-name').value;
+            document.getElementById('out-title').innerText = plantName + " " + docName;
+            document.getElementById('out-subtitle').innerText = plantName.includes("1") ? "Planta 1 Maintenance Request" : "Planta 3 Maintenance Request";
+
+            document.getElementById('out-date').innerText = document.getElementById('in-date').value;
+            document.getElementById('out-category').innerText = document.getElementById('in-category').value;
+            document.getElementById('out-dept').innerText = document.getElementById('in-dept').value;
+            const rate = parseFloat(document.getElementById('in-rate').value) || 1;
+            document.getElementById('out-rate').innerText = rate.toLocaleString();
+
+            document.getElementById('out-overview-text').innerText = document.getElementById('in-overview').value;
+
+            const ovGrid = document.getElementById('out-overview-grid');
+            ovGrid.innerHTML = "";
+            const ovInputs = document.querySelectorAll('.ov-img-data');
+            ovInputs.forEach(input => {
+                const src = input.value;
+                if (src && src.startsWith('data:')) {
+                    const img = document.createElement('img');
+                    img.src = src;
+                    img.className = 'overview-img-item';
+                    ovGrid.appendChild(img);
+                }
+            });
+
+            const issueBody = document.getElementById('out-issue-body'); issueBody.innerHTML = "";
+            const issues = document.getElementById('issue-inputs').children;
+            for (let i = 0; i < issues.length; i++) {
+                const imgSrc = issues[i].querySelector('.temp-img').src;
+                const loc = issues[i].querySelector('.issue-loc').value;
+                const desc = issues[i].querySelector('.issue-desc').value;
+                if (!loc && !desc && (!imgSrc || imgSrc === window.location.href)) continue;
+                issueBody.innerHTML += `<tr class="photo-row"><td>${i + 1}</td><td>${imgSrc ? `<img src="${imgSrc}" class="photo-img">` : '<span style="color:#ccc">No Photo</span>'}</td><td style="text-align:left; padding:5px;"><strong>[Location]</strong> ${loc}<br><strong>[Detail]</strong> ${desc}</td></tr>`;
+            }
+
+            subTotalMXN = 0;
+            subTotalKRW = 0;
+            const renderCost = (type) => {
+                let html = "";
+                let sub = 0;
+                const names = document.querySelectorAll(`.c-name-${type}`);
+                const vendors = document.querySelectorAll(`.c-vendor-${type}`);
+                const stocks = document.querySelectorAll(`.c-stock-${type}`);
+                const qtys = document.querySelectorAll(`.c-qty-${type}`);
+                const prices = document.querySelectorAll(`.c-price-${type}`);
+                for (let i = 0; i < names.length; i++) {
+                    if (!names[i].value) continue;
+                    const q = parseFloat(qtys[i].value) || 0; const p = parseFloat(prices[i].value) || 0;
+                    const total = q * p;
+                    sub += total;
+                    html += `<tr>
+                    <td>${names[i].value}</td>
+                    <td>${vendors[i].value}</td>
+                    <td style="color:#666;">${stocks[i].value}</td>
+                    <td style="text-align:center">${q}</td>
+                    <td style="text-align:center">EA</td>
+                    <td style="text-align:right">${fmt(p, type)}</td>
+                    <td style="text-align:right">${fmt(total, type)}</td>
+                </tr>`;
+                }
+                return { html, sub };
+            };
+
+            const mxnData = renderCost('MXN');
+            document.getElementById('out-mxn-body').innerHTML = mxnData.html;
+            subTotalMXN = mxnData.sub;
+            document.getElementById('out-total-mxn').innerText = fmt(subTotalMXN, 'MXN');
+
+            const krwData = renderCost('KRW');
+            document.getElementById('out-krw-body').innerHTML = krwData.html;
+            subTotalKRW = krwData.sub;
+            document.getElementById('out-total-krw').innerText = fmt(subTotalKRW, 'KRW');
+
+            const grandTotal = subTotalMXN + (subTotalKRW / rate);
+            document.getElementById('out-grand-total-mxn').innerText = "$ " + fmt(grandTotal, 'MXN');
+
+            renderCompareAll();
+            renderHistory();
+            calcBudget('p1', grandTotal, plantName.includes('1공장'));
+            calcBudget('p3', grandTotal, plantName.includes('3공장'));
+
+            renderSchedule();
+
+            performAutoSave();
+        }
+
+        function renderCompareAll() {
+            const body = document.getElementById('out-compare-body');
+            body.innerHTML = "";
+            const renderType = (type) => {
+                const descs = document.querySelectorAll(`.cmp-desc-${type}`);
+                const sVendors = document.querySelectorAll(`.cmp-sel-vendor-${type}`);
+                const sPrices = document.querySelectorAll(`.cmp-sel-price-${type}`);
+                const cVendors = document.querySelectorAll(`.cmp-cmp-vendor-${type}`);
+                const cPrices = document.querySelectorAll(`.cmp-cmp-price-${type}`);
+                for (let i = 0; i < descs.length; i++) {
+                    if (!descs[i].value && !sVendors[i].value) continue;
+                    const sP = parseFloat(sPrices[i].value) || 0; const cP = parseFloat(cPrices[i].value) || 0;
+                    const diff = cP - sP;
+                    const cls = diff >= 0 ? 'diff-plus' : 'diff-minus';
+                    body.innerHTML += `<tr><td>${descs[i].value} <span style="font-size:9px;color:#888">(${type})</span></td>
+                    <td class="compare-sel">${sVendors[i].value}</td>
+                    <td class="compare-sel" style="text-align:right;">${fmt(sP, type)}</td>
+                    <td class="compare-cmp">${cVendors[i].value}</td>
+                    <td class="compare-cmp" style="text-align:right;">${fmt(cP, type)}</td>
+                    <td style="text-align:right;" class="${cls}">${fmt(diff, type)}</td></tr>`;
+                }
+            };
+            renderType('MXN'); renderType('KRW');
+        }
+
+        function renderHistory() {
+            const body = document.getElementById('out-history-body');
+            body.innerHTML = "";
+            const inputs = document.getElementById('history-inputs').children;
+            for (let r of inputs) {
+                const name = r.querySelector('.h-name').value;
+                const curr = parseFloat(r.querySelector('.h-curr').value) || 0;
+                const prev = parseFloat(r.querySelector('.h-prev').value) || 0;
+                const date = r.querySelector('.h-date').value;
+                if (!name && !curr && !prev) continue;
+
+                let diffHtml = "-";
+                if (prev > 0 && curr > 0) {
+                    const diff = curr - prev;
+                    if (diff > 0) diffHtml = `<span class="price-up">▲ ${fmt(diff, 'MXN')}</span> (인상)`;
+                    else if (diff < 0) diffHtml = `<span class="price-down">▼ ${fmt(Math.abs(diff), 'MXN')}</span> (인하)`;
+                    else diffHtml = `<span class="price-same">- 변동없음</span>`;
+                }
+
+                body.innerHTML += `<tr>
+                <td>${name}</td>
+                <td style="text-align:right; font-weight:bold;">${fmt(curr, 'MXN')}</td>
+                <td style="text-align:right; color:#666;">${fmt(prev, 'MXN')}</td>
+                <td style="text-align:center;">${date}</td>
+                <td style="text-align:center;">${diffHtml}</td>
+            </tr>`;
+            }
+        }
+
+        function createBudgetInputs(suffix) {
+            const pC = document.getElementById(`budget-plan-${suffix}`);
+            const aC = document.getElementById(`budget-act-${suffix}`);
+            pC.innerHTML = ""; aC.innerHTML = "";
+            for (let i = 1; i <= 12; i++) {
+                pC.innerHTML += `<input type="number" class="b-plan-${suffix}" placeholder="${i}월 (Mes)" onkeyup="updateView()">`;
+                aC.innerHTML += `<input type="number" class="b-act-${suffix}" placeholder="${i}월 (Mes)" onkeyup="updateView()">`;
+            }
+        }
+        function switchBudgetTab(plant) {
+            document.querySelectorAll('.budget-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.budget-container').forEach(c => c.classList.remove('active'));
+            if (plant === 'P1') {
+                document.querySelectorAll('.budget-tab')[0].classList.add('active');
+                document.getElementById('budget-input-p1').classList.add('active');
+            } else {
+                document.querySelectorAll('.budget-tab')[1].classList.add('active');
+                document.getElementById('budget-input-p3').classList.add('active');
+            }
+        }
+        function calcBudget(suffix, cost, isTarget) {
+            let tp = 0, tu = 0;
+            const pp = document.querySelectorAll(`.b-plan-${suffix}`);
+            const aa = document.querySelectorAll(`.b-act-${suffix}`);
+            let mh = `<tr><th style="background:#f8f9fa;">Plan</th>`;
+            let ah = `<tr><th style="background:#f8f9fa;">Act</th>`;
+            for (let i = 0; i < 12; i++) {
+                const p = parseFloat(pp[i].value) || 0;
+                const a = parseFloat(aa[i].value) || 0;
+                tp += p; tu += a;
+                mh += `<td>${p ? fmt(p, 'MXN') : '-'}</td>`;
+                ah += `<td>${a ? fmt(a, 'MXN') : '-'}</td>`;
+            }
+            mh += "</tr>"; ah += "</tr>";
+            document.getElementById(`out-month-${suffix}`).innerHTML = mh + ah;
+            const req = isTarget ? cost : 0;
+            const bal = tp - tu - req;
+            const rate = tp > 0 ? ((tu + req) / tp) * 100 : 0;
+
+            document.getElementById(`${suffix}-year-plan`).innerText = fmt(tp, 'MXN');
+            document.getElementById(`${suffix}-year-used`).innerText = fmt(tu, 'MXN');
+            document.getElementById(`${suffix}-this-req`).innerText = fmt(req, 'MXN');
+            document.getElementById(`${suffix}-bal`).innerText = fmt(bal, 'MXN');
+            document.getElementById(`${suffix}-rate-text`).innerText = rate.toFixed(1) + "%";
+
+            const bar = document.getElementById(`${suffix}-bar`);
+            bar.style.width = (rate > 100 ? 100 : rate) + "%";
+            bar.className = 'bar-fill ' + (rate > 100 ? 'danger' : (rate > 80 ? 'warning' : ''));
+        }
+
+        function collectData() {
+            const visibility = {
+                overview: document.getElementById('chk-overview').checked,
+                issue: document.getElementById('chk-issue').checked,
+                cost: document.getElementById('chk-cost').checked,
+                compare: document.getElementById('chk-compare').checked,
+                budget: document.getElementById('chk-budget').checked,
+                schedule: document.getElementById('chk-schedule').checked
+            };
+
+            return {
+                plant: document.getElementById('in-plant').value,
+                date: document.getElementById('in-date').value,
+                dept: document.getElementById('in-dept').value,
+                docName: document.getElementById('in-doc-name').value,
+                category: document.getElementById('in-category').value,
+                rate: document.getElementById('in-rate').value,
+                overview: document.getElementById('in-overview').value,
+                overviewImages: Array.from(document.querySelectorAll('.ov-img-data')).map(i => i.value),
+                issues: getDynamicValues('issue-inputs', ['.issue-loc', '.issue-desc', '.temp-img'], ['loc', 'desc', 'img']),
+                costsMXN: getDynamicValues('mxn-inputs', ['.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['name', 'vendor', 'stock', 'qty', 'price']),
+                costsKRW: getDynamicValues('krw-inputs', ['.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['name', 'vendor', 'stock', 'qty', 'price']),
+                compMXN: getDynamicValues('compare-mxn-inputs', ['.cmp-desc-MXN', '.cmp-sel-vendor-MXN', '.cmp-sel-price-MXN', '.cmp-cmp-vendor-MXN', '.cmp-cmp-price-MXN'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']),
+                compKRW: getDynamicValues('compare-krw-inputs', ['.cmp-desc-KRW', '.cmp-sel-vendor-KRW', '.cmp-sel-price-KRW', '.cmp-cmp-vendor-KRW', '.cmp-cmp-price-KRW'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']),
+                history: getDynamicValues('history-inputs', ['.h-name', '.h-curr', '.h-prev', '.h-date'], ['name', 'curr', 'prev', 'date']),
+                budgetP1: { plan: Array.from(document.querySelectorAll('.b-plan-p1')).map(e => e.value), act: Array.from(document.querySelectorAll('.b-act-p1')).map(e => e.value) },
+                budgetP3: { plan: Array.from(document.querySelectorAll('.b-plan-p3')).map(e => e.value), act: Array.from(document.querySelectorAll('.b-act-p3')).map(e => e.value) },
+                schedule: getDynamicValues('schedule-inputs', ['.s-start', '.s-end', '.s-desc'], ['start', 'end', 'desc']),
+                visibility: visibility
+            };
+        }
+
+        function applyDataToForm(data) {
+            document.getElementById('in-plant').value = data.plant;
+            document.getElementById('in-date').value = data.date;
+            document.getElementById('in-dept').value = data.dept;
+            document.getElementById('in-doc-name').value = data.docName;
+            document.getElementById('in-category').value = data.category || '수선 (Reparación)';
+            document.getElementById('in-rate').value = data.rate;
+            document.getElementById('in-overview').value = data.overview;
+
+            if (data.visibility) {
+                document.getElementById('chk-overview').checked = data.visibility.overview; toggleSection('sec-overview', data.visibility.overview);
+                document.getElementById('chk-issue').checked = data.visibility.issue; toggleSection('sec-issue', data.visibility.issue);
+                document.getElementById('chk-cost').checked = data.visibility.cost; toggleSection('sec-cost', data.visibility.cost);
+                document.getElementById('chk-compare').checked = data.visibility.compare; toggleSection('sec-compare', data.visibility.compare);
+                document.getElementById('chk-budget').checked = data.visibility.budget; toggleSection('sec-budget', data.visibility.budget);
+                document.getElementById('chk-schedule').checked = data.visibility.schedule; toggleSection('sec-schedule', data.visibility.schedule);
+            }
+
+            document.getElementById('overview-img-list').innerHTML = "";
+            if (data.overviewImages) {
+                data.overviewImages.forEach(src => {
+                    if (!src) return;
+                    addOverviewImgInput();
+                    const last = document.getElementById('overview-img-list').lastElementChild;
+                    last.querySelector('.ov-img-data').value = src;
+                });
+            }
+
+            restoreDynamicRows('issue-inputs', data.issues, addIssueRow, ['.issue-loc', '.issue-desc', '.temp-img'], ['loc', 'desc', 'img']);
+            restoreDynamicRows('mxn-inputs', data.costsMXN, () => addCostRow('MXN'), ['.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['name', 'vendor', 'stock', 'qty', 'price']);
+            restoreDynamicRows('krw-inputs', data.costsKRW, () => addCostRow('KRW'), ['.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['name', 'vendor', 'stock', 'qty', 'price']);
+            restoreDynamicRows('compare-mxn-inputs', data.compMXN, () => addCompareRow('MXN'), ['.cmp-desc-MXN', '.cmp-sel-vendor-MXN', '.cmp-sel-price-MXN', '.cmp-cmp-vendor-MXN', '.cmp-cmp-price-MXN'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']);
+            restoreDynamicRows('compare-krw-inputs', data.compKRW, () => addCompareRow('KRW'), ['.cmp-desc-KRW', '.cmp-sel-vendor-KRW', '.cmp-sel-price-KRW', '.cmp-cmp-vendor-KRW', '.cmp-cmp-price-KRW'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']);
+            restoreDynamicRows('history-inputs', data.history, addHistoryRow, ['.h-name', '.h-curr', '.h-prev', '.h-date'], ['name', 'curr', 'prev', 'date']);
+
+            if (data.budgetP1) { const pp = document.querySelectorAll('.b-plan-p1'); const aa = document.querySelectorAll('.b-act-p1'); data.budgetP1.plan.forEach((v, i) => pp[i].value = v); data.budgetP1.act.forEach((v, i) => aa[i].value = v); }
+            if (data.budgetP3) { const pp = document.querySelectorAll('.b-plan-p3'); const aa = document.querySelectorAll('.b-act-p3'); data.budgetP3.plan.forEach((v, i) => pp[i].value = v); data.budgetP3.act.forEach((v, i) => aa[i].value = v); }
+
+            restoreDynamicRows('schedule-inputs', data.schedule, () => addScheduleRow(), ['.s-start', '.s-end', '.s-desc'], ['start', 'end', 'desc']);
+            updateView();
+        }
+
+        function performAutoSave() {
+            const data = collectData();
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+                const now = new Date();
+                document.getElementById('save-status').innerText = "Last saved: " + now.toTimeString().split(' ')[0];
+            } catch (e) {
+                console.error("AutoSave Failed (Quota?): ", e);
+                document.getElementById('save-status').innerText = "Auto-save failed (too large)";
+            }
+        }
+
+        function checkAutoSave() {
+            const saved = localStorage.getItem(SAVE_KEY);
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    applyDataToForm(data);
+                    // Use showToast if available, otherwise console.log
+                    if (typeof showToast === 'function') {
+                        showToast("☁️ 자동 저장된 내용을 불러왔습니다. (Auto-loaded)");
+                    }
+                } catch (e) {
+                    console.error("Auto-load failed", e);
+                }
+            }
+        }
+
+        function resetForm() {
+            if (confirm("모든 내용을 지우고 초기화하시겠습니까? (Reset all data?)")) {
+                localStorage.removeItem(SAVE_KEY);
+                location.reload();
+            }
+        }
+
+        function saveData() {
+            const data = collectData();
+            const docName = data.docName || "Report";
+            const safeName = docName.replace(/[\/\\*?"<>|:]/g, "_");
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `${safeName}_${data.date}.json`;
+            link.click();
+        }
+
+        function loadDataFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    applyDataToForm(data);
+                } catch (e) { console.error(e); alert("Load Error"); }
+            }
+            reader.readAsText(file);
+        }
+
+        function getDynamicValues(id, sels, keys) {
+            const res = [];
+            for (let r of document.getElementById(id).children) {
+                let obj = {};
+                sels.forEach((s, i) => { const el = r.querySelector(s); if (el.tagName === 'IMG') obj[keys[i]] = el.src; else obj[keys[i]] = el.value; });
+                res.push(obj);
+            }
+            return res;
+        }
+        function restoreDynamicRows(id, data, fn, sels, keys) {
+            document.getElementById(id).innerHTML = "";
+            if (!data) { fn(); return; }
+            data.forEach(d => { fn(); const r = document.getElementById(id).lastElementChild; sels.forEach((s, i) => { const el = r.querySelector(s); if (el.tagName === 'IMG') el.src = d[keys[i]]; else el.value = d[keys[i]]; }); });
+        }
+    </script>
+
+</body>
+
+</html>

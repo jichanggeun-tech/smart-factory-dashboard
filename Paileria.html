@@ -1,0 +1,1435 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Paileria Production</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --bg-body: #111827;
+            --bg-nav: #1f2937;
+            --bg-card: #2d3748;
+            --bg-input: #374151;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --blue: #3b82f6;
+            --border: #4b5563;
+            --success: #15803d;
+            /* Darker Green for visibility */
+            --text-dark: #111827;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-body);
+            display: flex;
+            height: 100vh;
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .input-panel {
+            width: 600px;
+            min-width: 450px;
+            background: var(--bg-nav);
+            color: var(--text-main);
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-right: 1px solid var(--border);
+            z-index: 10;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .input-panel h2 {
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 12px;
+            font-size: 1.4rem;
+            margin: 0;
+            color: var(--blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input,
+        textarea,
+        select {
+            background: var(--bg-input);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: 2px solid var(--blue);
+            border-color: transparent;
+        }
+
+
+
+        /* Sidebar Controls (Home + Toggle wrapper) */
+        /* Sidebar Controls (Home + Toggle wrapper) */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 15px;
+            left: 15px !important;
+            z-index: 1001;
+            transition: none;
+        }
+
+        .home-btn {
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            border-radius: 20px 0 0 20px;
+            width: 70px;
+            height: 36px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .home-btn:hover {
+            background: #4285F4;
+            color: #fff;
+        }
+
+        .btn-toggle-sidebar {
+            width: 70px;
+            height: 36px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-left: none;
+            border-radius: 0 20px 20px 0;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white;
+            background: #334155;
+        }
+
+        /* Full Screen Mode */
+        body.full-screen .input-panel {
+            display: none;
+        }
+
+        body.full-screen .resizer {
+            display: none;
+        }
+
+        body.full-screen .sidebar-controls {
+            position: fixed;
+            left: 15px !important;
+            top: 15px;
+            z-index: 100;
+        }
+
+        .preview-panel {
+            flex: 1;
+            background: var(--bg-report);
+            color: #1f2937;
+            /* Explicitly set text color for potentially light backgrounds */
+            overflow-y: auto;
+            padding: 40px;
+            display: block;
+            position: relative;
+        }
+
+        .report-container {
+            width: 100%;
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            padding: 60px;
+            box-sizing: border-box;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            position: relative;
+            color: var(--text-dark);
+            min-height: 100%;
+        }
+
+        .summary-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 40px;
+        }
+
+        .summary-row {
+            display: grid;
+            gap: 10px;
+        }
+
+        .summary-row.row-top {
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .summary-row.row-bottom {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .summary-card {
+            padding: 20px 10px;
+            border-radius: 10px;
+            background: white;
+            border: 1px solid #edf2f7;
+            text-align: center;
+            border-bottom: 4px solid #cbd5e0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+        }
+
+        .summary-card h4 {
+            margin: 0 0 10px 0;
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #1a202c;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin: 40px 0 15px 0;
+            display: flex;
+            align-items: center;
+            color: #1a202c;
+        }
+
+        .section-title::before {
+            content: "";
+            width: 6px;
+            height: 24px;
+            background: var(--accent);
+            margin-right: 12px;
+            border-radius: 3px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 11.5px;
+            margin-bottom: 20px;
+            table-layout: fixed;
+            border: 1px solid #6b7280;
+            /* Outer border */
+        }
+
+        th,
+        td {
+            border: 1px solid #9ca3af;
+            /* Darker border for visibility */
+            padding: 12px 6px;
+            text-align: center;
+            vertical-align: middle;
+            background-color: #fff;
+            word-break: break-all;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #4a5568;
+            font-weight: 800;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #fafbfd;
+        }
+
+        td[rowspan] {
+            background-color: #fff !important;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 50px;
+            font-size: 10px;
+            font-weight: 800;
+            color: white;
+            display: inline-block;
+        }
+
+        .bg-done {
+            background: #15803d;
+            /* Verified Visible Green */
+        }
+
+        .bg-prog {
+            background: #0f766e;
+            /* Darker Teal */
+        }
+
+        .bg-new {
+            background: #64748b;
+        }
+
+        .bg-mod {
+            background: #8b5cf6;
+        }
+
+        .bar-container {
+            width: 100%;
+            height: 12px;
+            background: #edf2f7;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e2e8f0;
+        }
+
+        .bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #0ea5e9);
+            transition: width 0.8s;
+        }
+
+        .bar-text {
+            font-size: 10px;
+            font-weight: 800;
+            margin-top: 3px;
+            display: block;
+            color: var(--text-muted);
+        }
+
+        .form-section {
+            background: #343a40;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #495057;
+            margin-bottom: 10px;
+        }
+
+        .project-card {
+            background: #2b3035;
+            border: 1px solid #495057;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #3c4249;
+            height: 36px;
+            display: flex;
+            align-items: stretch;
+            border-bottom: 1px solid #495057;
+        }
+
+        /* Move Controls */
+        .move-controls {
+            width: 26px;
+            background: #343a40;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #495057;
+        }
+
+        .btn-move {
+            flex: 1;
+            border: none;
+            background: transparent;
+            color: #adb5bd;
+            cursor: pointer;
+            font-size: 9px;
+            line-height: 1;
+            padding: 0;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-move:hover {
+            background: #495057;
+            color: var(--accent);
+        }
+
+        .btn-move:first-child {
+            border-bottom: 1px solid #495057;
+        }
+
+        .header-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+
+        .header-content:hover {
+            background: #454d55;
+        }
+
+        .card-title {
+            color: #e9ecef;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+
+        .card-info {
+            font-size: 0.75rem;
+            color: #adb5bd;
+            margin-right: 5px;
+        }
+
+        .fold-icon {
+            font-size: 0.7rem;
+            color: #adb5bd;
+            transition: transform 0.2s;
+        }
+
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0 8px;
+            background: #343a40;
+            border-left: 1px solid #495057;
+        }
+
+        .btn-sm {
+            width: 24px;
+            height: 24px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+        }
+
+        .btn-del {
+            background: var(--danger);
+        }
+
+        .btn-dup {
+            background: #6f42c1;
+        }
+
+        .card-body {
+            padding: 15px;
+            display: block;
+        }
+
+        .grid-days-labels {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-bottom: 2px;
+        }
+
+        .grid-days-labels span {
+            font-size: 0.65rem;
+            color: #adb5bd;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .grid-days {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 0.7rem;
+            color: #adb5bd;
+            font-weight: 600;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #6c757d;
+            border-radius: 4px;
+            background: #fff;
+            color: #212529;
+            font-size: 0.85rem;
+            box-sizing: border-box;
+        }
+
+        .btn {
+            background: #374151;
+            border: 1px solid #4b5563;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+            height: 40px;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            filter: brightness(1.1);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(33, 37, 41, 0.95);
+            color: var(--accent);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            z-index: 9999;
+            display: none;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            border: 1px solid var(--accent);
+            font-weight: bold;
+        }
+
+        @media print {
+
+            body,
+            html {
+                margin: 0;
+                padding: 0;
+                height: auto !important;
+                overflow: visible !important;
+                background: white;
+            }
+
+            .input-panel,
+            .resizer,
+            .btn,
+            .form-section,
+            .toast,
+            .btn-toggle-sidebar {
+                display: none !important;
+            }
+
+            .preview-panel {
+                display: block;
+                position: relative;
+                width: 100% !important;
+                height: auto !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                overflow: visible !important;
+                background: white;
+            }
+
+            .report-container {
+                width: 100% !important;
+                max-width: none !important;
+                margin: 0 !important;
+                padding: 20px !important;
+                box-shadow: none !important;
+                border: none !important;
+                border-radius: 0 !important;
+            }
+
+            table {
+                page-break-inside: auto;
+            }
+
+            tr {
+                page-break-inside: avoid;
+                page-break-after: auto;
+            }
+
+            .bar-fill,
+            th {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="saveToast" class="toast">💾 저장 완료! (Saved)</div>
+    <div id="cloudToast" class="toast" style="border-color:#4285F4; color:#4285F4;">☁️ 처리 완료!</div>
+
+    <datalist id="model-list">
+        <option value="6500H">
+        <option value="6500C">
+    </datalist>
+    <datalist id="loc-list">
+        <option value="LH">
+        <option value="RH">
+        <option value="FRE">
+    </datalist>
+
+    <div class="input-panel" id="leftPanel">
+        <h2>
+        </h2>
+
+        <div style="display:flex; gap:5px; margin-bottom:10px;">
+            <button class="btn" onclick="window.print()" style="flex:1;">PDF 변환 (PDF)</button>
+            <button class="btn" onclick="exportImage()" style="flex:1;">스크린샷 (Captura)</button>
+        </div>
+
+        <div class="form-section">
+            <h3 style="font-size:0.9rem; border-bottom:1px solid #555; padding-bottom:5px; margin-top:0;">📂 구글 시트 및 파일
+                (Google Sheet & File)
+            </h3>
+
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <button class="btn" onclick="saveToCloud()">☁️ 주차별 저장</button>
+                <button class="btn" onclick="openCloudModal()">☁️ 불러오기</button>
+            </div>
+            <div style="display:flex; gap:8px; margin-bottom:10px;">
+                <button class="btn" onclick="loadPrevWeekData()">📥 전주 실적 → Prev 자동입력</button>
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;"><label>로고 변경 (Logo)</label><input type="file" id="logo-input" accept="image/*"
+                        onchange="handleLogo(this)"></div>
+                <div style="flex:1;"><label>보고 날짜 (Fecha)</label><input type="date" id="in-date"
+                        onchange="renderReport();">
+                </div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:12px;">
+                <button class="btn" style="flex:1;" onclick="manualSaveFile()">💾 파일 백업</button>
+                <label class="btn" style="flex:1; cursor:pointer;">
+                    📂 파일 열기 <input type="file" id="file-input" accept=".json" onchange="handleFileLoad(this)"
+                        style="display:none;">
+                </label>
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h3 style="font-size:0.9rem; border-bottom:1px solid #555; padding-bottom:5px; margin-top:0;">
+                📊 생산 실적 입력 (Registro de Producción) <span
+                    style="font-size:0.7rem; color:#aaa; font-weight:normal;">(화살표로 이동)</span>
+            </h3>
+            <div id="project-inputs" style="margin-top:10px;"></div>
+            <button class="btn" style="margin-top:10px;" onclick="addProjectRow()">+ 실적 항목 추가</button>
+        </div>
+
+        <div class="form-section" style="border: 1px solid var(--warning);">
+            <h3
+                style="font-size:0.9rem; border-bottom:1px solid var(--warning); padding-bottom:5px; margin-top:0; color:var(--warning);">
+                ⚙️ 가용 능력 기초 데이터 (Datos Básicos de Capacidad)</h3>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
+                <input type="number" id="base-l" value="280" placeholder="Base LH" onkeyup="renderReport();">
+                <input type="number" id="base-r" value="140" placeholder="Base RH" onkeyup="renderReport();">
+                <input type="number" id="base-f" value="244" placeholder="Base FRE" onkeyup="renderReport();">
+                <input type="number" id="global-weekly-meta" value="0" placeholder="금주 목표" onkeyup="renderReport();"
+                    style="border:1px solid var(--warning);">
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+    <div class="sidebar-controls">
+        <a class="home-btn" href="index.html">🏠 Home</a>
+        <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+    </div>
+
+
+
+
+
+    <div class="preview-panel">
+        <h2 style="margin: 0 0 15px 0; color: #111827; font-size: 24px; font-weight: bold;">
+            Paileria Production
+        </h2>
+        <div class="report-container" id="report-content">
+            <div
+                style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:4px solid var(--text-dark); padding-bottom:15px; margin-bottom:40px;">
+                <div style="display:flex; align-items:center; gap:25px;">
+                    <img id="report-logo" src="" alt="" style="display:none; max-height:60px;">
+                    <div>
+                        <h1 style="margin:0; font-size:28px; font-weight:900;">PAILERIA 주간 생산 현황 보고서</h1>
+                        <div style="font-size:14px; color:var(--text-muted); font-weight:700; margin-top:5px;">Weekly
+                            Production Performance Report</div>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:20px; font-weight:900; color:var(--accent);" id="out-week-display">Week --
+                    </div>
+                    <div style="font-size:14px; color:var(--text-muted); font-weight:700;" id="out-date"></div>
+                </div>
+            </div>
+
+            <div class="summary-container">
+                <div class="summary-row row-top">
+                    <div class="summary-card">
+                        <h4>전체 목표</h4>
+                        <div class="value" id="sum-meta">0</div>
+                    </div>
+                    <div class="summary-card" style="border-bottom-color:#0ea5e9;">
+                        <h4>현재 완료</h4>
+                        <div class="value" id="sum-accum" style="color:#0ea5e9;">0</div>
+                    </div>
+                    <div class="summary-card" style="border-bottom-color:#f97316;">
+                        <h4>남은 수량</h4>
+                        <div class="value" id="sum-remain" style="color:#f97316;">0</div>
+                    </div>
+                    <div class="summary-card" style="border-bottom-color:#6f42c1;">
+                        <h4>금주 목표</h4>
+                        <div class="value" id="sum-weekly-target" style="color:#6f42c1;">0</div>
+                    </div>
+                    <div class="summary-card" style="border-bottom-color:var(--warning);">
+                        <h4>금주 실적</h4>
+                        <div class="value" id="sum-weekly-prod" style="color:#d97706;">0</div>
+                    </div>
+                </div>
+                <div class="summary-row row-bottom">
+                    <div class="summary-card" style="border-bottom-color:var(--success);">
+                        <h4>주간 달성률</h4>
+                        <div class="value" id="sum-weekly-rate" style="color:var(--success);">0%</div>
+                    </div>
+                    <div class="summary-card" style="border-bottom-color:var(--danger);">
+                        <h4>종합 진도율</h4>
+                        <div class="value" id="sum-rate" style="color:var(--danger);">0%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section-title">1. 프로젝트별 생산 실적 및 진행 현황</div>
+            <table id="tbl-projects">
+                <thead>
+                    <tr>
+                        <th width="65">상태</th>
+                        <th width="60">유형</th>
+                        <th width="110">모델</th>
+                        <th width="80">구분</th>
+                        <th width="70">위치</th>
+                        <th width="50">적재</th>
+                        <th width="75">금주실적</th>
+                        <th width="85">전체목표</th>
+                        <th width="85">합계</th>
+                        <th width="140">진도율</th>
+                    </tr>
+                </thead>
+                <tbody id="out-prod-body"></tbody>
+            </table>
+
+            <div class="section-title">2-1. 납품 대차 보유 현황 및 적재 분석</div>
+            <table id="tbl-status">
+                <thead>
+                    <tr>
+                        <th width="160">모델 분류</th>
+                        <th width="120">구분</th>
+                        <th width="100">위치</th>
+                        <th style="font-weight:900;">대차 수량</th>
+                        <th>적재/대</th>
+                        <th style="font-weight:900;">현재 적재(EA)</th>
+                        <th>계획(목표)</th>
+                    </tr>
+                </thead>
+                <tbody id="cart-status-body"></tbody>
+            </table>
+
+            <div class="section-title">2-2. 최종 저장 능력 분석 (SET 환산)</div>
+            <table id="tbl-capa">
+                <thead>
+                    <tr>
+                        <th>차종 모델</th>
+                        <th>FRE 적재 (EA)</th>
+                        <th>LH 적재 (EA)</th>
+                        <th>RH 적재 (EA)</th>
+                        <th style="background:#f0f7ff; color:var(--accent); font-weight:900;">가용 저장 SET</th>
+                    </tr>
+                </thead>
+                <tbody id="capa-status-body"></tbody>
+            </table>
+
+            <div id="report-note"
+                style="margin:20px 0; padding:20px; border-radius:8px; background:#f8fafc; border:1px dashed #cbd5e0; font-size:13px; color:#4a5568; line-height:1.8;">
+                <b>※ 비고 (Note)</b> <br>
+                - 대차 관리 대장은 별도 파일로 관리됩니다.<br>
+                - 본 보고서의 '저장 능력'은 기초 데이터와 개조 수량을 바탕으로 산출됩니다.
+            </div>
+        </div>
+    </div>
+
+    <!-- Cloud Modal -->
+    <div id="cloud-modal"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+        <div
+            style="background:#1e1e1e; border-radius:12px; padding:25px; width:420px; max-height:80vh; overflow-y:auto; border:1px solid #444;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; color:#4285F4;">☁️ 클라우드 주차 목록</h3>
+                <button onclick="document.getElementById('cloud-modal').style.display='none'"
+                    style="background:none; border:none; color:#aaa; font-size:1.5rem; cursor:pointer;">✕</button>
+            </div>
+            <ul id="cloud-list-ul" style="list-style:none; padding:0; margin:0;"></ul>
+        </div>
+    </div>
+
+    <style>
+        .cloud-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            margin-bottom: 6px;
+            background: #2b2b2b;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 1px solid transparent;
+        }
+
+        .cloud-item:hover {
+            background: #3a3a3a;
+            border-color: #4285F4;
+        }
+
+        .cloud-item.loaded {
+            border-color: #34A853;
+            opacity: 0.7;
+        }
+    </style>
+
+    <script>
+        // ==========================================
+        // [중요] 여기에 배포한 구글 웹 앱 URL을 붙여넣으세요
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIH4aOpc0L_WVTsLbHNkJ76RjEbjZZ9Upswl1APzDr72_aTY-7j_L7v0lok7EWh_v-/exec";
+        // ==========================================
+
+        const STORAGE_KEY = 'paileria_v8_3_cloud';
+        let currentLogoBase64 = "";
+
+        // === Cloud Functions (주차별 저장) ===
+        function getCurrentWeekId() {
+            const d = document.getElementById('in-date').value;
+            if (!d) return null;
+            const w = getSimpleWeek(d);
+            const y = d.split('-')[0];
+            return `${y}-W${String(w).padStart(2, '0')}`;
+        }
+
+        async function saveToCloud() {
+            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어서 APPS_SCRIPT_URL 변수에 구글 주소를 넣어주세요!"); return; }
+
+            const weekId = getCurrentWeekId();
+            if (!weekId) { alert("보고 날짜를 먼저 입력해주세요."); return; }
+            if (!confirm(`[${weekId}] 주차 데이터를 구글 시트에 저장하시겠습니까?`)) return;
+
+            const btn = event.target; const orgTxt = btn.innerText;
+            btn.innerText = "저장 중..."; btn.disabled = true;
+
+            try {
+                const projectsData = Array.from(document.querySelectorAll('.project-card')).map(row => ({
+                    model: row.querySelector('.p-model').value, class: row.querySelector('.p-class').value, loc: row.querySelector('.p-loc').value,
+                    type: row.querySelector('.p-type').value, loadCap: row.querySelector('.p-loadCap').value,
+                    isDone: row.querySelector('.p-done').checked, target: row.querySelector('.p-target').value, prev: row.querySelector('.p-prev').value,
+                    mon: row.querySelector('.p-mon').value, tue: row.querySelector('.p-tue').value, wed: row.querySelector('.p-wed').value,
+                    thu: row.querySelector('.p-thu').value, fri: row.querySelector('.p-fri').value, sat: row.querySelector('.p-sat').value
+                }));
+
+                const payload = {
+                    weekId: weekId,
+                    d: document.getElementById('in-date').value,
+                    logo: currentLogoBase64,
+                    base: { l: document.getElementById('base-l').value, r: document.getElementById('base-r').value, f: document.getElementById('base-f').value, wm: document.getElementById('global-weekly-meta').value },
+                    projects: projectsData
+                };
+
+                await fetch(APPS_SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "text/plain" },
+                    body: JSON.stringify(payload)
+                });
+
+                showToast(`☁️ [${weekId}] 저장 완료!`);
+            } catch (error) {
+                alert("오류: " + error.message);
+            } finally {
+                btn.innerText = orgTxt; btn.disabled = false;
+            }
+        }
+
+        async function openCloudModal() {
+            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어서 APPS_SCRIPT_URL 변수에 구글 주소를 넣어주세요!"); return; }
+
+            const modal = document.getElementById('cloud-modal');
+            const listUl = document.getElementById('cloud-list-ul');
+            listUl.innerHTML = '<li style="text-align:center; padding:10px; color:#aaa;">로딩 중...</li>';
+            modal.style.display = 'flex';
+
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?cmd=list&t=${Date.now()}`);
+                const text = await response.text();
+                let result;
+                try { result = JSON.parse(text); } catch (pe) {
+                    listUl.innerHTML = `<li style="color:red; text-align:center;">서버 응답 파싱 실패</li>`;
+                    return;
+                }
+
+                listUl.innerHTML = '';
+                if (result.list && result.list.length > 0) {
+                    result.list.forEach(item => {
+                        const li = document.createElement('li');
+                        li.className = 'cloud-item';
+                        li.innerHTML = `
+                            <div>
+                                <div style="font-weight:bold; font-size:1.1rem; color:#4285F4;">${item.weekId}</div>
+                                <div style="font-size:0.8rem; color:#aaa;">날짜: ${item.date} | 항목: ${item.projectCount}건</div>
+                            </div>
+                            <div style="font-size:0.75rem; color:#888;">${item.updated}</div>
+                        `;
+                        li.onclick = () => loadCloudWeek(item.weekId);
+                        listUl.appendChild(li);
+                    });
+                } else {
+                    listUl.innerHTML = '<li style="text-align:center; padding:10px; color:#aaa;">저장된 데이터가 없습니다.</li>';
+                }
+            } catch (e) {
+                listUl.innerHTML = `<li style="color:red; text-align:center;">로드 실패: ${e.message}</li>`;
+            }
+        }
+
+        async function loadCloudWeek(weekId) {
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?cmd=load&weekId=${weekId}&t=${Date.now()}`);
+                const text = await response.text();
+                let result;
+                try { result = JSON.parse(text); } catch (pe) { alert('서버 응답 파싱 실패'); return; }
+                if (result.error) { alert('서버 에러: ' + result.error); return; }
+
+                const data = result.data || result;
+
+                document.getElementById('in-date').value = data.d || '';
+                currentLogoBase64 = data.logo || '';
+                if (currentLogoBase64) { document.getElementById('report-logo').src = currentLogoBase64; document.getElementById('report-logo').style.display = 'block'; }
+
+                if (data.base) {
+                    document.getElementById('base-l').value = data.base.l;
+                    document.getElementById('base-r').value = data.base.r;
+                    document.getElementById('base-f').value = data.base.f;
+                    document.getElementById('global-weekly-meta').value = data.base.wm;
+                }
+
+                document.getElementById('project-inputs').innerHTML = '';
+                if (data.projects) data.projects.forEach(p => addProjectRow(normalizeProjectData(p)));
+
+                setTimeout(() => renderReport(), 300);
+                document.getElementById('cloud-modal').style.display = 'none';
+                showToast(`☁️ [${weekId}] 불러오기 완료!`);
+            } catch (e) {
+                alert('데이터 로드 실패: ' + e.toString());
+            }
+        }
+
+        // === 전주 실적 → Prev 자동 입력 ===
+        async function loadPrevWeekData() {
+            const weekId = getCurrentWeekId();
+            if (!weekId) { alert('보고 날짜를 먼저 입력해주세요.'); return; }
+
+            // 전주 weekId 계산
+            const parts = weekId.split('-W');
+            let year = parseInt(parts[0]);
+            let week = parseInt(parts[1]) - 1;
+            if (week <= 0) { year--; week = 52; }
+            const prevWeekId = `${year}-W${String(week).padStart(2, '0')}`;
+
+            if (!confirm(`[${prevWeekId}] 전주 실적을 Prev 항목에 자동 입력하시겠습니까?`)) return;
+
+            try {
+                const response = await fetch(`${APPS_SCRIPT_URL}?cmd=load&weekId=${prevWeekId}&t=${Date.now()}`);
+                const text = await response.text();
+                let result;
+                try { result = JSON.parse(text); } catch (pe) { alert('전주 데이터 파싱 실패'); return; }
+                if (result.error) { alert(`전주(${prevWeekId}) 데이터 없음: ${result.error}`); return; }
+
+                const prevData = result.data || result;
+                if (!prevData.projects || prevData.projects.length === 0) {
+                    alert('전주 프로젝트 데이터가 없습니다.'); return;
+                }
+
+                // 전주 프로젝트별 누적 합계 계산 (model+loc을 키로 매칭)
+                const prevTotals = {};
+                prevData.projects.forEach(p => {
+                    const key = `${(p.model || '').toUpperCase()}_${(p.loc || '').toUpperCase()}`;
+                    const prev = parseFloat(p.prev) || 0;
+                    const week = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'].reduce((a, d) => a + (parseFloat(p[d]) || 0), 0);
+                    prevTotals[key] = (prevTotals[key] || 0) + prev + week;
+                });
+
+                // 현재 프로젝트 카드에 Prev 자동 입력
+                let matched = 0;
+                document.querySelectorAll('.project-card').forEach(card => {
+                    const model = card.querySelector('.p-model').value.toUpperCase();
+                    const loc = card.querySelector('.p-loc').value.toUpperCase();
+                    const key = `${model}_${loc}`;
+                    if (prevTotals[key] !== undefined) {
+                        card.querySelector('.p-prev').value = prevTotals[key];
+                        matched++;
+                    }
+                });
+
+                // 보고 날짜의 요일 이후 요일들을 0으로 초기화
+                const inDate = document.getElementById('in-date').value;
+                if (inDate) {
+                    const dayOfWeek = new Date(inDate).getDay(); // 0=일, 1=월, ..., 6=토
+                    const dayFields = ['p-mon', 'p-tue', 'p-wed', 'p-thu', 'p-fri', 'p-sat']; // index 0=월(1), ..., 5=토(6)
+                    document.querySelectorAll('.project-card').forEach(card => {
+                        for (let i = 0; i < dayFields.length; i++) {
+                            const fieldDayNum = i + 1; // 월=1, 화=2, ..., 토=6
+                            if (fieldDayNum >= dayOfWeek) {
+                                card.querySelector('.' + dayFields[i]).value = 0;
+                            }
+                        }
+                    });
+                }
+
+                renderReport();
+                showToast(`📥 전주(${prevWeekId}) 실적 → ${matched}개 항목 Prev에 반영!`);
+            } catch (e) {
+                alert('전주 데이터 로드 실패: ' + e.toString());
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('cloudToast');
+            t.innerText = msg; t.style.display = 'block';
+            setTimeout(() => { t.style.display = 'none'; }, 2500);
+        }
+
+        // === Existing Logic ===
+        const leftSide = document.getElementById('leftPanel');
+
+        function toggleSidebar() {
+            document.body.classList.toggle('full-screen');
+            const btn = document.getElementById('btn-toggle-sidebar');
+
+            if (document.body.classList.contains('full-screen')) {
+                btn.innerText = "▶";
+                btn.title = "Show Sidebar";
+            } else {
+                btn.innerText = "◀";
+                btn.title = "Hide Sidebar";
+            }
+        }
+
+        function cleanNum(val, defaultVal = 0) { if (val === null || val === undefined || val === "") return defaultVal; return parseFloat(val) || defaultVal; }
+
+        function compressImage(file, callback) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 450;
+                    let width = img.width; let height = img.height;
+                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                    canvas.width = width; canvas.height = height;
+                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
+                    callback(canvas.toDataURL('image/jpeg', 0.8));
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleLogo(input) { if (input.files && input.files[0]) { compressImage(input.files[0], (base64) => { currentLogoBase64 = base64; document.getElementById('report-logo').src = base64; document.getElementById('report-logo').style.display = "block"; renderReport(); }); } }
+
+        function toggleCard(headerContent) {
+            const body = headerContent.closest('.card-header').nextElementSibling;
+            const icon = headerContent.querySelector('.fold-icon');
+            if (body.style.display === 'none') {
+                body.style.display = 'block'; icon.style.transform = 'rotate(0deg)';
+            } else {
+                body.style.display = 'none'; icon.style.transform = 'rotate(-90deg)';
+            }
+        }
+
+        function updateCardHeader(cardDiv) {
+            const model = cardDiv.querySelector('.p-model').value || 'New';
+            const target = cleanNum(cardDiv.querySelector('.p-target').value);
+            const prev = cleanNum(cardDiv.querySelector('.p-prev').value);
+            const weekSum = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'].reduce((a, b) => a + cleanNum(cardDiv.querySelector(`.p-${b}`).value), 0);
+            const total = prev + weekSum;
+            const rate = target > 0 ? Math.round(total / target * 100) : 0;
+
+            cardDiv.querySelector('.card-title').innerText = model;
+            cardDiv.querySelector('.card-info').innerText = `(진도율: ${rate}%)`;
+        }
+
+        function moveRow(btn, dir) {
+            const card = btn.closest('.project-card');
+            const container = document.getElementById('project-inputs');
+            if (dir === -1) { if (card.previousElementSibling) { container.insertBefore(card, card.previousElementSibling); renderReport(); } }
+            else { if (card.nextElementSibling) { container.insertBefore(card.nextElementSibling, card); renderReport(); } }
+        }
+
+        function duplicateProjectRow(btn) {
+            const src = btn.closest('.project-card');
+            const data = {
+                model: src.querySelector('.p-model').value, class: src.querySelector('.p-class').value,
+                loc: src.querySelector('.p-loc').value, type: src.querySelector('.p-type').value,
+                loadCap: src.querySelector('.p-loadCap').value, isDone: src.querySelector('.p-done').checked,
+                target: src.querySelector('.p-target').value, prev: src.querySelector('.p-prev').value,
+                mon: src.querySelector('.p-mon').value, tue: src.querySelector('.p-tue').value,
+                wed: src.querySelector('.p-wed').value, thu: src.querySelector('.p-thu').value,
+                fri: src.querySelector('.p-fri').value, sat: src.querySelector('.p-sat').value
+            };
+            addProjectRow(normalizeProjectData(data));
+            renderReport();
+        }
+
+        function normalizeProjectData(p) {
+            return {
+                model: (p.model || "").toString().toUpperCase(), class: p.class || "전용", loc: (p.loc || "").toString().toUpperCase(),
+                type: p.type || "신규", loadCap: cleanNum(p.loadCap, 20), isDone: p.isDone === true,
+                target: cleanNum(p.target), prev: cleanNum(p.prev),
+                mon: cleanNum(p.mon), tue: cleanNum(p.tue), wed: cleanNum(p.wed),
+                thu: cleanNum(p.thu), fri: cleanNum(p.fri), sat: cleanNum(p.sat)
+            };
+        }
+
+        function addProjectRow(d = null) {
+            d = d || { model: '', class: '전용', loc: '', type: '신규', loadCap: 20, isDone: false, target: 0, prev: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 };
+            const div = document.createElement('div');
+            div.className = 'project-card';
+
+            div.innerHTML = `
+            <div class="card-header">
+                <div class="move-controls">
+                    <button class="btn-move" onclick="moveRow(this, -1)">▲</button>
+                    <button class="btn-move" onclick="moveRow(this, 1)">▼</button>
+                </div>
+                <div class="header-content" onclick="toggleCard(this)">
+                    <span class="card-title">${d.model || 'New Project'}</span>
+                    <div style="display:flex; align-items:center;">
+                        <span class="card-info"></span>
+                        <span class="fold-icon">▼</span>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn-sm btn-dup" onclick="event.stopPropagation(); duplicateProjectRow(this);" title="복제">📑</button>
+                    <button class="btn-sm btn-del" onclick="event.stopPropagation(); this.closest('.project-card').remove(); renderReport();" title="삭제">×</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div style="display:grid; grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.6fr 0.8fr 0.3fr; gap:8px; margin-bottom:15px;">
+                    <div><label>Model</label><input type="text" class="p-model" list="model-list" value="${d.model}"></div>
+                    <div><label>Class</label><select class="p-class"><option value="전용" ${d.class === '전용' ? 'selected' : ''}>전용</option><option value="공용" ${d.class === '공용' ? 'selected' : ''}>공용</option></select></div>
+                    <div><label>Loc.</label><input type="text" class="p-loc" list="loc-list" value="${d.loc}"></div>
+                    <div><label>Type</label><select class="p-type"><option value="신규" ${d.type === '신규' ? 'selected' : ''}>신규</option><option value="개조" ${d.type === '개조' ? 'selected' : ''}>개조</option></select></div>
+                    <div><label>Cap</label><input type="number" class="p-loadCap" value="${d.loadCap}"></div>
+                    <div><label>Target</label><input type="number" class="p-target" value="${d.target}"></div>
+                    <div style="padding-top:22px;"><input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''}></div>
+                </div>
+                <div class="grid-days-labels"><span>Prev</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+                <div class="grid-days">
+                    <input type="number" class="p-prev" value="${d.prev}"><input type="number" class="p-mon" value="${d.mon}"><input type="number" class="p-tue" value="${d.tue}"><input type="number" class="p-wed" value="${d.wed}"><input type="number" class="p-thu" value="${d.thu}"><input type="number" class="p-fri" value="${d.fri}"><input type="number" class="p-sat" value="${d.sat}">
+                </div>
+            </div>
+        `;
+
+            div.querySelectorAll('input, select').forEach(el => {
+                el.addEventListener('keyup', () => { updateCardHeader(div); renderReport(); });
+                el.addEventListener('change', () => { updateCardHeader(div); renderReport(); });
+            });
+
+            // 완료 체크박스 → 카드 숨기기/보이기
+            const doneCheckbox = div.querySelector('.p-done');
+            doneCheckbox.addEventListener('change', () => { applyDoneState(div); renderReport(); });
+
+            document.getElementById('project-inputs').appendChild(div);
+            updateCardHeader(div);
+            applyDoneState(div);
+        }
+
+        // 완료된 항목 입력 숨기기 + 데이터 보호
+        function applyDoneState(cardDiv) {
+            const isDone = cardDiv.querySelector('.p-done').checked;
+            const body = cardDiv.querySelector('.card-body');
+
+            if (isDone) {
+                body.style.display = 'none';
+                cardDiv.style.opacity = '0.6';
+                // 완료 시 입력 비활성화 (데이터 보호)
+                body.querySelectorAll('input, select').forEach(el => el.disabled = true);
+            } else {
+                body.style.display = 'block';
+                cardDiv.style.opacity = '1';
+                body.querySelectorAll('input, select').forEach(el => el.disabled = false);
+            }
+        }
+
+        // [수정됨] V40.5 표준 주차 계산 로직 적용
+        function getSimpleWeek(dateStr) {
+            if (!dateStr) return 0;
+
+            const date = new Date(dateStr);
+            date.setHours(0, 0, 0, 0);
+
+            const year = date.getFullYear();
+            const firstDayOfYear = new Date(year, 0, 1);
+
+            // 1월 1일부터 흐른 일수 계산 (밀리초 단위 변환)
+            const pastDays = Math.floor((date - firstDayOfYear) / 86400000);
+
+            // 1월 1일의 요일 (0=일요일 ~ 6=토요일)
+            const startDay = firstDayOfYear.getDay();
+
+            // 요일 보정값을 적용하여 올림 처리 (V40.5와 동일)
+            return Math.ceil((pastDays + startDay + 1) / 7);
+        }
+
+        function renderReport() {
+            const inDate = document.getElementById('in-date').value;
+            if (inDate) {
+                document.getElementById('out-date').innerText = inDate;
+                // [수정됨] 단순 계산 함수 적용
+                document.getElementById('out-week-display').innerText = `Week ${getSimpleWeek(inDate)}`;
+            }
+
+            const pRows = document.querySelectorAll('.project-card');
+            const pBody = document.getElementById('out-prod-body'); pBody.innerHTML = "";
+            let sumMeta = 0, sumAccum = 0, sumWeeklyProd = 0;
+            let modifiedQty = { LH: 0, RH: 0, FRE: 0 };
+            let modelGroupData = {};
+
+            pRows.forEach(row => {
+                const model = row.querySelector('.p-model').value.toUpperCase().trim();
+                const pClass = row.querySelector('.p-class').value;
+                const loc = row.querySelector('.p-loc').value.toUpperCase().trim();
+                const type = row.querySelector('.p-type').value;
+                const loadCap = cleanNum(row.querySelector('.p-loadCap').value);
+                const target = cleanNum(row.querySelector('.p-target').value);
+                const isDone = row.querySelector('.p-done').checked;
+                const prev = cleanNum(row.querySelector('.p-prev').value);
+                const weekSum = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'].reduce((a, b) => a + cleanNum(row.querySelector(`.p-${b}`).value), 0);
+                const total = prev + weekSum;
+                const rate = target > 0 ? Math.min(Math.round(total / target * 100), 100) : 0;
+
+                // Solid color for 100%
+                let barStyle = `width:${rate}%;`;
+                if (rate >= 100) {
+                    barStyle += `background: #16a34a;`; // Solid Green
+                } else if (isDone) {
+                    barStyle += `background: #22c55e;`;
+                }
+
+                if (model) {
+                    pBody.innerHTML += `<tr style="${isDone ? 'background:#f9fafb' : ''}">
+                    <td><span class="badge ${isDone ? 'bg-done' : 'bg-prog'}">${isDone ? '완료' : '진행'}</span></td>
+                    <td><span class="badge ${type === '신규' ? 'bg-new' : 'bg-mod'}">${type}</span></td>
+                    <td style="font-weight:800; color:var(--accent);">${model}</td><td>${pClass}</td><td>${loc}</td>
+                    <td>${loadCap}</td><td>${weekSum}</td><td>${target}</td><td style="font-weight:800; background:#f1f5f9;">${total}</td>
+                    <td><div class="bar-container"><div class="bar-fill" style="${barStyle}"></div></div><span class="bar-text">${rate}%</span></td>
+                </tr>`;
+                    sumMeta += target; sumWeeklyProd += weekSum; sumAccum += total;
+                    if (type === '개조' && modifiedQty.hasOwnProperty(loc)) modifiedQty[loc] += total;
+                    if (!modelGroupData[model]) modelGroupData[model] = {};
+                    if (!modelGroupData[model][pClass]) modelGroupData[model][pClass] = {};
+                    if (!modelGroupData[model][pClass][loc]) modelGroupData[model][pClass][loc] = { qty: 0, cap: loadCap, target: 0 };
+                    modelGroupData[model][pClass][loc].qty += total;
+                    modelGroupData[model][pClass][loc].target += target;
+                }
+            });
+
+            const base = { LH: cleanNum(document.getElementById('base-l').value), RH: cleanNum(document.getElementById('base-r').value), FRE: cleanNum(document.getElementById('base-f').value) };
+            const cartStatusBody = document.getElementById('cart-status-body'); cartStatusBody.innerHTML = "";
+
+            ["FRE", "LH", "RH"].forEach((l, idx) => {
+                const remQty = base[l] - (modifiedQty[l] || 0);
+                const cap = (l === "FRE") ? 20 : (l === "LH") ? 15 : 30;
+                cartStatusBody.innerHTML += `<tr>${idx === 0 ? `<td rowspan="3" style="font-weight:800; background:#f8fafc;">6500C (가용)</td><td rowspan="3">전용</td>` : ''}<td style="background:#f8fafc;">${l}</td><td style="font-weight:900;">${remQty}</td><td>${cap}</td><td style="font-weight:900; color:var(--accent);">${(remQty * cap).toLocaleString()}</td><td>-</td></tr>`;
+            });
+
+            [{ m: "6500H", c: "전용" }, { m: "6500H", c: "공용" }].forEach(cat => {
+                ["FRE", "LH", "RH"].forEach((l, idx) => {
+                    let d = { qty: 0, cap: (l === "FRE") ? 20 : (l === "LH") ? 15 : 30, target: 0 };
+                    if (modelGroupData[cat.m] && modelGroupData[cat.m][cat.c] && modelGroupData[cat.m][cat.c][l]) d = modelGroupData[cat.m][cat.c][l];
+                    cartStatusBody.innerHTML += `<tr>${idx === 0 ? `<td rowspan="3" style="font-weight:800; background:#f8fafc;">${cat.m}</td><td rowspan="3">${cat.c}</td>` : ''}<td>${l}</td><td style="font-weight:900;">${d.qty}</td><td>${d.cap}</td><td style="font-weight:900; color:var(--accent);">${(d.qty * d.cap).toLocaleString()}</td><td>${d.target || '-'}</td></tr>`;
+                });
+            });
+
+            const capaBody = document.getElementById('capa-status-body'); capaBody.innerHTML = "";
+            ["6500H", "6500C"].forEach(m => {
+                let mD = { FRE: 0, LH: 0, RH: 0 };
+                if (m === "6500C") {
+                    mD.FRE = (base.FRE - modifiedQty.FRE) * 20; mD.LH = (base.LH - modifiedQty.LH) * 15; mD.RH = (base.RH - modifiedQty.RH) * 30;
+                } else if (modelGroupData[m]) {
+                    for (let c in modelGroupData[m]) { for (let l in modelGroupData[m][c]) { if (mD.hasOwnProperty(l)) mD[l] += (modelGroupData[m][c][l].qty * modelGroupData[m][c][l].cap); } }
+                }
+                const setQ = Math.min(mD.FRE, mD.LH, mD.RH);
+                capaBody.innerHTML += `<tr><td style="font-weight:800; background:#f8fafc;">${m}</td><td>${mD.FRE.toLocaleString()}</td><td>${mD.LH.toLocaleString()}</td><td>${mD.RH.toLocaleString()}</td><td style="background:#f0f7ff; font-weight:900; color:var(--accent); font-size:16px;">${setQ.toLocaleString()} SET</td></tr>`;
+            });
+
+            const gwm = cleanNum(document.getElementById('global-weekly-meta').value);
+            document.getElementById('sum-meta').innerText = sumMeta.toLocaleString();
+            document.getElementById('sum-accum').innerText = sumAccum.toLocaleString();
+            document.getElementById('sum-remain').innerText = Math.max(0, sumMeta - sumAccum).toLocaleString();
+            document.getElementById('sum-weekly-target').innerText = gwm.toLocaleString();
+            document.getElementById('sum-weekly-prod').innerText = sumWeeklyProd.toLocaleString();
+            const wr = gwm > 0 ? Math.round((sumWeeklyProd / gwm) * 100) : 0;
+            document.getElementById('sum-weekly-rate').innerText = wr + "%";
+            document.getElementById('sum-rate').innerText = (sumMeta > 0 ? Math.round(sumAccum / sumMeta * 100) : 0) + "%";
+
+            // Dynamic Background for Summary Cards
+            const cardWeekly = document.getElementById('sum-weekly-rate').closest('.summary-card');
+            const cardTotal = document.getElementById('sum-rate').closest('.summary-card');
+
+            const wrBg = Math.min(wr, 100);
+            const trBg = Math.min((sumMeta > 0 ? Math.round(sumAccum / sumMeta * 100) : 0), 100);
+
+            cardWeekly.style.background = `linear-gradient(to right, rgba(16, 185, 129, 0.2) ${wrBg}%, #2d3748 ${wrBg}%)`;
+            cardTotal.style.background = `linear-gradient(to right, rgba(239, 68, 68, 0.2) ${trBg}%, #2d3748 ${trBg}%)`;
+
+            autoSave();
+        }
+
+        function autoSave() {
+            const projectsData = Array.from(document.querySelectorAll('.project-card')).map(row => ({
+                model: row.querySelector('.p-model').value, class: row.querySelector('.p-class').value, loc: row.querySelector('.p-loc').value,
+                type: row.querySelector('.p-type').value, loadCap: row.querySelector('.p-loadCap').value,
+                isDone: row.querySelector('.p-done').checked, target: row.querySelector('.p-target').value, prev: row.querySelector('.p-prev').value,
+                mon: row.querySelector('.p-mon').value, tue: row.querySelector('.p-tue').value, wed: row.querySelector('.p-wed').value,
+                thu: row.querySelector('.p-thu').value, fri: row.querySelector('.p-fri').value, sat: row.querySelector('.p-sat').value
+            }));
+
+            const data = {
+                v: "8.3", d: document.getElementById('in-date').value, logo: currentLogoBase64,
+                base: { l: document.getElementById('base-l').value, r: document.getElementById('base-r').value, f: document.getElementById('base-f').value, wm: document.getElementById('global-weekly-meta').value },
+                projects: projectsData
+            };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        }
+
+        function manualSaveFile() {
+            try {
+                const projectsData = Array.from(document.querySelectorAll('.project-card')).map(row => ({
+                    model: row.querySelector('.p-model').value, class: row.querySelector('.p-class').value, loc: row.querySelector('.p-loc').value,
+                    type: row.querySelector('.p-type').value, loadCap: row.querySelector('.p-loadCap').value,
+                    isDone: row.querySelector('.p-done').checked, target: row.querySelector('.p-target').value, prev: row.querySelector('.p-prev').value,
+                    mon: row.querySelector('.p-mon').value, tue: row.querySelector('.p-tue').value, wed: row.querySelector('.p-wed').value,
+                    thu: row.querySelector('.p-thu').value, fri: row.querySelector('.p-fri').value, sat: row.querySelector('.p-sat').value
+                }));
+
+                if (projectsData.length === 0 && !confirm("입력된 실적이 없습니다. 빈 파일을 저장하시겠습니까?")) return;
+
+                const data = {
+                    v: "8.3", d: document.getElementById('in-date').value, logo: currentLogoBase64,
+                    base: { l: document.getElementById('base-l').value, r: document.getElementById('base-r').value, f: document.getElementById('base-f').value, wm: document.getElementById('global-weekly-meta').value },
+                    projects: projectsData
+                };
+
+                const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const wk = data.d ? getSimpleWeek(data.d) : 'X';
+                const a = document.createElement('a'); a.href = url; a.download = `Paileria_Prod_${wk}W.json`;
+                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+
+                const toast = document.getElementById('saveToast');
+                toast.style.display = 'block'; setTimeout(() => { toast.style.display = 'none'; }, 2000);
+
+            } catch (e) { alert("저장 중 오류 발생: " + e.message); }
+        }
+
+        function handleFileLoad(input) {
+            const file = input.files[0]; if (!file) return; const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const d = JSON.parse(e.target.result);
+                    document.getElementById('in-date').value = d.d || ""; currentLogoBase64 = d.logo || "";
+                    if (currentLogoBase64) document.getElementById('report-logo').src = currentLogoBase64;
+                    if (d.base) { document.getElementById('base-l').value = d.base.l; document.getElementById('base-r').value = d.base.r; document.getElementById('base-f').value = d.base.f; document.getElementById('global-weekly-meta').value = d.base.wm; }
+                    document.getElementById('project-inputs').innerHTML = "";
+                    if (d.projects) d.projects.forEach(p => addProjectRow(normalizeProjectData(p)));
+                    setTimeout(() => renderReport(), 200);
+                } catch (err) { alert("파일 형식 오류"); }
+            };
+            reader.readAsText(file); input.value = "";
+        }
+
+        async function exportImage() { const r = document.getElementById('report-content'); const c = await html2canvas(r, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }); const l = document.createElement('a'); l.download = `Report_V8.3.png`; l.href = c.toDataURL('image/png'); l.click(); }
+
+
+
+        function getTodayStr() {
+            const d = new Date();
+            const year = d.getFullYear();
+            const month = ('0' + (d.getMonth() + 1)).slice(-2);
+            const day = ('0' + d.getDate()).slice(-2);
+            return `${year}-${month}-${day}`;
+        }
+
+        window.onload = () => {
+            const today = getTodayStr();
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const d = JSON.parse(saved);
+                    loadBaseSettings(d);
+                    document.getElementById('in-date').value = today; // Force Today
+                    if (d.projects) d.projects.forEach(p => addProjectRow(normalizeProjectData(p)));
+                    setTimeout(() => renderReport(), 300);
+                } catch (e) {
+                    document.getElementById('in-date').value = today;
+                    addProjectRow(); renderReport();
+                }
+            } else {
+                document.getElementById('in-date').value = today;
+                addProjectRow(); renderReport();
+            }
+        };
+
+        function loadBaseSettings(d) {
+            // [Modified] Date is forced in window.onload, but if loaded manually via file/cloud, use saved date or today fallback
+            document.getElementById('in-date').value = d.d || getTodayStr();
+            currentLogoBase64 = d.logo || "";
+            if (currentLogoBase64) document.getElementById('report-logo').src = currentLogoBase64;
+            let baseL = 280, baseR = 140, baseF = 244, wm = 0;
+            if (d.base) { baseL = d.base.l; baseR = d.base.r; baseF = d.base.f; wm = d.base.wm; }
+            document.getElementById('base-l').value = baseL; document.getElementById('base-r').value = baseR; document.getElementById('base-f').value = baseF; document.getElementById('global-weekly-meta').value = wm;
+        }
+    </script>
+</body>
+
+</html>
