@@ -1981,7 +1981,7 @@
         }
         function renderReport() {
             const sVal = document.getElementById('in-start-date').value; const eVal = document.getElementById('in-end-date').value;
-            if (sVal && eVal) { const parts = sVal.split("-"); const d = new Date(parts[0], parts[1] - 1, parts[2]); document.getElementById('out-title').innerText = `${d.getFullYear()}년 ${getWeekNumber(d)}주차 설비(Instalaciones) Loss 분석`; document.getElementById('out-period-str').innerText = `${sVal} ~ ${eVal}`; }
+            if (sVal && eVal) { const parts = sVal.split("-"); const d = new Date(parts[0], parts[1] - 1, parts[2]); document.getElementById('out-title').innerText = `${d.getFullYear()}년 ${getWeekNumber(d)}주차 설비 Loss 분석`; document.getElementById('out-period-str').innerText = `${sVal} ~ ${eVal}`; }
             document.getElementById('out-writer').innerText = document.getElementById('in-writer').value;
             const totalNetMin = calcTotalTime(); document.getElementById('out-net-time').innerText = formatK(totalNetMin);
             const tbody = document.getElementById('out-loss-body'); tbody.innerHTML = ""; let totalLoss = 0; let lossCount = 0;
