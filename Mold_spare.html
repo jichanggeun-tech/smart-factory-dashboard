@@ -1702,7 +1702,7 @@
                         // Count items per project (Unique Name Trimmed)
                         const counts = {};
                         d.parts.forEach(p => {
-                            const name = (p.project || p.model || 'Unknown').trim();
+                            const name = String(p.project || p.model || 'Unknown').trim();
                             counts[name] = (counts[name] || 0) + 1;
                         });
 

@@ -387,7 +387,7 @@
                         // Group by project name
                         const counts = {};
                         d.parts.forEach(p => {
-                            const name = (p.project || p.model || 'Unknown').trim();
+                            const name = String(p.project || p.model || 'Unknown').trim();
                             counts[name] = (counts[name] || 0) + 1;
                         });
                         cloudProjects.value = Object.keys(counts).map(k => ({ name: k, count: counts[k] }));
