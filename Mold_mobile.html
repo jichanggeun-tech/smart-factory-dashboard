@@ -561,12 +561,13 @@
                 };
 
                 const findAndEdit = (id) => {
-                    const found = parts.value.find(p => p.id === id);
+                    // ID 비교 시 형변환 허용 (String vs Number)
+                    const found = parts.value.find(p => String(p.id) === String(id));
                     if (found) {
                         editItem(found);
                     } else {
                         // Fallback: search by ID only if project matches (sometimes legacy data)
-                        alert("현재 프로젝트에 없는 부품입니다. (Part not found)");
+                        alert(`현재 프로젝트에 없는 부품입니다. (Part not found)\nID: ${id}\n\n* PC에서 '클라우드 저장(Save)'을 했는지 확인해주세요.\n* Check if you saved to cloud on PC.`);
                     }
                 };
 
