@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>설비 LOSS 보고서</title>
+    <title></title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -42,71 +42,6 @@
         }
 
         /* 컨트롤 바 (Left Panel) */
-        .sidebar-controls {
-            display: flex;
-            align-items: center;
-            position: fixed;
-            top: 15px;
-            left: 15px !important;
-            z-index: 1100;
-            /* Higher than control-bar (1000) */
-            transition: none;
-        }
-
-        .home-btn {
-            background: #334155;
-            color: #e2e8f0;
-            border: 1px solid #475569;
-            border-radius: 20px 0 0 20px;
-            width: 70px;
-            height: 36px;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        .home-btn:hover {
-            background: #4285F4;
-            color: #fff;
-        }
-
-        .btn-toggle-sidebar {
-            width: 70px;
-            height: 36px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-left: none;
-            border-radius: 0 20px 20px 0;
-            color: #94a3b8;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        .btn-toggle-sidebar:hover {
-            color: white;
-            background: #334155;
-        }
-
-        /* Full Screen Logic */
-        body.full-screen .control-bar {
-            margin-left: -380px;
-        }
-
-        body.full-screen .sidebar-controls {
-            left: 15px !important;
-        }
-
         .control-bar {
             background: var(--bg-nav);
             color: var(--text-main);
@@ -370,11 +305,7 @@
         .sidebar-controls {
             display: flex;
             align-items: center;
-            position: fixed;
-            top: 15px;
-            left: 320px;
-            z-index: 2001;
-            transition: left 0.3s ease;
+            margin-left: auto;
         }
 
         .control-row h2 {
@@ -388,18 +319,16 @@
             background: #334155;
             color: #e2e8f0;
             border: 1px solid #475569;
-            border-radius: 20px 0 0 20px;
-            width: 70px;
-            height: 36px;
+            border-radius: 8px 0 0 8px;
+            height: 28px;
+            padding: 0 10px;
+            box-sizing: border-box;
             text-decoration: none;
             font-size: 12px;
             font-weight: 700;
             display: flex;
             align-items: center;
-            justify-content: center;
             gap: 4px;
-            padding: 0;
-            box-sizing: border-box;
         }
 
         .home-btn:hover {
@@ -408,12 +337,13 @@
         }
 
         .btn-toggle-sidebar {
-            width: 70px;
-            height: 36px;
+            width: 24px;
+            height: 28px;
             background: #1e293b;
             border: 1px solid #334155;
             border-left: none;
-            border-radius: 0 20px 20px 0;
+            border-radius: 0 8px 8px 0;
+            box-sizing: border-box;
             color: #94a3b8;
             cursor: pointer;
             display: flex;
@@ -421,7 +351,6 @@
             justify-content: center;
             font-size: 12px;
             padding: 0;
-            box-sizing: border-box;
         }
 
         .btn-toggle-sidebar:hover {
@@ -775,15 +704,13 @@
         </div>
     </div>
 
-    <div class="sidebar-controls">
-        <a class="home-btn" href="index.html">🏠 Home</a>
-        <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
-    </div>
-
     <div class="control-bar">
         <div class="control-row">
-            <h2>설비 LOSS 보고서
-
+            <h2>
+                <div class="sidebar-controls">
+                    <a class="home-btn" href="index.html">🏠 Home</a>
+                    <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+                </div>
             </h2>
             <div class="control-group" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
                 <label class="btn btn-load" style="justify-content:center;">📂 로컬 파일<input type="file" id="fileInput"
@@ -820,11 +747,6 @@
                 <div class="col-menu" id="colMenu"></div>
             </div>
         </div>
-    </div>
-
-    <div class="sidebar-controls">
-        <a class="home-btn" href="index.html">🏠 Home</a>
-        <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
     </div>
 
 
@@ -1581,7 +1503,7 @@
         window.toggleCol = (i) => {
             colVisibility[i] = document.getElementById(`chk-${i}`).checked;
             document.querySelectorAll(`.col-wk-${i}`).forEach(el => el.style.display = colVisibility[i] ? '' : 'none');
-            // [추가] 차트 업데이트
+            // [추가] 차트도 같이 업데이트
             if (typeof renderTrendChart === 'function') renderTrendChart(processedData);
         };
 
