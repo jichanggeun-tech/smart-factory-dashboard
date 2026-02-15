@@ -85,7 +85,7 @@
 
 
         /* Sidebar Controls (Home + Toggle wrapper) */
-        /* Sidebar Controls (Home + Toggle wrapper) */
+        /* [수정됨] 표준 홈 버튼 & 토글 버튼 스타일 */
         .sidebar-controls {
             display: flex;
             align-items: center;
@@ -97,43 +97,53 @@
         }
 
         .home-btn {
-            background: #334155;
-            color: #e2e8f0;
-            border: 1px solid #475569;
-            border-radius: 20px 0 0 20px;
-            width: 70px;
-            height: 36px;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            padding: 0;
-            box-sizing: border-box;
+            background: #334155 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #475569 !important;
+            border-radius: 8px 0 0 8px !important;
+            /* 둥근 정도 8px */
+            height: 28px !important;
+            /* 높이 28px */
+            padding: 0 10px !important;
+            box-sizing: border-box !important;
+            text-decoration: none !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            margin: 0 !important;
         }
 
         .home-btn:hover {
-            background: #4285F4;
-            color: #fff;
+            background: #4285F4 !important;
+            color: #fff !important;
         }
 
         .btn-toggle-sidebar {
-            width: 70px;
-            height: 36px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-left: none;
-            border-radius: 0 20px 20px 0;
-            color: #94a3b8;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            padding: 0;
-            box-sizing: border-box;
+            width: 24px !important;
+            height: 28px !important;
+            /* 높이 28px */
+            background: #1e293b !important;
+            border: 1px solid #334155 !important;
+            border-left: none !important;
+            /* 왼쪽 선 제거 (연결효과) */
+            border-radius: 0 8px 8px 0 !important;
+            /* 오른쪽만 둥글게 */
+            box-sizing: border-box !important;
+            color: #94a3b8 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 12px !important;
+            padding: 0 !important;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white !important;
+            background: #334155 !important;
         }
 
         .btn-toggle-sidebar:hover {
