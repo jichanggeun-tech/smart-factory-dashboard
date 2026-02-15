@@ -406,7 +406,14 @@
         }
 
         body.full-screen .sidebar-controls {
-            left: 0;
+            position: fixed;
+            /* 화면에 고정시킴 */
+            top: 20px;
+            /* 상단 여백 (control-bar padding과 비슷하게) */
+            left: 10px;
+            /* 왼쪽 여백 */
+            z-index: 2000;
+            /* 다른 요소보다 위에 보이도록 설정 */
         }
 
         /* 헤더 & 섹션 */
