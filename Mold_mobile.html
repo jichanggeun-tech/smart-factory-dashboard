@@ -414,7 +414,7 @@
                         const d = await r.json();
 
                         // Find latest batch for this project
-                        const allParts = d.parts.filter(p => (p.project || p.model || 'Unknown').trim() === pName);
+                        const allParts = d.parts.filter(p => String(p.project || p.model || 'Unknown').trim() === pName);
                         if (allParts.length === 0) throw new Error("데이터 없음");
 
                         const latestBatchId = allParts.reduce((max, p) => Math.max(max, p.batchId || 0), 0);
