@@ -344,6 +344,19 @@
             width: 100%;
         }
 
+        .control-row h2::after {
+            content: "";
+            flex-grow: 1;
+            /* 남은 공간을 선으로 가득 채움 */
+            height: 1px;
+            /* 선의 두께 (얇게 하려면 1px, 두껍게 하려면 2px) */
+            background: #4b5563;
+            /* 선의 색상 (회색) */
+            margin-left: 0;
+            /* 버튼과 선 사이의 간격 (딱 붙이려면 0) */
+            display: block;
+        }
+
         .home-btn {
             background: #334155;
             color: #e2e8f0;

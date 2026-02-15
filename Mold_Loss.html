@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>금형 Loss</title>
+    <title></title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
@@ -903,6 +903,72 @@
         body.full-screen .sidebar-controls {
             left: 15px !important;
         }
+
+        /* Standardized Home Button & Sidebar Controls */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .input-panel h2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-top: 0;
+            height: 40px;
+            /* Fixed height for consistency */
+        }
+
+        .home-btn {
+            background: #334155 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #475569 !important;
+            border-radius: 8px 0 0 8px !important;
+            height: 28px !important;
+            padding: 0 10px !important;
+            box-sizing: border-box !important;
+            text-decoration: none !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            width: auto !important;
+            /* Reset width */
+            margin: 0 !important;
+        }
+
+        .home-btn:hover {
+            background: #4285F4 !important;
+            color: #fff !important;
+        }
+
+        .btn-toggle-sidebar {
+            width: 24px !important;
+            height: 28px !important;
+            background: #1e293b !important;
+            border: 1px solid #334155 !important;
+            border-left: none !important;
+            border-radius: 0 8px 8px 0 !important;
+            box-sizing: border-box !important;
+            color: #94a3b8 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 12px !important;
+            padding: 0 !important;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white !important;
+            background: #334155 !important;
+        }
     </style>
 </head>
 
@@ -928,7 +994,10 @@
     <div class="input-panel" id="inputPanel">
 
         <h2>
-            <i class="fa-solid fa-wrench"></i> 금형 Loss
+            <div class="sidebar-controls">
+                <a class="home-btn" href="index.html">🏠 Home</a>
+                <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+            </div>
         </h2>
         <div style="display:flex; gap:5px; margin-bottom:10px;">
             <button class="btn-print" onclick="window.print()" style="flex:1;">PDF 변환 (PDF)</button>

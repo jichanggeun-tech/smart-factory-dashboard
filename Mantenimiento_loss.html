@@ -453,7 +453,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+
+            /* 두 코드의 장점을 합침 */
             color: #e0e0e0;
+            /* 글자색: 밝은 회색 (가독성 확보) */
+            transition: background 0.2s;
+            /* 애니메이션: 배경색 변경 시 부드럽게 */
+        }
+
+        /* (참고) 보통 이런 코드와 짝꿍으로 쓰이는 호버 효과 */
+        .cloud-item:hover {
+            background-color: #555;
+            /* 마우스 올리면 배경이 살짝 밝아짐 */
         }
 
         .cloud-item:hover {
@@ -986,6 +997,80 @@
         body.full-screen .sidebar-controls {
             left: 15px !important;
         }
+
+        /* Standardized Home Button & Sidebar Controls */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            margin-left: auto;
+        }
+
+        .control-row h2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .control-row h2::after {
+            content: "";
+            flex-grow: 1;
+            /* 남은 공간을 선으로 가득 채움 */
+            height: 1px;
+            /* 선의 두께 (얇게 하려면 1px, 두껍게 하려면 2px) */
+            background: #4b5563;
+            /* 선의 색상 (회색) */
+            margin-left: 0;
+            /* 버튼과 선 사이의 간격 (딱 붙이려면 0) */
+            display: block;
+        }
+
+        .home-btn {
+            background: #334155 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #475569 !important;
+            border-radius: 8px 0 0 8px !important;
+            height: 28px !important;
+            padding: 0 10px !important;
+            box-sizing: border-box !important;
+            text-decoration: none !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            width: auto !important;
+            /* Reset width */
+            margin: 0 !important;
+        }
+
+        .home-btn:hover {
+            background: #4285F4 !important;
+            color: #fff !important;
+        }
+
+        .btn-toggle-sidebar {
+            width: 24px !important;
+            height: 28px !important;
+            background: #1e293b !important;
+            border: 1px solid #334155 !important;
+            border-left: none !important;
+            border-radius: 0 8px 8px 0 !important;
+            box-sizing: border-box !important;
+            color: #94a3b8 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 12px !important;
+            padding: 0 !important;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white !important;
+            background: #334155 !important;
+        }
     </style>
 </head>
 
@@ -1010,7 +1095,10 @@
 
     <div class="input-panel" id="inputPanel">
         <h2>
-            <i class="fa-solid fa-industry"></i>
+            <div class="sidebar-controls">
+                <a class="home-btn" href="index.html">🏠 Home</a>
+                <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
+            </div>
         </h2>
 
         <div style="display:flex; gap:5px; margin-bottom:10px;">

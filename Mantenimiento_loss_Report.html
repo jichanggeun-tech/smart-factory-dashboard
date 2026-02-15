@@ -119,45 +119,60 @@
             transform: translateY(-1px);
         }
 
-        .btn-load {
-            background: #374151;
-            border: 1px solid #4b5563;
-        }
-
-        .btn-load:hover {
-            background: #4b5563;
-        }
-
+        .btn-load,
         .btn-cloud {
             background: #374151;
             border: 1px solid #4b5563;
+            height: 40px;
+            font-size: 0.9rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            transition: 0.2s;
         }
 
+        .btn-load:hover,
         .btn-cloud:hover {
             background: #4b5563;
         }
 
-        .btn-print {
+        .btn-print,
+        .btn-capture {
             background: #374151;
             border: 1px solid #4b5563;
+            height: 50px;
+            font-size: 1.1rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
-        .btn-print:hover {
-            background: #4b5563;
-        }
-
-        .btn-img {
-            background: #374151;
-            border: 1px solid #4b5563;
-        }
-
-        .btn-img:hover {
+        .btn-print:hover,
+        .btn-capture:hover {
             background: #4b5563;
         }
 
         .btn-apply {
             background: #374151;
             border: 1px solid #4b5563;
+            height: 40px;
+            font-size: 0.9rem;
+            color: #f9fafb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
         }
 
         .btn-apply:hover {
@@ -167,6 +182,11 @@
         .btn-config {
             background: #374151;
             border: 1px solid #4b5563;
+            height: 32px;
+            font-size: 0.85rem;
+            color: #f9fafb;
+            border-radius: 4px;
+            padding: 0 10px;
         }
 
         .btn-config:hover {
@@ -178,6 +198,9 @@
             border: 1px solid #4b5563;
             font-size: 0.8rem;
             padding: 5px 10px;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
         }
 
         .btn-reset-data:hover {
@@ -305,7 +328,8 @@
         .sidebar-controls {
             display: flex;
             align-items: center;
-            margin-left: auto;
+            margin-right: auto;
+            /* Changed from margin-left to margin-right to move to the left */
         }
 
         .control-row h2 {
@@ -679,6 +703,80 @@
                 min-height: auto;
             }
         }
+
+        /* Standardized Home Button & Sidebar Controls */
+        .sidebar-controls {
+            display: flex;
+            align-items: center;
+            margin-right: auto;
+        }
+
+        .control-row h2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .control-row h2::after {
+            content: "";
+            flex-grow: 1;
+            /* 남은 공간을 선으로 가득 채움 */
+            height: 1px;
+            /* 선의 두께 (얇게 하려면 1px, 두껍게 하려면 2px) */
+            background: #4b5563;
+            /* 선의 색상 (회색) */
+            margin-left: 0;
+            /* 버튼과 선 사이의 간격 (딱 붙이려면 0) */
+            display: block;
+        }
+
+        .home-btn {
+            background: #334155 !important;
+            color: #e2e8f0 !important;
+            border: 1px solid #475569 !important;
+            border-radius: 8px 0 0 8px !important;
+            height: 28px !important;
+            padding: 0 10px !important;
+            box-sizing: border-box !important;
+            text-decoration: none !important;
+            font-size: 12px !important;
+            font-weight: 700 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 4px !important;
+            width: auto !important;
+            /* Reset width */
+            margin: 0 !important;
+        }
+
+        .home-btn:hover {
+            background: #4285F4 !important;
+            color: #fff !important;
+        }
+
+        .btn-toggle-sidebar {
+            width: 24px !important;
+            height: 28px !important;
+            background: #1e293b !important;
+            border: 1px solid #334155 !important;
+            border-left: none !important;
+            border-radius: 0 8px 8px 0 !important;
+            box-sizing: border-box !important;
+            color: #94a3b8 !important;
+            cursor: pointer !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-size: 12px !important;
+            padding: 0 !important;
+        }
+
+        .btn-toggle-sidebar:hover {
+            color: white !important;
+            background: #334155 !important;
+        }
     </style>
 </head>
 
@@ -718,7 +816,7 @@
                 <button class="btn btn-cloud" style="justify-content:center;" onclick="openCloudModal()">☁️
                     클라우드</button>
                 <button class="btn btn-print" style="justify-content:center;" onclick="window.print()">🖨️ 인쇄</button>
-                <button class="btn btn-img" style="justify-content:center;" onclick="captureReport()">📸 캡처</button>
+                <button class="btn btn-capture" style="justify-content:center;" onclick="captureReport()">📸 캡처</button>
             </div>
         </div>
         <div class="control-row" style="background:#3c4043; padding:10px; border-radius:6px; margin-top:5px;">
@@ -754,13 +852,14 @@
     <div class="main-content">
         <div class="report-paper" id="report-target">
             <div class="header-area">
-                <div>
-                    <h1 style="margin:0; font-size:26px; font-weight:800; color:#212529;" id="report-title">설비 LOSS 분석
-                        보고서</h1>
-                    <p style="margin:2px 0 0 0; color:#0d6efd; font-size:12px; font-weight:bold;">Equipment Loss
-                        Analysis Report</p>
+                <div style="flex: 1;">
+                    <h1 style="margin:0; font-size:28px; font-weight:900; color:#333; letter-spacing:-0.5px;"
+                        id="report-title">MANTENIMIENTO LOSS REPORT</h1>
+                    <p
+                        style="margin:5px 0 0 0; color:#374151; font-size:12px; font-weight:bold; text-transform:uppercase; letter-spacing:1px;">
+                        Equipment Loss Analysis Report</p>
                 </div>
-                <div style="text-align:right; font-size:11px; line-height:1.4;">
+                <div style="text-align:right; font-size:11px; line-height:1.5; color:#555; width:220px;">
                     <strong>DEPT:</strong> <span id="out-dept">-</span><br>
                     <strong>TARGET:</strong> <span id="out-period">-</span><br>
                     <strong>DATE:</strong> <span id="out-gen-date">-</span>
