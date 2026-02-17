@@ -504,6 +504,7 @@
             background: #f8f9fa;
             text-align: left;
             padding-left: 8px;
+            color: #555;
         }
 
         .kpi-blue .value {
@@ -1356,7 +1357,7 @@
                 map[k].c++; map[k].t += i.min;
             }));
             const sorted = Object.keys(map).map(k => map[k]).sort((a, b) => b.t - a.t).slice(0, 15);
-            document.getElementById('reason-table-body').innerHTML = sorted.map((d, i) => `<tr><td>${i + 1}</td><td style="text-align:left">${d.m}</td><td style="text-align:left;color:#0d6efd;">${d.p}</td><td style="text-align:left">${d.r}</td><td style="text-align:left; color:#555; font-size:10px;">${d.cm}</td><td>${d.c}</td><td style="font-weight:bold">${d.t}</td><td>${d.isImproved ? '<span class="badge bg-good">개선 (Done)</span>' : '<span class="badge bg-neutral">-</span>'}</td></tr>`).join('');
+            document.getElementById('reason-table-body').innerHTML = sorted.map((d, i) => `<tr><td style="color:#555;">${i + 1}</td><td style="text-align:left; color:#555;">${d.m}</td><td style="text-align:left;color:#0d6efd;">${d.p}</td><td style="text-align:left">${d.r}</td><td style="text-align:left; color:#555; font-size:10px;">${d.cm}</td><td>${d.c}</td><td style="font-weight:bold">${d.t}</td><td>${d.isImproved ? '<span class="badge bg-good">개선 (Done)</span>' : '<span class="badge bg-neutral">-</span>'}</td></tr>`).join('');
         }
 
         function renderPareto(curr, statusMap) {
