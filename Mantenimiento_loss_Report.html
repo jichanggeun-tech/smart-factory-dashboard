@@ -1307,9 +1307,9 @@
             const body = document.getElementById('pivot-body');
             const foot = document.getElementById('pivot-footer');
 
-            let hHtml = `<th style="width:100px;">설비</th><th style="width:120px;">부품</th>`;
+            let hHtml = `<th style="width:100px; background:#d1d5db; color:#111827;">설비</th><th style="width:120px; background:#d1d5db; color:#111827;">부품</th>`;
             weekHeaders.forEach((h, i) => hHtml += `<th class="col-wk-${i}" style="${colVisibility[i] ? '' : 'display:none'}">${h.label}</th>`);
-            hHtml += `<th style="background:#333;">Total</th>`;
+            hHtml += `<th style="background:#333; color:#fff;">Total</th>`;
             head.innerHTML = hHtml;
 
             const map = {}, totals = new Array(weekHeaders.length).fill(0);
