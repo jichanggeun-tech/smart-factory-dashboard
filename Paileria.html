@@ -1172,11 +1172,11 @@
                     </div>
                 </div>
                 <div class="card-actions">
-                    <label title="완료 처리" style="display:flex; align-items:center; gap:3px; cursor:pointer; font-size:10px; color:#adb5bd; margin:0; padding:0 4px; white-space:nowrap;">
-                        <input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''} style="width:14px; height:14px; cursor:pointer; accent-color:#15803d;"> 완료
+                    <label title="완료 처리" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; color:#fff; margin:0; padding:0 8px; white-space:nowrap; background:rgba(0,0,0,0.2); border-radius:4px; height:28px;">
+                        <input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer; accent-color:#10b981;"> <span style="font-weight:bold;">완료</span>
                     </label>
-                    <button class="btn-sm btn-dup" onclick="event.stopPropagation(); duplicateProjectRow(this);" title="복제">📑</button>
-                    <button class="btn-sm btn-del" onclick="event.stopPropagation(); this.closest('.project-card').remove(); renderReport();" title="삭제">×</button>
+                    <button class="btn-sm btn-dup" onclick="event.stopPropagation(); duplicateProjectRow(this);" title="복제" style="width:28px; height:28px;">📑</button>
+                    <button class="btn-sm btn-del" onclick="event.stopPropagation(); if(confirm('이 항목을 삭제하시겠습니까?')) { this.closest('.project-card').remove(); renderReport(); }" title="삭제" style="width:28px; height:28px;">×</button>
                 </div>
             </div>
             <div class="card-body">
@@ -1205,24 +1205,54 @@
             doneCheckbox.addEventListener('change', () => { applyDoneState(div); renderReport(); });
 
             document.getElementById('project-inputs').appendChild(div);
-            updateCardHeader(div);
-            applyDoneState(div);
+            // 초기 상태 적용 (렌더링 시점에 한 번 더 명확히 호출)
+            setTimeout(() => {
+                updateCardHeader(div);
+                applyDoneState(div);
+            }, 10);
         }
 
-        // 완료된 항목 입력 숨기기 + 데이터 보호
+        // 완료된 항목 입력 숨기기 + 데이터 보호 로직 개선
         function applyDoneState(cardDiv) {
             const isDone = cardDiv.querySelector('.p-done').checked;
             const body = cardDiv.querySelector('.card-body');
+            const header = cardDiv.querySelector('.card-header');
+            const titleEl = cardDiv.querySelector('.card-title');
 
             if (isDone) {
                 body.style.display = 'none';
-                cardDiv.style.opacity = '0.6';
-                // 완료 시 입력 비활성화 (데이터 보호)
-                body.querySelectorAll('input, select').forEach(el => el.disabled = true);
+                cardDiv.style.opacity = '0.7';
+                cardDiv.style.border = '1px solid #10b981';
+                header.style.background = '#064e3b'; // 완료 상태 배경색 (어두운 초록)
+
+                // 폰트 강조: 완료됨을 제목 앞에 명시
+                if (!titleEl.innerText.startsWith('[완료]')) {
+                    titleEl.innerText = '[완료] ' + titleEl.innerText.replace('[완료] ', '');
+                }
+                titleEl.style.color = '#10b981';
+
+                // 완료 시 입력 비활성화 (보호)
+                body.querySelectorAll('input, select').forEach(el => {
+                    el.disabled = true;
+                    el.style.backgroundColor = '#1f2937'; // 비활성화 느낌 강조
+                    el.style.color = '#4b5563';
+                });
             } else {
                 body.style.display = 'block';
                 cardDiv.style.opacity = '1';
-                body.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                cardDiv.style.border = '1px solid #495057';
+                header.style.background = '#3c4249'; // 원래 헤더 색상
+
+                // [완료] 문구 제거 및 색상 복구
+                titleEl.innerText = titleEl.innerText.replace('[완료] ', '');
+                titleEl.style.color = '#e9ecef';
+
+                // 모든 필드 즉시 활성화
+                body.querySelectorAll('input, select').forEach(el => {
+                    el.disabled = false;
+                    el.style.backgroundColor = '#fff';
+                    el.style.color = '#212529';
+                });
             }
         }
 
