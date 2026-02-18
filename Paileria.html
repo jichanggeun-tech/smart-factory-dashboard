@@ -1010,25 +1010,39 @@
                 // 현재 프로젝트 카드에 Prev 자동 입력
                 let matched = 0;
                 document.querySelectorAll('.project-card').forEach(card => {
-                    const model = card.querySelector('.p-model').value.toUpperCase();
-                    const loc = card.querySelector('.p-loc').value.toUpperCase();
+                    const modelEl = card.querySelector('.p-model');
+                    const locEl = card.querySelector('.p-loc');
+                    // disabled 상태여도 값을 읽을 수 있도록 처리
+                    const model = (modelEl.value || '').toUpperCase();
+                    const loc = (locEl.value || '').toUpperCase();
                     const key = `${model}_${loc}`;
                     if (prevTotals[key] !== undefined) {
-                        card.querySelector('.p-prev').value = prevTotals[key];
+                        const prevEl = card.querySelector('.p-prev');
+                        const wasDisabled = prevEl.disabled;
+                        prevEl.disabled = false;  // 임시 해제
+                        prevEl.value = prevTotals[key];
+                        if (wasDisabled) prevEl.disabled = true;  // 복원
                         matched++;
                     }
                 });
 
                 // 보고 날짜의 요일 이후 요일들을 0으로 초기화
+                // 이번 주 모든 일별 실적 초기화 (전주 데이터를 Prev로 넘기고 새 주 시작)
                 const inDate = document.getElementById('in-date').value;
                 if (inDate) {
-                    const dayOfWeek = new Date(inDate).getDay(); // 0=일, 1=월, ..., 6=토
-                    const dayFields = ['p-mon', 'p-tue', 'p-wed', 'p-thu', 'p-fri', 'p-sat']; // index 0=월(1), ..., 5=토(6)
+                    // 날짜 파싱 시 타임존 오류 방지 (로컬 날짜 기준)
+                    const [y, mo, dy] = inDate.split('-').map(Number);
+                    const localDate = new Date(y, mo - 1, dy);
+                    const dayOfWeek = localDate.getDay(); // 0=일, 1=월, ..., 6=토
+                    const dayFields = ['p-mon', 'p-tue', 'p-wed', 'p-thu', 'p-fri', 'p-sat'];
+                    // 월~토 인덱스: 0=월(dayNum=1), 1=화(2), 2=수(3), 3=목(4), 4=금(5), 5=토(6)
                     document.querySelectorAll('.project-card').forEach(card => {
                         for (let i = 0; i < dayFields.length; i++) {
                             const fieldDayNum = i + 1; // 월=1, 화=2, ..., 토=6
+                            // 보고 날짜의 요일 포함 이후 요일만 초기화
                             if (fieldDayNum >= dayOfWeek) {
-                                card.querySelector('.' + dayFields[i]).value = 0;
+                                const el = card.querySelector('.' + dayFields[i]);
+                                if (el) el.value = 0;
                             }
                         }
                     });
@@ -1158,19 +1172,21 @@
                     </div>
                 </div>
                 <div class="card-actions">
+                    <label title="완료 처리" style="display:flex; align-items:center; gap:3px; cursor:pointer; font-size:10px; color:#adb5bd; margin:0; padding:0 4px; white-space:nowrap;">
+                        <input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''} style="width:14px; height:14px; cursor:pointer; accent-color:#15803d;"> 완료
+                    </label>
                     <button class="btn-sm btn-dup" onclick="event.stopPropagation(); duplicateProjectRow(this);" title="복제">📑</button>
                     <button class="btn-sm btn-del" onclick="event.stopPropagation(); this.closest('.project-card').remove(); renderReport();" title="삭제">×</button>
                 </div>
             </div>
             <div class="card-body">
-                <div style="display:grid; grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.6fr 0.8fr 0.3fr; gap:8px; margin-bottom:15px;">
+                <div style="display:grid; grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.6fr 0.8fr; gap:8px; margin-bottom:15px;">
                     <div><label>Model</label><input type="text" class="p-model" list="model-list" value="${d.model}"></div>
                     <div><label>Class</label><select class="p-class"><option value="전용" ${d.class === '전용' ? 'selected' : ''}>전용</option><option value="공용" ${d.class === '공용' ? 'selected' : ''}>공용</option></select></div>
                     <div><label>Loc.</label><input type="text" class="p-loc" list="loc-list" value="${d.loc}"></div>
                     <div><label>Type</label><select class="p-type"><option value="신규" ${d.type === '신규' ? 'selected' : ''}>신규</option><option value="개조" ${d.type === '개조' ? 'selected' : ''}>개조</option></select></div>
                     <div><label>Cap</label><input type="number" class="p-loadCap" value="${d.loadCap}"></div>
                     <div><label>Target</label><input type="number" class="p-target" value="${d.target}"></div>
-                    <div style="padding-top:22px;"><input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''}></div>
                 </div>
                 <div class="grid-days-labels"><span>Prev</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
                 <div class="grid-days">
