@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>설비 수리 품의서 V6.0 (Cloud Select)</title>
+    <title>설비 수리 품의서 V6.1 (Cloud Select)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* [공통] 레이아웃 */
@@ -1008,25 +1008,7 @@
         <div class="form-section">
             <h3>4. 비용 산출 (Cálculo de Costos)</h3>
 
-            <!-- 대상 공장 선택 (비용 산출 기준) -->
-            <div style="background:#1a2a3a; border:1px solid #0dcaf0; border-radius:6px; padding:10px 12px; margin-bottom:12px;">
-                <label style="color:#0dcaf0; font-weight:bold; font-size:0.85rem; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-                    🏭 대상 공장 (Planta) <span style="font-size:0.72rem; color:#adb5bd; font-weight:normal;">— 금번 품의 예산 반영 기준</span>
-                </label>
-                <div style="display:flex; gap:6px;">
-                    <button type="button" id="plant-btn-p1" onclick="selectPlant('1공장')"
-                        style="flex:1; padding:7px 0; border-radius:5px; border:1px solid #0dcaf0; background:#0dcaf0; color:#000; font-weight:bold; cursor:pointer; font-size:0.88rem;">
-                        🏭 1공장 (Planta 1)
-                    </button>
-                    <button type="button" id="plant-btn-p3" onclick="selectPlant('3공장')"
-                        style="flex:1; padding:7px 0; border-radius:5px; border:1px solid #495057; background:#343a40; color:#adb5bd; font-weight:bold; cursor:pointer; font-size:0.88rem;">
-                        🏭 3공장 (Planta 3)
-                    </button>
-                </div>
-                <input type="hidden" id="in-plant" value="1공장">
-            </div>
-
-            <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 재고/이력 포함 (Incluir Stock/Historial)</div>
+            <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 항목별 대상 공장 및 재고/이력 포함 입력</div>
             <div style="margin-bottom:10px;">
                 <div id="mxn-inputs"></div>
                 <button class="btn-add" onclick="addCostRow('MXN'); updateView()">+ MXN 추가 (Agregar MXN)</button>
@@ -1083,7 +1065,6 @@
 
     <div class="resizer" id="dragMe"></div>
 
-    <!-- Sidebar Controls (Home + Toggle) -->
     <div class="sidebar-controls">
         <a class="home-btn" href="index.html">🏠 Home</a>
         <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
@@ -1094,7 +1075,7 @@
 
             <div class="modern-header">
                 <div class="header-left">
-                    <h1 class="doc-title" id="out-title">1공장 설비 수리 품의서</h1>
+                    <h1 class="doc-title" id="out-title">설비 수리 품의서</h1>
                     <div class="doc-subtitle" id="out-subtitle">Repair Request Form & Cost Analysis</div>
                 </div>
                 <div class="header-right">
@@ -1385,7 +1366,6 @@
         // ==========================================
 
         let subTotalMXN = 0; let subTotalKRW = 0;
-        const SAVE_KEY = "pumi_autosave_v2";
 
         // --- Cloud Functions ---
 
@@ -1393,20 +1373,25 @@
         async function saveToCloud() {
             if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 APPS_SCRIPT_URL을 설정해주세요!"); return; }
 
-            if (!confirm("클라우드에 저장하시겠습니까?\n(새로운 데이터로 추가됩니다)")) return;
+            const data = collectData();
+            const docName = (data.docName || '').trim().replace(/[\\/:*?"<>|]/g, '_');
+            const defaultName = docName ? `${docName}_${data.date}` : `Report_${data.date}`;
+            let saveName = prompt('클라우드에 저장할 이름을 입력하세요.', defaultName);
+            if (saveName === null) return; // 취소
+            saveName = saveName.trim() || defaultName;
+            data.docName = saveName; // 저장 이름을 docName에 반영
 
             const btn = event.target; const orgTxt = btn.innerText;
             btn.innerText = "저장 중..."; btn.disabled = true;
 
             try {
-                const data = collectData();
                 await fetch(APPS_SCRIPT_URL, {
                     method: "POST",
                     mode: "no-cors",
                     headers: { "Content-Type": "text/plain" },
                     body: JSON.stringify(data)
                 });
-                showToast("☁️ 저장 완료! (목록에서 확인 가능)");
+                showToast(`☁️ "${saveName}" 저장 완료!`);
             } catch (error) {
                 alert("오류: " + error.message);
             } finally {
@@ -1443,7 +1428,7 @@
                     div.innerHTML = `
                     <div class="file-info">
                         <div class="f-title">${item.docName || '(제목 없음)'}</div>
-                        <div class="f-meta">📅 ${item.date} | 🏭 ${item.plant} | 👤 ${item.dept || '-'}</div>
+                        <div class="f-meta">📅 ${item.date} | 👤 ${item.dept || '-'}</div>
                     </div>
                     <button class="f-btn">불러오기</button>
                 `;
@@ -1488,13 +1473,11 @@
             document.getElementById('in-date').valueAsDate = new Date();
             initForm();
             initResizer();
-            setTimeout(checkAutoSave, 500);
         };
 
         function toggleSection(id, isChecked) {
             const el = document.getElementById(id);
             if (el) el.style.display = isChecked ? 'block' : 'none';
-            performAutoSave();
         }
 
         function fmt(num, currency) {
@@ -1650,6 +1633,10 @@
             div.className = "cost-input-group";
             div.innerHTML = `
             <div class="cost-row">
+                <select class="c-plant-${type}" onchange="updateView()" style="width: 75px; padding: 4px; font-weight: bold; font-size: 0.8rem; background: #e9ecef;">
+                    <option value="1공장">1공장</option>
+                    <option value="3공장">3공장</option>
+                </select>
                 <input type="text" class="c-name-${type}" placeholder="품명 (Item)" style="flex:2" onkeyup="updateView()">
                 <input type="text" class="c-vendor-${type}" placeholder="업체명 (Proveedor)" style="flex:2" onkeyup="updateView()">
             </div>
@@ -1809,37 +1796,10 @@
             table.appendChild(tbody);
         }
 
-        function selectPlant(value) {
-            document.getElementById('in-plant').value = value;
-
-            // 버튼 활성 스타일 토글
-            const p1Btn = document.getElementById('plant-btn-p1');
-            const p3Btn = document.getElementById('plant-btn-p3');
-            if (value === '1공장') {
-                p1Btn.style.background = '#0dcaf0';
-                p1Btn.style.color = '#000';
-                p1Btn.style.borderColor = '#0dcaf0';
-                p3Btn.style.background = '#343a40';
-                p3Btn.style.color = '#adb5bd';
-                p3Btn.style.borderColor = '#495057';
-                switchBudgetTab('P1');
-            } else {
-                p3Btn.style.background = '#0dcaf0';
-                p3Btn.style.color = '#000';
-                p3Btn.style.borderColor = '#0dcaf0';
-                p1Btn.style.background = '#343a40';
-                p1Btn.style.color = '#adb5bd';
-                p1Btn.style.borderColor = '#495057';
-                switchBudgetTab('P3');
-            }
-            updateView();
-        }
-
         function updateView() {
-            const plantName = document.getElementById('in-plant').value;
             const docName = document.getElementById('in-doc-name').value;
-            document.getElementById('out-title').innerText = plantName + " " + docName;
-            document.getElementById('out-subtitle').innerText = plantName.includes("1") ? "Planta 1 Maintenance Request" : "Planta 3 Maintenance Request";
+            document.getElementById('out-title').innerText = docName || "설비 수리 품의서";
+            document.getElementById('out-subtitle').innerText = "Repair Request Form & Cost Analysis";
 
             document.getElementById('out-date').innerText = document.getElementById('in-date').value;
             document.getElementById('out-category').innerText = document.getElementById('in-category').value;
@@ -1874,21 +1834,40 @@
 
             subTotalMXN = 0;
             subTotalKRW = 0;
+            let grandTotalP1 = 0;
+            let grandTotalP3 = 0;
+
             const renderCost = (type) => {
                 let html = "";
                 let sub = 0;
+                const plants = document.querySelectorAll(`.c-plant-${type}`);
                 const names = document.querySelectorAll(`.c-name-${type}`);
                 const vendors = document.querySelectorAll(`.c-vendor-${type}`);
                 const stocks = document.querySelectorAll(`.c-stock-${type}`);
                 const qtys = document.querySelectorAll(`.c-qty-${type}`);
                 const prices = document.querySelectorAll(`.c-price-${type}`);
+                
                 for (let i = 0; i < names.length; i++) {
                     if (!names[i].value) continue;
-                    const q = parseFloat(qtys[i].value) || 0; const p = parseFloat(prices[i].value) || 0;
+                    const q = parseFloat(qtys[i].value) || 0; 
+                    const p = parseFloat(prices[i].value) || 0;
                     const total = q * p;
                     sub += total;
+
+                    const plantVal = plants[i].value;
+                    const plantBadge = plantVal === '1공장' ? '<span style="color:#28a745; font-weight:bold; font-size:9px;">[1공장]</span>' : '<span style="color:#17a2b8; font-weight:bold; font-size:9px;">[3공장]</span>';
+
+                    // 각 공장별 총액(MXN 기준) 계산
+                    if (type === 'MXN') {
+                        if (plantVal === '1공장') grandTotalP1 += total;
+                        else grandTotalP3 += total;
+                    } else {
+                        if (plantVal === '1공장') grandTotalP1 += (total / rate);
+                        else grandTotalP3 += (total / rate);
+                    }
+
                     html += `<tr>
-                    <td>${names[i].value}</td>
+                    <td>${plantBadge} ${names[i].value}</td>
                     <td>${vendors[i].value}</td>
                     <td style="color:#666;">${stocks[i].value}</td>
                     <td style="text-align:center">${q}</td>
@@ -1915,12 +1894,12 @@
 
             renderCompareAll();
             renderHistory();
-            calcBudget('p1', grandTotal, plantName.includes('1공장'));
-            calcBudget('p3', grandTotal, plantName.includes('3공장'));
+            
+            // 공장별 예산 개별 계산
+            calcBudget('p1', grandTotalP1);
+            calcBudget('p3', grandTotalP3);
 
             renderSchedule();
-
-            performAutoSave();
         }
 
         function renderCompareAll() {
@@ -1986,6 +1965,7 @@
                 aC.innerHTML += `<input type="number" class="b-act-${suffix}" placeholder="${i}월 (Mes)" onkeyup="updateView()">`;
             }
         }
+        
         function switchBudgetTab(plant) {
             document.querySelectorAll('.budget-tab').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.budget-container').forEach(c => c.classList.remove('active'));
@@ -1997,7 +1977,8 @@
                 document.getElementById('budget-input-p3').classList.add('active');
             }
         }
-        function calcBudget(suffix, cost, isTarget) {
+        
+        function calcBudget(suffix, reqCost) {
             let tp = 0, tu = 0;
             const pp = document.querySelectorAll(`.b-plan-${suffix}`);
             const aa = document.querySelectorAll(`.b-act-${suffix}`);
@@ -2012,13 +1993,13 @@
             }
             mh += "</tr>"; ah += "</tr>";
             document.getElementById(`out-month-${suffix}`).innerHTML = mh + ah;
-            const req = isTarget ? cost : 0;
-            const bal = tp - tu - req;
-            const rate = tp > 0 ? ((tu + req) / tp) * 100 : 0;
+            
+            const bal = tp - tu - reqCost;
+            const rate = tp > 0 ? ((tu + reqCost) / tp) * 100 : 0;
 
             document.getElementById(`${suffix}-year-plan`).innerText = fmt(tp, 'MXN');
             document.getElementById(`${suffix}-year-used`).innerText = fmt(tu, 'MXN');
-            document.getElementById(`${suffix}-this-req`).innerText = isTarget ? fmt(req, 'MXN') : '-';
+            document.getElementById(`${suffix}-this-req`).innerText = reqCost > 0 ? fmt(reqCost, 'MXN') : '-';
             document.getElementById(`${suffix}-bal`).innerText = fmt(bal, 'MXN');
             document.getElementById(`${suffix}-rate-text`).innerText = rate.toFixed(1) + "%";
 
@@ -2026,11 +2007,11 @@
             bar.style.width = (rate > 100 ? 100 : rate) + "%";
             bar.className = 'bar-fill ' + (rate > 100 ? 'danger' : (rate > 80 ? 'warning' : ''));
 
-            // 선택 공장 헤더 강조
+            // 비용이 0보다 크면 대상 공장으로 판단하여 헤더 강조
             const labelId = `budget-section-label-${suffix}`;
             const el = document.getElementById(labelId);
             if (el) {
-                if (isTarget) {
+                if (reqCost > 0) {
                     el.style.background = (suffix === 'p1') ? 'rgba(40,167,69,0.12)' : 'rgba(23,162,184,0.12)';
                     el.style.borderRadius = '5px';
                     el.style.padding = '4px 8px';
@@ -2054,7 +2035,6 @@
             };
 
             return {
-                plant: document.getElementById('in-plant').value,
                 date: document.getElementById('in-date').value,
                 dept: document.getElementById('in-dept').value,
                 docName: document.getElementById('in-doc-name').value,
@@ -2063,8 +2043,8 @@
                 overview: document.getElementById('in-overview').value,
                 overviewImages: Array.from(document.querySelectorAll('.ov-img-data')).map(i => i.value),
                 issues: getDynamicValues('issue-inputs', ['.issue-loc', '.issue-desc', '.temp-img'], ['loc', 'desc', 'img']),
-                costsMXN: getDynamicValues('mxn-inputs', ['.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['name', 'vendor', 'stock', 'qty', 'price']),
-                costsKRW: getDynamicValues('krw-inputs', ['.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['name', 'vendor', 'stock', 'qty', 'price']),
+                costsMXN: getDynamicValues('mxn-inputs', ['.c-plant-MXN', '.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['plant', 'name', 'vendor', 'stock', 'qty', 'price']),
+                costsKRW: getDynamicValues('krw-inputs', ['.c-plant-KRW', '.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['plant', 'name', 'vendor', 'stock', 'qty', 'price']),
                 compMXN: getDynamicValues('compare-mxn-inputs', ['.cmp-desc-MXN', '.cmp-sel-vendor-MXN', '.cmp-sel-price-MXN', '.cmp-cmp-vendor-MXN', '.cmp-cmp-price-MXN'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']),
                 compKRW: getDynamicValues('compare-krw-inputs', ['.cmp-desc-KRW', '.cmp-sel-vendor-KRW', '.cmp-sel-price-KRW', '.cmp-cmp-vendor-KRW', '.cmp-cmp-price-KRW'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']),
                 history: getDynamicValues('history-inputs', ['.h-name', '.h-curr', '.h-prev', '.h-date'], ['name', 'curr', 'prev', 'date']),
@@ -2076,9 +2056,6 @@
         }
 
         function applyDataToForm(data) {
-            document.getElementById('in-plant').value = data.plant || '1공장';
-            // 버튼 상태 복원 (UI 동기화)
-            selectPlant(data.plant || '1공장');
             document.getElementById('in-date').value = data.date;
             document.getElementById('in-dept').value = data.dept;
             document.getElementById('in-doc-name').value = data.docName;
@@ -2106,8 +2083,8 @@
             }
 
             restoreDynamicRows('issue-inputs', data.issues, addIssueRow, ['.issue-loc', '.issue-desc', '.temp-img'], ['loc', 'desc', 'img']);
-            restoreDynamicRows('mxn-inputs', data.costsMXN, () => addCostRow('MXN'), ['.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['name', 'vendor', 'stock', 'qty', 'price']);
-            restoreDynamicRows('krw-inputs', data.costsKRW, () => addCostRow('KRW'), ['.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['name', 'vendor', 'stock', 'qty', 'price']);
+            restoreDynamicRows('mxn-inputs', data.costsMXN, () => addCostRow('MXN'), ['.c-plant-MXN', '.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['plant', 'name', 'vendor', 'stock', 'qty', 'price']);
+            restoreDynamicRows('krw-inputs', data.costsKRW, () => addCostRow('KRW'), ['.c-plant-KRW', '.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['plant', 'name', 'vendor', 'stock', 'qty', 'price']);
             restoreDynamicRows('compare-mxn-inputs', data.compMXN, () => addCompareRow('MXN'), ['.cmp-desc-MXN', '.cmp-sel-vendor-MXN', '.cmp-sel-price-MXN', '.cmp-cmp-vendor-MXN', '.cmp-cmp-price-MXN'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']);
             restoreDynamicRows('compare-krw-inputs', data.compKRW, () => addCompareRow('KRW'), ['.cmp-desc-KRW', '.cmp-sel-vendor-KRW', '.cmp-sel-price-KRW', '.cmp-cmp-vendor-KRW', '.cmp-cmp-price-KRW'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']);
             restoreDynamicRows('history-inputs', data.history, addHistoryRow, ['.h-name', '.h-curr', '.h-prev', '.h-date'], ['name', 'curr', 'prev', 'date']);
@@ -2119,35 +2096,8 @@
             updateView();
         }
 
-        function performAutoSave() {
-            const data = collectData();
-            try {
-                localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-                const now = new Date();
-                document.getElementById('save-status').innerText = "Last saved: " + now.toTimeString().split(' ')[0];
-            } catch (e) {
-                console.error("AutoSave Failed (Quota?): ", e);
-                document.getElementById('save-status').innerText = "Auto-save failed (too large)";
-            }
-        }
-
-        function checkAutoSave() {
-            const saved = localStorage.getItem(SAVE_KEY);
-            if (saved) {
-                if (confirm("이전에 작성 중이던 내용이 있습니다. 복구하시겠습니까?\n(Hay datos guardados anteriormente. ¿Desea restaurarlos?)")) {
-                    try {
-                        const data = JSON.parse(saved);
-                        applyDataToForm(data);
-                    } catch (e) {
-                        alert("데이터 복구 실패");
-                    }
-                }
-            }
-        }
-
         function resetForm() {
             if (confirm("모든 내용을 지우고 초기화하시겠습니까? (Reset all data?)")) {
-                localStorage.removeItem(SAVE_KEY);
                 location.reload();
             }
         }
@@ -2183,10 +2133,24 @@
             }
             return res;
         }
+        
         function restoreDynamicRows(id, data, fn, sels, keys) {
             document.getElementById(id).innerHTML = "";
             if (!data) { fn(); return; }
-            data.forEach(d => { fn(); const r = document.getElementById(id).lastElementChild; sels.forEach((s, i) => { const el = r.querySelector(s); if (el.tagName === 'IMG') el.src = d[keys[i]]; else el.value = d[keys[i]]; }); });
+            data.forEach(d => { 
+                fn(); 
+                const r = document.getElementById(id).lastElementChild; 
+                sels.forEach((s, i) => { 
+                    const el = r.querySelector(s); 
+                    if (el.tagName === 'IMG') {
+                        el.src = d[keys[i]]; 
+                    } else if (el.tagName === 'SELECT') {
+                        el.value = d[keys[i]] || '1공장';
+                    } else {
+                        el.value = d[keys[i]] || '';
+                    }
+                }); 
+            });
         }
     </script>
 
