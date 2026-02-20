@@ -1242,7 +1242,9 @@
                 <div id="budget-section-label-p1"
                     style="font-size:12px; font-weight:bold; color:#28a745; border-bottom:1px solid #28a745; margin-bottom:5px; display:flex; align-items:center; gap:8px; padding:4px 0;">
                     Planta 1
-                    <span class="plant-tag" style="display:none; background:#28a745; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶ 금번 품의 반영</span>
+                    <span class="plant-tag"
+                        style="display:none; background:#28a745; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶
+                        금번 품의 반영</span>
                 </div>
                 <table class="styled-table" style="margin-bottom:2px;">
                     <thead>
@@ -1295,7 +1297,9 @@
                 <div id="budget-section-label-p3"
                     style="font-size:12px; font-weight:bold; color:#17a2b8; border-bottom:1px solid #17a2b8; margin-bottom:5px; margin-top:20px; display:flex; align-items:center; gap:8px; padding:4px 0;">
                     Planta 3
-                    <span class="plant-tag" style="display:none; background:#17a2b8; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶ 금번 품의 반영</span>
+                    <span class="plant-tag"
+                        style="display:none; background:#17a2b8; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶
+                        금번 품의 반영</span>
                 </div>
                 <table class="styled-table" style="margin-bottom:2px;">
                     <thead>
@@ -1594,12 +1598,42 @@
             div.style.marginBottom = "5px";
             div.style.display = "flex";
             div.style.alignItems = "center";
+            div.style.flexWrap = "wrap";
+
+            // --- 변경점: 붙여넣기 영역 시각적 강조 및 포커스 속성 추가 ---
+            div.style.border = "1px dashed #adb5bd";
+            div.style.padding = "8px";
+            div.style.borderRadius = "4px";
+            div.style.background = "#343a40";
+            div.tabIndex = 0; // 마우스 클릭 시 요소가 포커스를 받도록 설정하여 붙여넣기 이벤트를 대기합니다.
 
             div.innerHTML = `
-            <input type="file" accept="image/*" onchange="processOverviewImage(this)" style="font-size:0.8rem; width:80%;">
-            <input type="hidden" class="ov-img-data">
-            <button class="btn-del-mini" onclick="this.parentElement.remove(); updateView()">삭제</button>
-        `;
+                <input type="file" accept="image/*" onchange="processOverviewImage(this)" style="font-size:0.8rem; width:70%; margin-bottom:5px;">
+                <button class="btn-del-mini" onclick="this.parentElement.remove(); updateView()">삭제</button>
+                <span style="font-size:0.75rem; color:#ffc107; display:block; width:100%;">💡 이 점선 박스를 마우스로 클릭한 후 Ctrl+V를 누르면 캡처한 이미지가 바로 입력됩니다.</span>
+                <input type="hidden" class="ov-img-data">
+            `;
+
+            // --- 변경점: 클립보드 붙여넣기(Paste) 이벤트 감지 ---
+            div.addEventListener('paste', function (e) {
+                // 클립보드 데이터에서 아이템을 가져옵니다.
+                const items = (e.clipboardData || window.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    // 복사된 항목이 이미지 형식인지 확인합니다.
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const file = items[i].getAsFile();
+                        // 기존에 작성된 이미지 압축 함수를 활용해 화면에 적용합니다.
+                        compressImage(file, (base64) => {
+                            div.querySelector('.ov-img-data').value = base64;
+                            updateView();
+                            showToast("📸 개요 사진이 붙여넣기 되었습니다.");
+                        });
+                        e.preventDefault(); // 기본 붙여넣기 동작을 막습니다.
+                        break; // 이미지를 찾았으므로 반복을 종료합니다.
+                    }
+                }
+            });
+
             container.appendChild(div);
         }
 
@@ -1614,8 +1648,43 @@
 
         function addIssueRow() {
             const div = document.createElement('div');
-            div.style.marginBottom = "5px"; div.style.background = "#2c3034"; div.style.padding = "5px"; div.style.borderRadius = "4px";
-            div.innerHTML = `<input type="file" accept="image/*" onchange="handleImage(this)" style="font-size:0.8rem"><input type="text" class="issue-loc" placeholder="위치 (Ubicación)" onkeyup="updateView()"><input type="text" class="issue-desc" placeholder="설명 (Descripción)" onkeyup="updateView()"><img class="temp-img" style="display:none;" src="">`;
+            div.style.marginBottom = "8px";
+            div.style.background = "#2c3034";
+            div.style.padding = "10px";
+            div.style.borderRadius = "4px";
+
+            // --- 변경점: 붙여넣기 영역 시각적 강조 및 포커스 속성 추가 ---
+            div.style.border = "1px dashed #adb5bd";
+            div.tabIndex = 0; // 마우스 클릭 시 요소가 포커스를 받도록 설정합니다.
+
+            div.innerHTML = `
+                <div style="margin-bottom:8px;">
+                    <input type="file" accept="image/*" onchange="handleImage(this)" style="font-size:0.8rem; width:70%;">
+                    <button class="btn-del-mini" onclick="this.parentElement.parentElement.remove(); updateView()" style="float:right;">삭제</button>
+                    <span style="font-size:0.75rem; color:#17a2b8; display:block; margin-top:5px;">💡 이 점선 박스를 클릭하고 Ctrl+V (복사/캡처한 이미지 붙여넣기)</span>
+                </div>
+                <input type="text" class="issue-loc" placeholder="위치 (Ubicación)" onkeyup="updateView()">
+                <input type="text" class="issue-desc" placeholder="설명 (Descripción)" onkeyup="updateView()">
+                <img class="temp-img" style="display:none;" src="">
+            `;
+
+            // --- 변경점: 클립보드 붙여넣기(Paste) 이벤트 감지 ---
+            div.addEventListener('paste', function (e) {
+                const items = (e.clipboardData || window.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const file = items[i].getAsFile();
+                        compressImage(file, (base64) => {
+                            div.querySelector('.temp-img').src = base64;
+                            updateView();
+                            showToast("📸 점검 결과 사진이 붙여넣기 되었습니다.");
+                        });
+                        e.preventDefault();
+                        break;
+                    }
+                }
+            });
+
             document.getElementById('issue-inputs').appendChild(div);
         }
 
@@ -1846,10 +1915,10 @@
                 const stocks = document.querySelectorAll(`.c-stock-${type}`);
                 const qtys = document.querySelectorAll(`.c-qty-${type}`);
                 const prices = document.querySelectorAll(`.c-price-${type}`);
-                
+
                 for (let i = 0; i < names.length; i++) {
                     if (!names[i].value) continue;
-                    const q = parseFloat(qtys[i].value) || 0; 
+                    const q = parseFloat(qtys[i].value) || 0;
                     const p = parseFloat(prices[i].value) || 0;
                     const total = q * p;
                     sub += total;
@@ -1894,7 +1963,7 @@
 
             renderCompareAll();
             renderHistory();
-            
+
             // 공장별 예산 개별 계산
             calcBudget('p1', grandTotalP1);
             calcBudget('p3', grandTotalP3);
@@ -1965,7 +2034,7 @@
                 aC.innerHTML += `<input type="number" class="b-act-${suffix}" placeholder="${i}월 (Mes)" onkeyup="updateView()">`;
             }
         }
-        
+
         function switchBudgetTab(plant) {
             document.querySelectorAll('.budget-tab').forEach(b => b.classList.remove('active'));
             document.querySelectorAll('.budget-container').forEach(c => c.classList.remove('active'));
@@ -1977,7 +2046,7 @@
                 document.getElementById('budget-input-p3').classList.add('active');
             }
         }
-        
+
         function calcBudget(suffix, reqCost) {
             let tp = 0, tu = 0;
             const pp = document.querySelectorAll(`.b-plan-${suffix}`);
@@ -1993,7 +2062,7 @@
             }
             mh += "</tr>"; ah += "</tr>";
             document.getElementById(`out-month-${suffix}`).innerHTML = mh + ah;
-            
+
             const bal = tp - tu - reqCost;
             const rate = tp > 0 ? ((tu + reqCost) / tp) * 100 : 0;
 
@@ -2133,23 +2202,23 @@
             }
             return res;
         }
-        
+
         function restoreDynamicRows(id, data, fn, sels, keys) {
             document.getElementById(id).innerHTML = "";
             if (!data) { fn(); return; }
-            data.forEach(d => { 
-                fn(); 
-                const r = document.getElementById(id).lastElementChild; 
-                sels.forEach((s, i) => { 
-                    const el = r.querySelector(s); 
+            data.forEach(d => {
+                fn();
+                const r = document.getElementById(id).lastElementChild;
+                sels.forEach((s, i) => {
+                    const el = r.querySelector(s);
                     if (el.tagName === 'IMG') {
-                        el.src = d[keys[i]]; 
+                        el.src = d[keys[i]];
                     } else if (el.tagName === 'SELECT') {
                         el.value = d[keys[i]] || '1공장';
                     } else {
                         el.value = d[keys[i]] || '';
                     }
-                }); 
+                });
             });
         }
     </script>
