@@ -3,32 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>품의서 (Purchase Request)</title>
+    <title>설비 수리 품의서 V6.0 (Cloud Select)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
-        :root {
-            --bg-body: #111827;
-            --bg-nav: #1f2937;
-            --bg-card: #2d3748;
-            --bg-input: #374151;
-            --text-main: #f9fafb;
-            --text-muted: #9ca3af;
-            --accent: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
-            --blue: #3b82f6;
-            --border: #4b5563;
-        }
-
         /* [공통] 레이아웃 */
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-body);
+            background-color: #2c3e50;
             display: flex;
             height: 100vh;
             font-family: 'Malgun Gothic', 'Segoe UI', sans-serif;
-            color: var(--text-main);
             overflow: hidden;
         }
 
@@ -37,11 +22,11 @@
             width: 450px;
             min-width: 350px;
             max-width: 900px;
-            background: var(--bg-nav);
-            color: var(--text-main);
+            background: #212529;
+            color: white;
             padding: 20px;
             overflow-y: auto;
-            border-right: 1px solid var(--border);
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -49,14 +34,14 @@
         }
 
         .input-panel h2 {
-            border-bottom: 2px solid var(--border);
+            border-bottom: 2px solid #adb5bd;
             padding-bottom: 10px;
             font-size: 1.2rem;
-            color: var(--blue);
+            color: #f8f9fa;
             margin-top: 0;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
         }
 
         .save-status {
@@ -65,11 +50,35 @@
             font-weight: normal;
         }
 
+        /* Resizer */
+        .resizer {
+            width: 8px;
+            background-color: #1a1d20;
+            cursor: col-resize;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            transition: background 0.2s;
+        }
+
+        .resizer:hover,
+        .resizer.resizing {
+            background-color: #0d6efd;
+        }
+
+        .resizer::after {
+            content: "⋮";
+            color: #6c757d;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
         .form-section {
-            background: var(--bg-card);
+            background: #343a40;
             padding: 15px;
             border-radius: 8px;
-            border: 1px solid var(--border);
+            border: 1px solid #495057;
         }
 
         .form-section h3 {
@@ -84,29 +93,22 @@
             display: block;
             margin-bottom: 5px;
             font-size: 0.8rem;
-            color: var(--text-muted);
+            color: #ced4da;
         }
 
         input,
         textarea,
         select {
             width: 100%;
-            padding: 8px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            background: var(--bg-input);
-            color: var(--text-main);
+            padding: 6px;
+            border: 1px solid #6c757d;
+            border-radius: 4px;
+            background: #fff;
+            color: #333;
             margin-bottom: 8px;
             font-family: inherit;
             font-size: 0.9rem;
             box-sizing: border-box;
-        }
-
-        input:focus,
-        textarea:focus,
-        select:focus {
-            outline: 2px solid var(--blue);
-            border-color: transparent;
         }
 
         ::placeholder {
@@ -187,87 +189,80 @@
             flex-wrap: wrap;
         }
 
-        /* 이전 코드와 동일한 버튼 스타일 적용 */
-        .btn-print {
+        .btn-save {
             flex: 1;
-            background: #374151;
-            border: 1px solid #4b5563;
-            height: 50px;
-            font-size: 1.1rem;
-            color: #f9fafb;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .btn-print:hover {
-            background: #4b5563;
-        }
-
-        .btn-capture {
-            flex: 1;
-            background: #374151;
-            border: 1px solid #4b5563;
-            height: 50px;
-            font-size: 1.1rem;
-            color: #f9fafb;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .btn-capture:hover {
-            background: #4b5563;
-        }
-
-        .btn-save,
-        .btn-load,
-        .btn-reset,
-        .btn-cloud-save,
-        .btn-cloud-load {
-            flex: 1;
-            background: #374151;
-            border: 1px solid #4b5563;
-            color: #f9fafb;
+            background: #0d6efd;
+            color: white;
+            border: none;
             padding: 10px;
-            border-radius: 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-load {
+            flex: 1;
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-reset {
+            flex: 0.5;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Cloud Buttons */
+        .btn-cloud-save {
+            flex: 1;
+            background: #4285F4;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 5px;
-            transition: 0.2s;
-            font-size: 0.9rem;
-            height: 40px;
         }
 
-        .btn-save:hover,
-        .btn-load:hover,
-        .btn-reset:hover,
-        .btn-cloud-save:hover,
-        .btn-cloud-load:hover {
-            background: #4b5563;
+        .btn-cloud-load {
+            flex: 1;
+            background: #34A853;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
         .btn-add {
-            background: #374151;
-            border: 1px solid #4b5563;
-            color: #f9fafb;
-            padding: 8px 12px;
+            background: #17a2b8;
+            border: none;
+            padding: 8px;
+            color: white;
             width: 100%;
             border-radius: 4px;
             cursor: pointer;
             margin-top: 5px;
-            font-size: 0.9rem;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-
-        .btn-add:hover {
-            background: #4b5563;
+            font-size: 0.8rem;
         }
 
         .btn-del-mini {
@@ -279,6 +274,36 @@
             cursor: pointer;
             font-size: 0.7rem;
             margin-left: 5px;
+        }
+
+        .btn-output-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .btn-print {
+            flex: 1;
+            background: #28a745;
+            height: 50px;
+            font-size: 1.1rem;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-capture {
+            flex: 1;
+            background: #6f42c1;
+            height: 50px;
+            font-size: 1.1rem;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         .budget-tabs {
@@ -319,16 +344,14 @@
             display: block;
         }
 
-        /* [우측] 미리보기 패널 (이전 코드 디자인 유지) */
+        /* [우측] 미리보기 패널 */
         .preview-panel {
             flex: 1;
             padding: 40px;
             overflow: auto;
-            background: #e9ecef;
-            /* 밝은 회색 배경 */
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
+            background: #555;
+            display: block;
+            min-width: 300px;
         }
 
         .report-container {
@@ -337,11 +360,10 @@
             height: auto;
             margin: 0 auto;
             background: white;
-            color: #333;
             box-sizing: border-box;
             padding: 15mm;
             padding-bottom: 30mm;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
 
         /* [Header] */
@@ -398,13 +420,13 @@
 
         .category-badge {
             font-weight: bold;
-            color: #374151;
+            color: #d63384;
         }
 
         .section-title {
             font-size: 15px;
             font-weight: bold;
-            color: #111827;
+            color: #000;
             margin-top: 30px;
             margin-bottom: 10px;
             display: flex;
@@ -439,11 +461,11 @@
         }
 
         .styled-table th {
-            background-color: #e5e7eb;
-            color: #111827;
+            background-color: #e9ecef;
+            color: #000;
             text-align: center;
             font-weight: bold;
-            border-top: 2px solid #333;
+            border-top: 2px solid black;
         }
 
         .styled-table tr:nth-child(even) {
@@ -474,22 +496,20 @@
         .cost-header-mxn {
             background-color: #d1ecf1;
             font-weight: bold;
-            color: #374151;
         }
 
         .cost-header-krw {
             background-color: #fff3cd;
             font-weight: bold;
-            color: #374151;
         }
 
         .diff-plus {
-            color: #374151;
+            color: blue;
             font-weight: bold;
         }
 
         .diff-minus {
-            color: #374151;
+            color: red;
             font-weight: bold;
         }
 
@@ -502,17 +522,17 @@
         }
 
         .price-up {
-            color: #374151;
+            color: red;
             font-weight: bold;
         }
 
         .price-down {
-            color: #374151;
+            color: blue;
             font-weight: bold;
         }
 
         .price-same {
-            color: #6b7280;
+            color: #999;
         }
 
         .bar-bg {
@@ -684,6 +704,7 @@
             font-weight: bold;
         }
 
+        /* [추가됨] 클라우드 파일 목록 팝업 스타일 */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -780,6 +801,7 @@
         @media print {
 
             .input-panel,
+            .resizer,
             .toast,
             .modal-overlay,
             .sidebar-controls {
@@ -789,7 +811,6 @@
             .preview-panel {
                 padding: 0;
                 background: white;
-                display: block;
             }
 
             .report-container {
@@ -804,20 +825,17 @@
                 background: white;
                 height: auto;
                 overflow: visible;
-                display: block;
             }
         }
 
-        /* [핵심 변경] 이전 코드와 동일한 사이드바 컨트롤 스타일 */
-        /* [수정됨] 표준 홈 버튼 & 토글 버튼 스타일 */
+        /* Sidebar Controls (Home + Toggle) */
         .sidebar-controls {
             display: flex;
             align-items: center;
             position: fixed;
             top: 15px;
-            left: 15px !important;
+            left: 15px;
             z-index: 1001;
-            transition: none;
         }
 
         .home-btn {
@@ -825,9 +843,7 @@
             color: #e2e8f0 !important;
             border: 1px solid #475569 !important;
             border-radius: 8px 0 0 8px !important;
-            /* 둥근 정도 8px */
             height: 28px !important;
-            /* 높이 28px */
             padding: 0 10px !important;
             box-sizing: border-box !important;
             text-decoration: none !important;
@@ -843,31 +859,6 @@
         .home-btn:hover {
             background: #4285F4 !important;
             color: #fff !important;
-        }
-
-        .btn-toggle-sidebar {
-            width: 24px !important;
-            height: 28px !important;
-            /* 높이 28px */
-            background: #1e293b !important;
-            border: 1px solid #334155 !important;
-            border-left: none !important;
-            /* 왼쪽 선 제거 (연결효과) */
-            border-radius: 0 8px 8px 0 !important;
-            /* 오른쪽만 둥글게 */
-            box-sizing: border-box !important;
-            color: #94a3b8 !important;
-            cursor: pointer !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 12px !important;
-            padding: 0 !important;
-        }
-
-        .btn-toggle-sidebar:hover {
-            color: white !important;
-            background: #334155 !important;
         }
 
         .btn-toggle-sidebar {
@@ -896,10 +887,13 @@
             display: none !important;
         }
 
-        /* 전체 화면일 때 사이드바 컨트롤 위치 조정 (좌측 상단 고정) */
+        body.full-screen .resizer {
+            display: none !important;
+        }
+
         body.full-screen .sidebar-controls {
             position: fixed;
-            left: 15px !important;
+            left: 15px;
             top: 15px;
             z-index: 1001;
         }
@@ -924,25 +918,18 @@
 
     <div class="input-panel" id="inputPanel">
         <h2>
-            <div class="sidebar-controls">
-                <a class="home-btn" href="index.html">🏠 Home</a>
-                <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
-            </div>
+
+            <span id="save-status" class="save-status"></span>
         </h2>
 
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <button class="btn-print" onclick="window.print()" style="flex:1;">PDF 변환 (PDF)</button>
-            <button class="btn-capture" onclick="captureImage()" style="flex:1;">스크린샷 (Captura)</button>
-        </div>
-
         <div class="btn-action">
-            <button class="btn-cloud-save" onclick="saveToCloud()">📤 클라우드 저장 (Save)</button>
-            <button class="btn-cloud-load" onclick="loadFromCloud()">📥 클라우드 불러오기 (Load)</button>
+            <button class="btn-cloud-save" onclick="saveToCloud()">☁️ 클라우드 저장 (Cloud Save)</button>
+            <button class="btn-cloud-load" onclick="loadFromCloud()">☁️ 선택 불러오기 (Cloud Load)</button>
         </div>
         <div class="btn-action">
-            <button class="btn-save" onclick="saveData()">💾 로컬 저장 (JSON)</button>
-            <button class="btn-load" onclick="document.getElementById('file-load').click()">📂 파일 열기 (Open)</button>
-            <button class="btn-reset" onclick="resetForm()">↻ 초기화</button>
+            <button class="btn-save" onclick="saveData()">💾 파일 저장</button>
+            <button class="btn-load" onclick="document.getElementById('file-load').click()">📂 파일 열기</button>
+            <button class="btn-reset" onclick="resetForm()">🗑️ 초기화</button>
             <input type="file" id="file-load" style="display:none;" accept=".json" onchange="loadDataFile(this)">
         </div>
 
@@ -969,13 +956,13 @@
             <h3>1. 기본 정보 (Información Básica)</h3>
 
             <label style="color:#0dcaf0; font-weight:bold;">대상 공장 (Planta)</label>
-            <select id="in-plant" onchange="updateView()" style="background:#e7f1ff; font-weight:bold; color:#333;">
+            <select id="in-plant" onchange="updateView()" style="background:#e7f1ff; font-weight:bold;">
                 <option value="1공장">1공장 (Planta 1)</option>
                 <option value="3공장">3공장 (Planta 3)</option>
             </select>
 
             <label style="color:#d63384; font-weight:bold;">품의 구분 (Categoría)</label>
-            <select id="in-category" onchange="updateView()" style="background:#fff0f6; font-weight:bold; color:#333;">
+            <select id="in-category" onchange="updateView()" style="background:#fff0f6; font-weight:bold;">
                 <option value="수선 (Reparación)">수선 (Reparación)</option>
                 <option value="투자 (Inversión)">투자 (Inversión)</option>
                 <option value="소모 (Consumibles)">소모 (Consumibles)</option>
@@ -1019,8 +1006,7 @@
             </div>
             <div>
                 <div id="krw-inputs"></div>
-                <button class="btn-add" style="background:#e0a800; color:white; border:none;"
-                    onclick="addCostRow('KRW'); updateView()">+ KRW 추가
+                <button class="btn-add" style="background:#e0a800;" onclick="addCostRow('KRW'); updateView()">+ KRW 추가
                     (Agregar KRW)</button>
             </div>
         </div>
@@ -1031,16 +1017,14 @@
             <div id="compare-mxn-inputs"></div>
             <button class="btn-add" onclick="addCompareRow('MXN'); updateView()">+ 비교 추가 MXN (Agregar Comp.)</button>
             <div style="margin-top:5px;" id="compare-krw-inputs"></div>
-            <button class="btn-add" style="background:#e0a800; color:white; border:none;"
-                onclick="addCompareRow('KRW'); updateView()">+ 비교 추가 KRW
+            <button class="btn-add" style="background:#e0a800;" onclick="addCompareRow('KRW'); updateView()">+ 비교 추가 KRW
                 (Agregar Comp.)</button>
 
             <label style="color:#20c997; margin-top:20px; border-top:1px dashed #666; padding-top:10px;">5-2. 단가 변동 이력
                 (Historial de Precios)</label>
             <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 금번/이전 단가 및 일자 비교</div>
             <div id="history-inputs"></div>
-            <button class="btn-add" style="background:#20c997; color:white; border:none;"
-                onclick="addHistoryRow(); updateView()">+ 이력 추가 (Agregar
+            <button class="btn-add" style="background:#20c997;" onclick="addHistoryRow(); updateView()">+ 이력 추가 (Agregar
                 Historial)</button>
         </div>
 
@@ -1064,21 +1048,25 @@
             <h3>7. 일정 관리 (Cronograma)</h3>
             <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 기간 및 작업 내용 입력 (Periodo y Actividad)</div>
             <div id="schedule-inputs"></div>
-            <button class="btn-add" style="background:#8e44ad; color:white; border:none;"
-                onclick="addScheduleRow(); updateView()">+ 일정 추가
+            <button class="btn-add" style="background:#8e44ad;" onclick="addScheduleRow(); updateView()">+ 일정 추가
                 (Agregar Tarea)</button>
+        </div>
+
+        <div class="btn-output-group">
+            <button class="btn-print" onclick="window.print()">🖨️ PDF 저장 (Guardar PDF)</button>
+            <button class="btn-capture" onclick="captureImage()">📸 이미지 저장 (Guardar Img)</button>
         </div>
     </div>
 
-    <div class="sidebar-controls" style="display:none;">
+    <div class="resizer" id="dragMe"></div>
+
+    <!-- Sidebar Controls (Home + Toggle) -->
+    <div class="sidebar-controls">
         <a class="home-btn" href="index.html">🏠 Home</a>
         <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
     </div>
 
     <div class="preview-panel">
-        <h2 style="margin: 0 0 15px 0; color: #fff; font-size: 24px; font-weight: bold;">
-            <span id="save-status" class="save-status" style="font-size:14px; margin-left:10px;"></span>
-        </h2>
         <div class="report-container" id="capture-target">
 
             <div class="modern-header">
@@ -1366,7 +1354,7 @@
     <script>
         // ==========================================
         // [중요] 여기에 배포한 구글 웹 앱 URL을 붙여넣으세요
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzHbtYU9931Ju1-bUJsNUdkzUJT2DOBNcmXDlfdlGtuzskzTNZi9XE2S-uZ8MRzNhh3/exec";
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-UgoVHWs2X9RLadsvVqqoVNpeU8ciwdHxKO6jauVALKqfBm5Zd9qDeoEzmV8BhsZd/exec";
         // ==========================================
 
         let subTotalMXN = 0; let subTotalKRW = 0;
@@ -1374,61 +1362,24 @@
 
         // --- Cloud Functions ---
 
-        function compressBase64Image(base64Str, maxW = 800, maxH = 800, quality = 0.5) {
-            return new Promise((resolve) => {
-                if (!base64Str || !base64Str.startsWith('data:image')) { resolve(base64Str); return; }
-                const img = new Image();
-                img.onload = function () {
-                    let w = img.width, h = img.height;
-                    if (w > h) { if (w > maxW) { h *= maxW / w; w = maxW; } }
-                    else { if (h > maxH) { w *= maxH / h; h = maxH; } }
-                    const canvas = document.createElement('canvas');
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', quality));
-                };
-                img.onerror = () => resolve('');
-                img.src = base64Str;
-            });
-        }
-
-        async function compressDataImages(data) {
-            if (data.overviewImages && data.overviewImages.length > 0) {
-                data.overviewImages = await Promise.all(
-                    data.overviewImages.map(src => compressBase64Image(src))
-                );
-            }
-            if (data.issues && data.issues.length > 0) {
-                for (let issue of data.issues) {
-                    if (issue.img) issue.img = await compressBase64Image(issue.img);
-                }
-            }
-            return data;
-        }
-
+        // 1. 저장하기 (날짜, 제목 등 메타데이터 포함)
         async function saveToCloud() {
             if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 APPS_SCRIPT_URL을 설정해주세요!"); return; }
 
-            const data = collectData();
-            const docName = data.docName || "";
-            if (!docName.trim()) { alert("제목(건명)을 입력해주세요! (Title is required)"); return; }
-
-            if (!confirm(`"${docName}" 을(를) 클라우드에 저장하시겠습니까?\n(같은 제목이 있으면 덮어쓰기됩니다)`)) return;
+            if (!confirm("클라우드에 저장하시겠습니까?\n(새로운 데이터로 추가됩니다)")) return;
 
             const btn = event.target; const orgTxt = btn.innerText;
-            btn.innerText = "📦 이미지 압축 중..."; btn.disabled = true;
+            btn.innerText = "저장 중..."; btn.disabled = true;
 
             try {
-                const compressedData = await compressDataImages(data);
-                btn.innerText = "☁️ 업로드 중...";
-
+                const data = collectData();
                 await fetch(APPS_SCRIPT_URL, {
                     method: "POST",
                     mode: "no-cors",
                     headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(compressedData)
+                    body: JSON.stringify(data)
                 });
-                showToast(`☁️ "${docName}" 저장 완료!`);
+                showToast("☁️ 저장 완료! (목록에서 확인 가능)");
             } catch (error) {
                 alert("오류: " + error.message);
             } finally {
@@ -1436,6 +1387,7 @@
             }
         }
 
+        // 2. 목록 불러오기 (팝업 열기)
         async function loadFromCloud() {
             if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어 APPS_SCRIPT_URL을 설정해주세요!"); return; }
 
@@ -1446,29 +1398,28 @@
             listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:#aaa;">☁️ 목록 로딩 중...</div>';
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL + "?cmd=list");
+                const response = await fetch(APPS_SCRIPT_URL + "?type=list");
                 const result = await response.json();
 
                 listContainer.innerHTML = "";
 
                 if (!result.list || result.list.length === 0) {
-                    listContainer.innerHTML = '<div style="text-align:center; padding:20px;">저장된 문서가 없습니다.</div>';
+                    listContainer.innerHTML = '<div style="text-align:center; padding:20px;">저장된 파일이 없습니다.</div>';
                     return;
                 }
 
                 result.list.forEach(item => {
                     const div = document.createElement('div');
                     div.className = 'file-item';
+                    div.onclick = () => loadSpecificCloudData(item.row);
+
                     div.innerHTML = `
-                    <div class="file-info" style="cursor:pointer;" onclick="loadSpecificCloudData('${item.docName.replace(/'/g, "\\'")}')">
+                    <div class="file-info">
                         <div class="f-title">${item.docName || '(제목 없음)'}</div>
-                        <div class="f-meta">📅 ${item.date || '-'} | 📂 ${item.category || '-'} | 🕐 ${item.updated || '-'}</div>
+                        <div class="f-meta">📅 ${item.date} | 🏭 ${item.plant} | 👤 ${item.dept || '-'}</div>
                     </div>
-                    <div style="display:flex; gap:4px;">
-                        <button class="f-btn" onclick="loadSpecificCloudData('${item.docName.replace(/'/g, "\\'")}')">불러오기</button>
-                        <button class="f-btn" style="background:#dc3545;" onclick="deleteFromCloud('${item.docName.replace(/'/g, "\\'")}')">삭제</button>
-                    </div>
-                    `;
+                    <button class="f-btn">불러오기</button>
+                `;
                     listContainer.appendChild(div);
                 });
 
@@ -1477,34 +1428,20 @@
             }
         }
 
-        async function loadSpecificCloudData(docName) {
-            if (!confirm(`"${docName}" 을(를) 불러오시겠습니까?\n(현재 작성 중인 내용은 사라집니다)`)) return;
+        // 3. 특정 데이터 로드
+        async function loadSpecificCloudData(rowIndex) {
+            if (!confirm("선택한 데이터를 불러오시겠습니까?\n(현재 작성 중인 내용은 사라집니다)")) return;
 
             closeCloudModal();
             showToast("☁️ 데이터 다운로드 중...");
 
             try {
-                const response = await fetch(APPS_SCRIPT_URL + `?cmd=load&docName=${encodeURIComponent(docName)}`);
-                const result = await response.json();
-                if (result.error) { alert("로드 실패: " + result.error); return; }
-                applyDataToForm(result.data);
-                showToast(`☁️ "${docName}" 불러오기 완료!`);
+                const response = await fetch(APPS_SCRIPT_URL + `?type=load&row=${rowIndex}`);
+                const data = await response.json();
+                applyDataToForm(data);
+                showToast("☁️ 불러오기 완료!");
             } catch (error) {
                 alert("데이터 로드 실패: " + error.message);
-            }
-        }
-
-        async function deleteFromCloud(docName) {
-            if (!confirm(`"${docName}" 을(를) 클라우드에서 삭제하시겠습니까?\n(이 작업은 되돌릴 수 없습니다)`)) return;
-
-            try {
-                const response = await fetch(APPS_SCRIPT_URL + `?cmd=delete&docName=${encodeURIComponent(docName)}`);
-                const result = await response.json();
-                if (result.error) { alert("삭제 실패: " + result.error); return; }
-                showToast(`🗑️ "${docName}" 삭제 완료!`);
-                loadFromCloud();
-            } catch (error) {
-                alert("삭제 실패: " + error.message);
             }
         }
 
@@ -1515,12 +1452,15 @@
         function showToast(msg) {
             const t = document.getElementById('cloudToast');
             t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 2500);
+            setTimeout(() => { t.style.display = 'none'; }, 2000);
         }
+
+        // --- Logic ---
 
         window.onload = function () {
             document.getElementById('in-date').valueAsDate = new Date();
             initForm();
+            initResizer();
             setTimeout(checkAutoSave, 500);
         };
 
@@ -1539,10 +1479,35 @@
             }
         }
 
+        function initResizer() {
+            const resizer = document.getElementById('dragMe');
+            const leftSide = document.getElementById('inputPanel');
+            let x = 0; let w = 0;
+            const mouseDownHandler = function (e) {
+                x = e.clientX;
+                const styles = window.getComputedStyle(leftSide);
+                w = parseInt(styles.width, 10);
+                resizer.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+                document.addEventListener('mousemove', mouseMoveHandler);
+                document.addEventListener('mouseup', mouseUpHandler);
+            };
+            const mouseMoveHandler = function (e) { const dx = e.clientX - x; leftSide.style.width = `${w + dx}px`; };
+            const mouseUpHandler = function () {
+                resizer.classList.remove('resizing');
+                document.body.style.removeProperty('cursor');
+                document.body.style.removeProperty('user-select');
+                document.removeEventListener('mousemove', mouseMoveHandler);
+                document.removeEventListener('mouseup', mouseUpHandler);
+            };
+
+            resizer.addEventListener('mousedown', mouseDownHandler);
+        }
+
         function toggleSidebar() {
             document.body.classList.toggle('full-screen');
             const btn = document.getElementById('btn-toggle-sidebar');
-            const panel = document.getElementById('inputPanel');
 
             if (document.body.classList.contains('full-screen')) {
                 btn.innerText = "▶";
@@ -1838,8 +1803,322 @@
                 const src = input.value;
                 if (src && src.startsWith('data:')) {
                     const img = document.createElement('img');
-                    img
+                    img.src = src;
+                    img.className = 'overview-img-item';
+                    ovGrid.appendChild(img);
                 }
-            })
+            });
+
+            const issueBody = document.getElementById('out-issue-body'); issueBody.innerHTML = "";
+            const issues = document.getElementById('issue-inputs').children;
+            for (let i = 0; i < issues.length; i++) {
+                const imgSrc = issues[i].querySelector('.temp-img').src;
+                const loc = issues[i].querySelector('.issue-loc').value;
+                const desc = issues[i].querySelector('.issue-desc').value;
+                if (!loc && !desc && (!imgSrc || imgSrc === window.location.href)) continue;
+                issueBody.innerHTML += `<tr class="photo-row"><td>${i + 1}</td><td>${imgSrc ? `<img src="${imgSrc}" class="photo-img">` : '<span style="color:#ccc">No Photo</span>'}</td><td style="text-align:left; padding:5px;"><strong>[Location]</strong> ${loc}<br><strong>[Detail]</strong> ${desc}</td></tr>`;
+            }
+
+            subTotalMXN = 0;
+            subTotalKRW = 0;
+            const renderCost = (type) => {
+                let html = "";
+                let sub = 0;
+                const names = document.querySelectorAll(`.c-name-${type}`);
+                const vendors = document.querySelectorAll(`.c-vendor-${type}`);
+                const stocks = document.querySelectorAll(`.c-stock-${type}`);
+                const qtys = document.querySelectorAll(`.c-qty-${type}`);
+                const prices = document.querySelectorAll(`.c-price-${type}`);
+                for (let i = 0; i < names.length; i++) {
+                    if (!names[i].value) continue;
+                    const q = parseFloat(qtys[i].value) || 0; const p = parseFloat(prices[i].value) || 0;
+                    const total = q * p;
+                    sub += total;
+                    html += `<tr>
+                    <td>${names[i].value}</td>
+                    <td>${vendors[i].value}</td>
+                    <td style="color:#666;">${stocks[i].value}</td>
+                    <td style="text-align:center">${q}</td>
+                    <td style="text-align:center">EA</td>
+                    <td style="text-align:right">${fmt(p, type)}</td>
+                    <td style="text-align:right">${fmt(total, type)}</td>
+                </tr>`;
+                }
+                return { html, sub };
+            };
+
+            const mxnData = renderCost('MXN');
+            document.getElementById('out-mxn-body').innerHTML = mxnData.html;
+            subTotalMXN = mxnData.sub;
+            document.getElementById('out-total-mxn').innerText = fmt(subTotalMXN, 'MXN');
+
+            const krwData = renderCost('KRW');
+            document.getElementById('out-krw-body').innerHTML = krwData.html;
+            subTotalKRW = krwData.sub;
+            document.getElementById('out-total-krw').innerText = fmt(subTotalKRW, 'KRW');
+
+            const grandTotal = subTotalMXN + (subTotalKRW / rate);
+            document.getElementById('out-grand-total-mxn').innerText = "$ " + fmt(grandTotal, 'MXN');
+
+            renderCompareAll();
+            renderHistory();
+            calcBudget('p1', grandTotal, plantName.includes('1공장'));
+            calcBudget('p3', grandTotal, plantName.includes('3공장'));
+
+            renderSchedule();
+
+            performAutoSave();
         }
-    
+
+        function renderCompareAll() {
+            const body = document.getElementById('out-compare-body');
+            body.innerHTML = "";
+            const renderType = (type) => {
+                const descs = document.querySelectorAll(`.cmp-desc-${type}`);
+                const sVendors = document.querySelectorAll(`.cmp-sel-vendor-${type}`);
+                const sPrices = document.querySelectorAll(`.cmp-sel-price-${type}`);
+                const cVendors = document.querySelectorAll(`.cmp-cmp-vendor-${type}`);
+                const cPrices = document.querySelectorAll(`.cmp-cmp-price-${type}`);
+                for (let i = 0; i < descs.length; i++) {
+                    if (!descs[i].value && !sVendors[i].value) continue;
+                    const sP = parseFloat(sPrices[i].value) || 0; const cP = parseFloat(cPrices[i].value) || 0;
+                    const diff = cP - sP;
+                    const cls = diff >= 0 ? 'diff-plus' : 'diff-minus';
+                    body.innerHTML += `<tr><td>${descs[i].value} <span style="font-size:9px;color:#888">(${type})</span></td>
+                    <td class="compare-sel">${sVendors[i].value}</td>
+                    <td class="compare-sel" style="text-align:right;">${fmt(sP, type)}</td>
+                    <td class="compare-cmp">${cVendors[i].value}</td>
+                    <td class="compare-cmp" style="text-align:right;">${fmt(cP, type)}</td>
+                    <td style="text-align:right;" class="${cls}">${fmt(diff, type)}</td></tr>`;
+                }
+            };
+            renderType('MXN'); renderType('KRW');
+        }
+
+        function renderHistory() {
+            const body = document.getElementById('out-history-body');
+            body.innerHTML = "";
+            const inputs = document.getElementById('history-inputs').children;
+            for (let r of inputs) {
+                const name = r.querySelector('.h-name').value;
+                const curr = parseFloat(r.querySelector('.h-curr').value) || 0;
+                const prev = parseFloat(r.querySelector('.h-prev').value) || 0;
+                const date = r.querySelector('.h-date').value;
+                if (!name && !curr && !prev) continue;
+
+                let diffHtml = "-";
+                if (prev > 0 && curr > 0) {
+                    const diff = curr - prev;
+                    if (diff > 0) diffHtml = `<span class="price-up">▲ ${fmt(diff, 'MXN')}</span> (인상)`;
+                    else if (diff < 0) diffHtml = `<span class="price-down">▼ ${fmt(Math.abs(diff), 'MXN')}</span> (인하)`;
+                    else diffHtml = `<span class="price-same">- 변동없음</span>`;
+                }
+
+                body.innerHTML += `<tr>
+                <td>${name}</td>
+                <td style="text-align:right; font-weight:bold;">${fmt(curr, 'MXN')}</td>
+                <td style="text-align:right; color:#666;">${fmt(prev, 'MXN')}</td>
+                <td style="text-align:center;">${date}</td>
+                <td style="text-align:center;">${diffHtml}</td>
+            </tr>`;
+            }
+        }
+
+        function createBudgetInputs(suffix) {
+            const pC = document.getElementById(`budget-plan-${suffix}`);
+            const aC = document.getElementById(`budget-act-${suffix}`);
+            pC.innerHTML = ""; aC.innerHTML = "";
+            for (let i = 1; i <= 12; i++) {
+                pC.innerHTML += `<input type="number" class="b-plan-${suffix}" placeholder="${i}월 (Mes)" onkeyup="updateView()">`;
+                aC.innerHTML += `<input type="number" class="b-act-${suffix}" placeholder="${i}월 (Mes)" onkeyup="updateView()">`;
+            }
+        }
+        function switchBudgetTab(plant) {
+            document.querySelectorAll('.budget-tab').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.budget-container').forEach(c => c.classList.remove('active'));
+            if (plant === 'P1') {
+                document.querySelectorAll('.budget-tab')[0].classList.add('active');
+                document.getElementById('budget-input-p1').classList.add('active');
+            } else {
+                document.querySelectorAll('.budget-tab')[1].classList.add('active');
+                document.getElementById('budget-input-p3').classList.add('active');
+            }
+        }
+        function calcBudget(suffix, cost, isTarget) {
+            let tp = 0, tu = 0;
+            const pp = document.querySelectorAll(`.b-plan-${suffix}`);
+            const aa = document.querySelectorAll(`.b-act-${suffix}`);
+            let mh = `<tr><th style="background:#f8f9fa;">Plan</th>`;
+            let ah = `<tr><th style="background:#f8f9fa;">Act</th>`;
+            for (let i = 0; i < 12; i++) {
+                const p = parseFloat(pp[i].value) || 0;
+                const a = parseFloat(aa[i].value) || 0;
+                tp += p; tu += a;
+                mh += `<td>${p ? fmt(p, 'MXN') : '-'}</td>`;
+                ah += `<td>${a ? fmt(a, 'MXN') : '-'}</td>`;
+            }
+            mh += "</tr>"; ah += "</tr>";
+            document.getElementById(`out-month-${suffix}`).innerHTML = mh + ah;
+            const req = isTarget ? cost : 0;
+            const bal = tp - tu - req;
+            const rate = tp > 0 ? ((tu + req) / tp) * 100 : 0;
+
+            document.getElementById(`${suffix}-year-plan`).innerText = fmt(tp, 'MXN');
+            document.getElementById(`${suffix}-year-used`).innerText = fmt(tu, 'MXN');
+            document.getElementById(`${suffix}-this-req`).innerText = fmt(req, 'MXN');
+            document.getElementById(`${suffix}-bal`).innerText = fmt(bal, 'MXN');
+            document.getElementById(`${suffix}-rate-text`).innerText = rate.toFixed(1) + "%";
+
+            const bar = document.getElementById(`${suffix}-bar`);
+            bar.style.width = (rate > 100 ? 100 : rate) + "%";
+            bar.className = 'bar-fill ' + (rate > 100 ? 'danger' : (rate > 80 ? 'warning' : ''));
+        }
+
+        function collectData() {
+            const visibility = {
+                overview: document.getElementById('chk-overview').checked,
+                issue: document.getElementById('chk-issue').checked,
+                cost: document.getElementById('chk-cost').checked,
+                compare: document.getElementById('chk-compare').checked,
+                budget: document.getElementById('chk-budget').checked,
+                schedule: document.getElementById('chk-schedule').checked
+            };
+
+            return {
+                plant: document.getElementById('in-plant').value,
+                date: document.getElementById('in-date').value,
+                dept: document.getElementById('in-dept').value,
+                docName: document.getElementById('in-doc-name').value,
+                category: document.getElementById('in-category').value,
+                rate: document.getElementById('in-rate').value,
+                overview: document.getElementById('in-overview').value,
+                overviewImages: Array.from(document.querySelectorAll('.ov-img-data')).map(i => i.value),
+                issues: getDynamicValues('issue-inputs', ['.issue-loc', '.issue-desc', '.temp-img'], ['loc', 'desc', 'img']),
+                costsMXN: getDynamicValues('mxn-inputs', ['.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['name', 'vendor', 'stock', 'qty', 'price']),
+                costsKRW: getDynamicValues('krw-inputs', ['.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['name', 'vendor', 'stock', 'qty', 'price']),
+                compMXN: getDynamicValues('compare-mxn-inputs', ['.cmp-desc-MXN', '.cmp-sel-vendor-MXN', '.cmp-sel-price-MXN', '.cmp-cmp-vendor-MXN', '.cmp-cmp-price-MXN'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']),
+                compKRW: getDynamicValues('compare-krw-inputs', ['.cmp-desc-KRW', '.cmp-sel-vendor-KRW', '.cmp-sel-price-KRW', '.cmp-cmp-vendor-KRW', '.cmp-cmp-price-KRW'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']),
+                history: getDynamicValues('history-inputs', ['.h-name', '.h-curr', '.h-prev', '.h-date'], ['name', 'curr', 'prev', 'date']),
+                budgetP1: { plan: Array.from(document.querySelectorAll('.b-plan-p1')).map(e => e.value), act: Array.from(document.querySelectorAll('.b-act-p1')).map(e => e.value) },
+                budgetP3: { plan: Array.from(document.querySelectorAll('.b-plan-p3')).map(e => e.value), act: Array.from(document.querySelectorAll('.b-act-p3')).map(e => e.value) },
+                schedule: getDynamicValues('schedule-inputs', ['.s-start', '.s-end', '.s-desc'], ['start', 'end', 'desc']),
+                visibility: visibility
+            };
+        }
+
+        function applyDataToForm(data) {
+            document.getElementById('in-plant').value = data.plant;
+            document.getElementById('in-date').value = data.date;
+            document.getElementById('in-dept').value = data.dept;
+            document.getElementById('in-doc-name').value = data.docName;
+            document.getElementById('in-category').value = data.category || '수선 (Reparación)';
+            document.getElementById('in-rate').value = data.rate;
+            document.getElementById('in-overview').value = data.overview;
+
+            if (data.visibility) {
+                document.getElementById('chk-overview').checked = data.visibility.overview; toggleSection('sec-overview', data.visibility.overview);
+                document.getElementById('chk-issue').checked = data.visibility.issue; toggleSection('sec-issue', data.visibility.issue);
+                document.getElementById('chk-cost').checked = data.visibility.cost; toggleSection('sec-cost', data.visibility.cost);
+                document.getElementById('chk-compare').checked = data.visibility.compare; toggleSection('sec-compare', data.visibility.compare);
+                document.getElementById('chk-budget').checked = data.visibility.budget; toggleSection('sec-budget', data.visibility.budget);
+                document.getElementById('chk-schedule').checked = data.visibility.schedule; toggleSection('sec-schedule', data.visibility.schedule);
+            }
+
+            document.getElementById('overview-img-list').innerHTML = "";
+            if (data.overviewImages) {
+                data.overviewImages.forEach(src => {
+                    if (!src) return;
+                    addOverviewImgInput();
+                    const last = document.getElementById('overview-img-list').lastElementChild;
+                    last.querySelector('.ov-img-data').value = src;
+                });
+            }
+
+            restoreDynamicRows('issue-inputs', data.issues, addIssueRow, ['.issue-loc', '.issue-desc', '.temp-img'], ['loc', 'desc', 'img']);
+            restoreDynamicRows('mxn-inputs', data.costsMXN, () => addCostRow('MXN'), ['.c-name-MXN', '.c-vendor-MXN', '.c-stock-MXN', '.c-qty-MXN', '.c-price-MXN'], ['name', 'vendor', 'stock', 'qty', 'price']);
+            restoreDynamicRows('krw-inputs', data.costsKRW, () => addCostRow('KRW'), ['.c-name-KRW', '.c-vendor-KRW', '.c-stock-KRW', '.c-qty-KRW', '.c-price-KRW'], ['name', 'vendor', 'stock', 'qty', 'price']);
+            restoreDynamicRows('compare-mxn-inputs', data.compMXN, () => addCompareRow('MXN'), ['.cmp-desc-MXN', '.cmp-sel-vendor-MXN', '.cmp-sel-price-MXN', '.cmp-cmp-vendor-MXN', '.cmp-cmp-price-MXN'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']);
+            restoreDynamicRows('compare-krw-inputs', data.compKRW, () => addCompareRow('KRW'), ['.cmp-desc-KRW', '.cmp-sel-vendor-KRW', '.cmp-sel-price-KRW', '.cmp-cmp-vendor-KRW', '.cmp-cmp-price-KRW'], ['desc', 'selVendor', 'selPrice', 'cmpVendor', 'cmpPrice']);
+            restoreDynamicRows('history-inputs', data.history, addHistoryRow, ['.h-name', '.h-curr', '.h-prev', '.h-date'], ['name', 'curr', 'prev', 'date']);
+
+            if (data.budgetP1) { const pp = document.querySelectorAll('.b-plan-p1'); const aa = document.querySelectorAll('.b-act-p1'); data.budgetP1.plan.forEach((v, i) => pp[i].value = v); data.budgetP1.act.forEach((v, i) => aa[i].value = v); }
+            if (data.budgetP3) { const pp = document.querySelectorAll('.b-plan-p3'); const aa = document.querySelectorAll('.b-act-p3'); data.budgetP3.plan.forEach((v, i) => pp[i].value = v); data.budgetP3.act.forEach((v, i) => aa[i].value = v); }
+
+            restoreDynamicRows('schedule-inputs', data.schedule, () => addScheduleRow(), ['.s-start', '.s-end', '.s-desc'], ['start', 'end', 'desc']);
+            updateView();
+        }
+
+        function performAutoSave() {
+            const data = collectData();
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+                const now = new Date();
+                document.getElementById('save-status').innerText = "Last saved: " + now.toTimeString().split(' ')[0];
+            } catch (e) {
+                console.error("AutoSave Failed (Quota?): ", e);
+                document.getElementById('save-status').innerText = "Auto-save failed (too large)";
+            }
+        }
+
+        function checkAutoSave() {
+            const saved = localStorage.getItem(SAVE_KEY);
+            if (saved) {
+                if (confirm("이전에 작성 중이던 내용이 있습니다. 복구하시겠습니까?\n(Hay datos guardados anteriormente. ¿Desea restaurarlos?)")) {
+                    try {
+                        const data = JSON.parse(saved);
+                        applyDataToForm(data);
+                    } catch (e) {
+                        alert("데이터 복구 실패");
+                    }
+                }
+            }
+        }
+
+        function resetForm() {
+            if (confirm("모든 내용을 지우고 초기화하시겠습니까? (Reset all data?)")) {
+                localStorage.removeItem(SAVE_KEY);
+                location.reload();
+            }
+        }
+
+        function saveData() {
+            const data = collectData();
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Report_${data.date}.json`;
+            link.click();
+        }
+
+        function loadDataFile(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    applyDataToForm(data);
+                } catch (e) { console.error(e); alert("Load Error"); }
+            }
+            reader.readAsText(file);
+        }
+
+        function getDynamicValues(id, sels, keys) {
+            const res = [];
+            for (let r of document.getElementById(id).children) {
+                let obj = {};
+                sels.forEach((s, i) => { const el = r.querySelector(s); if (el.tagName === 'IMG') obj[keys[i]] = el.src; else obj[keys[i]] = el.value; });
+                res.push(obj);
+            }
+            return res;
+        }
+        function restoreDynamicRows(id, data, fn, sels, keys) {
+            document.getElementById(id).innerHTML = "";
+            if (!data) { fn(); return; }
+            data.forEach(d => { fn(); const r = document.getElementById(id).lastElementChild; sels.forEach((s, i) => { const el = r.querySelector(s); if (el.tagName === 'IMG') el.src = d[keys[i]]; else el.value = d[keys[i]]; }); });
+        }
+    </script>
+
+</body>
+
+</html>
