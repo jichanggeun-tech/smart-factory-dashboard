@@ -279,7 +279,7 @@
         .btn-output-group {
             display: flex;
             gap: 5px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .btn-print {
@@ -928,7 +928,6 @@
 
     <div class="input-panel" id="inputPanel">
         <h2>
-
             <span id="save-status" class="save-status"></span>
         </h2>
 
@@ -970,12 +969,6 @@
         <div class="form-section">
             <h3>1. 기본 정보 (Información Básica)</h3>
 
-            <label style="color:#0dcaf0; font-weight:bold;">대상 공장 (Planta)</label>
-            <select id="in-plant" onchange="updateView()" style="background:#e7f1ff; font-weight:bold;">
-                <option value="1공장">1공장 (Planta 1)</option>
-                <option value="3공장">3공장 (Planta 3)</option>
-            </select>
-
             <label style="color:#d63384; font-weight:bold;">품의 구분 (Categoría)</label>
             <select id="in-category" onchange="updateView()" style="background:#fff0f6; font-weight:bold;">
                 <option value="수선 (Reparación)">수선 (Reparación)</option>
@@ -1014,6 +1007,25 @@
 
         <div class="form-section">
             <h3>4. 비용 산출 (Cálculo de Costos)</h3>
+
+            <!-- 대상 공장 선택 (비용 산출 기준) -->
+            <div style="background:#1a2a3a; border:1px solid #0dcaf0; border-radius:6px; padding:10px 12px; margin-bottom:12px;">
+                <label style="color:#0dcaf0; font-weight:bold; font-size:0.85rem; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                    🏭 대상 공장 (Planta) <span style="font-size:0.72rem; color:#adb5bd; font-weight:normal;">— 금번 품의 예산 반영 기준</span>
+                </label>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" id="plant-btn-p1" onclick="selectPlant('1공장')"
+                        style="flex:1; padding:7px 0; border-radius:5px; border:1px solid #0dcaf0; background:#0dcaf0; color:#000; font-weight:bold; cursor:pointer; font-size:0.88rem;">
+                        🏭 1공장 (Planta 1)
+                    </button>
+                    <button type="button" id="plant-btn-p3" onclick="selectPlant('3공장')"
+                        style="flex:1; padding:7px 0; border-radius:5px; border:1px solid #495057; background:#343a40; color:#adb5bd; font-weight:bold; cursor:pointer; font-size:0.88rem;">
+                        🏭 3공장 (Planta 3)
+                    </button>
+                </div>
+                <input type="hidden" id="in-plant" value="1공장">
+            </div>
+
             <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 재고/이력 포함 (Incluir Stock/Historial)</div>
             <div style="margin-bottom:10px;">
                 <div id="mxn-inputs"></div>
@@ -1246,9 +1258,11 @@
             <div id="sec-budget">
                 <div class="section-title">5. 예산 관리 <span class="section-sub">Control Presupuestario (MXN)</span></div>
 
-                <div
-                    style="font-size:12px; font-weight:bold; color:#28a745; border-bottom:1px solid #28a745; margin-bottom:5px;">
-                    Planta 1</div>
+                <div id="budget-section-label-p1"
+                    style="font-size:12px; font-weight:bold; color:#28a745; border-bottom:1px solid #28a745; margin-bottom:5px; display:flex; align-items:center; gap:8px; padding:4px 0;">
+                    Planta 1
+                    <span class="plant-tag" style="display:none; background:#28a745; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶ 금번 품의 반영</span>
+                </div>
                 <table class="styled-table" style="margin-bottom:2px;">
                     <thead>
                         <tr>
@@ -1297,9 +1311,11 @@
                     <tbody id="out-month-p1"></tbody>
                 </table>
 
-                <div
-                    style="font-size:12px; font-weight:bold; color:#17a2b8; border-bottom:1px solid #17a2b8; margin-bottom:5px; margin-top:20px;">
-                    Planta 3</div>
+                <div id="budget-section-label-p3"
+                    style="font-size:12px; font-weight:bold; color:#17a2b8; border-bottom:1px solid #17a2b8; margin-bottom:5px; margin-top:20px; display:flex; align-items:center; gap:8px; padding:4px 0;">
+                    Planta 3
+                    <span class="plant-tag" style="display:none; background:#17a2b8; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶ 금번 품의 반영</span>
+                </div>
                 <table class="styled-table" style="margin-bottom:2px;">
                     <thead>
                         <tr>
@@ -1793,6 +1809,32 @@
             table.appendChild(tbody);
         }
 
+        function selectPlant(value) {
+            document.getElementById('in-plant').value = value;
+
+            // 버튼 활성 스타일 토글
+            const p1Btn = document.getElementById('plant-btn-p1');
+            const p3Btn = document.getElementById('plant-btn-p3');
+            if (value === '1공장') {
+                p1Btn.style.background = '#0dcaf0';
+                p1Btn.style.color = '#000';
+                p1Btn.style.borderColor = '#0dcaf0';
+                p3Btn.style.background = '#343a40';
+                p3Btn.style.color = '#adb5bd';
+                p3Btn.style.borderColor = '#495057';
+                switchBudgetTab('P1');
+            } else {
+                p3Btn.style.background = '#0dcaf0';
+                p3Btn.style.color = '#000';
+                p3Btn.style.borderColor = '#0dcaf0';
+                p1Btn.style.background = '#343a40';
+                p1Btn.style.color = '#adb5bd';
+                p1Btn.style.borderColor = '#495057';
+                switchBudgetTab('P3');
+            }
+            updateView();
+        }
+
         function updateView() {
             const plantName = document.getElementById('in-plant').value;
             const docName = document.getElementById('in-doc-name').value;
@@ -1976,13 +2018,29 @@
 
             document.getElementById(`${suffix}-year-plan`).innerText = fmt(tp, 'MXN');
             document.getElementById(`${suffix}-year-used`).innerText = fmt(tu, 'MXN');
-            document.getElementById(`${suffix}-this-req`).innerText = fmt(req, 'MXN');
+            document.getElementById(`${suffix}-this-req`).innerText = isTarget ? fmt(req, 'MXN') : '-';
             document.getElementById(`${suffix}-bal`).innerText = fmt(bal, 'MXN');
             document.getElementById(`${suffix}-rate-text`).innerText = rate.toFixed(1) + "%";
 
             const bar = document.getElementById(`${suffix}-bar`);
             bar.style.width = (rate > 100 ? 100 : rate) + "%";
             bar.className = 'bar-fill ' + (rate > 100 ? 'danger' : (rate > 80 ? 'warning' : ''));
+
+            // 선택 공장 헤더 강조
+            const labelId = `budget-section-label-${suffix}`;
+            const el = document.getElementById(labelId);
+            if (el) {
+                if (isTarget) {
+                    el.style.background = (suffix === 'p1') ? 'rgba(40,167,69,0.12)' : 'rgba(23,162,184,0.12)';
+                    el.style.borderRadius = '5px';
+                    el.style.padding = '4px 8px';
+                    el.querySelector('.plant-tag').style.display = 'inline-block';
+                } else {
+                    el.style.background = 'transparent';
+                    el.style.padding = '4px 0';
+                    el.querySelector('.plant-tag').style.display = 'none';
+                }
+            }
         }
 
         function collectData() {
@@ -2018,7 +2076,9 @@
         }
 
         function applyDataToForm(data) {
-            document.getElementById('in-plant').value = data.plant;
+            document.getElementById('in-plant').value = data.plant || '1공장';
+            // 버튼 상태 복원 (UI 동기화)
+            selectPlant(data.plant || '1공장');
             document.getElementById('in-date').value = data.date;
             document.getElementById('in-dept').value = data.dept;
             document.getElementById('in-doc-name').value = data.docName;
