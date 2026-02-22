@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <style>
         :root {
@@ -480,6 +481,12 @@
                         <i class="fa-solid fa-chart-line"></i> 리포트 (Reporte)
                     </button>
 
+                    <button class="btn" @click="triggerExcelImport">
+                        <i class="fa-solid fa-file-excel"></i> 엑셀 가져오기
+                    </button>
+                    <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display:none;"
+                        @change="importFromExcel">
+
                     <button class="btn primary" @click="openAddModal">
                         <i class="fa-solid fa-plus"></i> 추가 (Agregar)
                     </button>
@@ -496,15 +503,14 @@
                             <th style="width:40px;">No</th>
                             <th style="width:60px; text-align:center;">Img</th>
                             <th>공장 (Fábrica)</th>
-                            <th>부서 (Depto)</th>
                             <th>모델명 (Modelo)</th>
-                            <th style="text-align:center;">대당수량 (Ctd/Carro)</th>
+                            <th style="text-align:center;">적재 수량 (Ctd/Carro)</th>
                             <th style="text-align:center;">대차수량 (Cant. Carros)</th>
                             <th style="text-align:right;">총 적재량 (Cap. Total)</th>
-                            <th style="text-align:center;">Q1</th>
-                            <th style="text-align:center;">Q2</th>
-                            <th style="text-align:center;">Q3</th>
-                            <th style="text-align:center;">Q4</th>
+                            <th style="text-align:center;">Q1 수량</th>
+                            <th style="text-align:center;">Q2 수량</th>
+                            <th style="text-align:center;">Q3 수량</th>
+                            <th style="text-align:center;">Q4 수량</th>
                             <th style="width:50px;">편집</th>
                         </tr>
                     </thead>
@@ -519,10 +525,10 @@
                                 <span v-else style="color:#555;">-</span>
                             </td>
                             <td>{{ c.factory }}</td>
-                            <td>{{ c.department }}</td>
                             <td style="font-weight:bold; color:var(--blue);">{{ c.modelName }}</td>
-                            <td style="text-align:center; color:#ccc;">{{ c.qtyPerCart }}</td>
-                            <td style="text-align:center; font-weight:bold; color:var(--accent);">{{ c.cartQty }}</td>
+                            <td style="text-align:center; color:#ccc;">{{ c.qtyPerCart ?? 0 }}</td>
+                            <td style="text-align:center; font-weight:bold; color:var(--accent);">{{ c.cartQty ?? 0 }}
+                            </td>
                             <td style="text-align:right; font-family:monospace;">{{ (c.cartQty *
                                 c.qtyPerCart).toLocaleString() }}</td>
 
@@ -576,9 +582,9 @@
                                 <th style="border:1px solid #000; padding:6px;">No</th>
                                 <th style="border:1px solid #000; padding:6px;">Img (사진)</th>
                                 <th style="border:1px solid #000; padding:6px;">공장 (Fábrica)</th>
-                                <th style="border:1px solid #000; padding:6px;">부서 (Depto)</th>
                                 <th style="border:1px solid #000; padding:6px;">모델명 (Modelo)</th>
-                                <th style="border:1px solid #000; padding:6px; text-align:center;">대당수량 (Ctd/Carro)</th>
+                                <th style="border:1px solid #000; padding:6px; text-align:center;">적재 수량 (Ctd/Carro)
+                                </th>
 
                                 <th style="border:1px solid #000; padding:6px; text-align:center; background:#e0f7fa;">
                                     Q1</th>
@@ -605,9 +611,9 @@
                                     <span v-else>-</span>
                                 </td>
                                 <td style="border:1px solid #ccc; padding:4px;">{{ c.factory }}</td>
-                                <td style="border:1px solid #ccc; padding:4px;">{{ c.department }}</td>
                                 <td style="border:1px solid #ccc; padding:4px; font-weight:bold;">{{ c.modelName }}</td>
-                                <td style="border:1px solid #ccc; padding:4px; text-align:center;">{{ c.qtyPerCart }}
+                                <td style="border:1px solid #ccc; padding:4px; text-align:center;">{{ c.qtyPerCart ?? 0
+                                    }}
                                 </td>
 
                                 <!-- Quarterly Data with Trend Arrows -->
@@ -824,7 +830,6 @@
                     projectId: null,
                     modelName: '',
                     factory: '1공장',
-                    department: '생산1팀',
                     qtyPerCart: 100,
                     cartQty: 0,
                     img: '',
@@ -962,6 +967,14 @@
                 const setModalImage = (src) => zoomedImage.value = src;
 
                 // --- Util ---
+                const getCurrentQuarter = () => {
+                    const m = new Date().getMonth() + 1;
+                    if (m <= 3) return 'q1';
+                    if (m <= 6) return 'q2';
+                    if (m <= 9) return 'q3';
+                    return 'q4';
+                };
+
                 const getQuarterVal = (c, qKey) => {
                     const y = selectedYear.value.toString();
                     if (!c.quarterly || !c.quarterly[y]) return '-';
@@ -1089,6 +1102,108 @@
                     }
                 };
 
+                // --- Excel Import ---
+                const triggerExcelImport = () => {
+                    if (!currentProject.value) return alert("프로젝트를 먼저 선택하세요! (Seleccione un proyecto!)");
+                    document.getElementById('excel-import-input').click();
+                };
+
+                const importFromExcel = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    e.target.value = '';
+
+                    const buf = await file.arrayBuffer();
+                    const wb = XLSX.read(buf, { type: 'array' });
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+
+                    // 헤더 행 찾기 (TIPO 또는 N° 포함 행)
+                    let headerIdx = rows.findIndex(r => r.some(c => typeof c === 'string' && (c.includes('TIPO') || c === 'N°')));
+                    if (headerIdx < 0) return alert("헤더를 찾을 수 없습니다.");
+
+                    const header = rows[headerIdx];
+                    const colIdx = {
+                        location: header.findIndex(c => typeof c === 'string' && c.toUpperCase().includes('UBIC')),
+                        modelName: header.findIndex(c => typeof c === 'string' && c.includes('TIPO')),
+                        size: header.findIndex(c => typeof c === 'string' && (c.toUpperCase().includes('ANCHO') || c.includes('*'))),
+                        qtyPerCart: header.findIndex(c => typeof c === 'string' && c.toUpperCase().includes('CAPAC')),
+                        q1: header.findIndex(c => typeof c === 'string' && /^1Q$/i.test(c.trim())),
+                        q2: header.findIndex(c => typeof c === 'string' && /^2Q$/i.test(c.trim())),
+                        q3: header.findIndex(c => typeof c === 'string' && /^3Q$/i.test(c.trim())),
+                        q4: header.findIndex(c => typeof c === 'string' && /^4Q$/i.test(c.trim())),
+                    };
+
+                    console.log('[ExcelImport] 콜럼 인덱스:', colIdx);
+                    if (colIdx.modelName < 0) return alert("모델명 콜럼(TIPO)을 찾을 수 없습니다.");
+
+                    const toFactory = (val) => {
+                        if (!val) return '1공장';
+                        const s = String(val).trim();
+                        if (s.includes('3')) return '3공장';
+                        if (s.includes('1')) return '1공장';
+                        return s;
+                    };
+                    const getNum = (r, idx) => (idx >= 0 && r[idx] != null && r[idx] !== '') ? Number(r[idx]) : null;
+
+                    const dataRows = rows.slice(headerIdx + 1).filter(r => r[colIdx.modelName] && String(r[colIdx.modelName]).trim() !== '');
+                    console.log('[ExcelImport] 데이터 행 수:', dataRows.length);
+                    if (dataRows.length === 0) return alert("가져올 데이터가 없습니다.");
+                    if (!confirm(`${dataRows.length}개 항목을 가져오시겠습니까?`)) return;
+
+                    const y = selectedYear.value.toString();
+                    const currentQ = getCurrentQuarter();
+
+                    // ★ 핵심: DB에서 직접 최신 목록을 가져와 모델명으로 인덱싱
+                    const dbCarts = await db.carts.where('projectId').equals(currentProject.value.id).toArray();
+                    const existingByModel = {};
+                    dbCarts.forEach(c => {
+                        const key = String(c.modelName || '').trim();
+                        if (key) existingByModel[key] = c;
+                    });
+                    console.log('[ExcelImport] 기존 모델 목록:', Object.keys(existingByModel));
+
+                    let added = 0, updated = 0;
+                    for (const r of dataRows) {
+                        const modelName = String(r[colIdx.modelName]).trim();
+                        const factory = toFactory(colIdx.location >= 0 ? r[colIdx.location] : null);
+                        const size = (colIdx.size >= 0 && r[colIdx.size] != null) ? String(r[colIdx.size]).trim() : '';
+                        const qtyPerCart = getNum(r, colIdx.qtyPerCart) ?? 0;
+
+                        const qData = {};
+                        const v1 = getNum(r, colIdx.q1); if (v1 !== null) qData.q1 = v1;
+                        const v2 = getNum(r, colIdx.q2); if (v2 !== null) qData.q2 = v2;
+                        const v3 = getNum(r, colIdx.q3); if (v3 !== null) qData.q3 = v3;
+                        const v4 = getNum(r, colIdx.q4); if (v4 !== null) qData.q4 = v4;
+
+                        const cartQty = qData[currentQ] ?? qData.q4 ?? qData.q3 ?? qData.q2 ?? qData.q1 ?? 0;
+
+                        console.log(`[ExcelImport] "${modelName}", 기존:`, !!existingByModel[modelName]);
+
+                        if (existingByModel[modelName]) {
+                            const existing = existingByModel[modelName];
+                            if (!existing.quarterly) existing.quarterly = {};
+                            if (!existing.quarterly[y]) existing.quarterly[y] = {};
+                            Object.assign(existing.quarterly[y], qData);
+                            existing.cartQty = cartQty;
+                            existing.factory = factory;
+                            existing.qtyPerCart = qtyPerCart;
+                            if (size) existing.size = size;
+                            await db.carts.put(existing);
+                            updated++;
+                        } else {
+                            const newCart = { projectId: currentProject.value.id, modelName, factory, size, qtyPerCart, cartQty, img: '', quarterly: Object.keys(qData).length > 0 ? { [y]: qData } : {} };
+                            const id = await db.carts.add(newCart);
+                            newCart.id = id;
+                            existingByModel[modelName] = newCart;
+                            added++;
+                        }
+                    }
+
+                    projectCarts.value = await db.carts.where('projectId').equals(currentProject.value.id).toArray();
+                    alert(`완료!\n신규: ${added}개 추가\n업데이트: ${updated}개`);
+                };
+
                 // --- Report ---
                 const openReport = () => { showReportModal.value = true; };
                 const printReport = () => window.print();
@@ -1112,6 +1227,7 @@
                     getQuarterVal, getTrend,
                     syncToCloud, syncFromCloud, loadSelectedCloudProject, deleteCloudProject,
                     downloadJsonBackup, uploadJsonRestore, clearAllData,
+                    triggerExcelImport, importFromExcel,
                     openReport, printReport, captureReport
                 };
             }
