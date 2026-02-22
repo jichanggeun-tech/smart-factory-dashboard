@@ -917,8 +917,13 @@
                 // --- Cart Actions ---
                 const openAddModal = () => {
                     if (!currentProject.value) return alert("프로젝트를 선택하세요! (Seleccione un proyecto!)");
-                    Object.assign(editingCart, { ...defaultCart, projectId: currentProject.value.id, quarterly: {} });
+                    Object.assign(editingCart, { ...defaultPart, projectId: currentProject.value.id, quarterly: {} });
                     Object.assign(editingQuarterly, { q1: null, q2: null, q3: null, q4: null });
+
+                    // 현재 분기에 현재 수량 제안
+                    const currentQ = getCurrentQuarter();
+                    editingQuarterly[currentQ] = editingCart.cartQty;
+
                     showCartModal.value = true;
                 };
 
@@ -927,9 +932,17 @@
                     if (!editingCart.quarterly) editingCart.quarterly = {};
 
                     const y = selectedYear.value.toString();
-                    const q = editingCart.quarterly[y] || { q1: null, q2: null, q3: null, q4: null };
-                    Object.assign(editingQuarterly, q);
+                    const qData = editingCart.quarterly[y] || { q1: null, q2: null, q3: null, q4: null };
 
+                    // 현재 분기 데이터가 비어있다면, 현재 수량을 기반으로 초기화 제안
+                    const currentQ = getCurrentQuarter();
+                    const isCurrentYear = new Date().getFullYear() === selectedYear.value;
+
+                    if (isCurrentYear && (qData[currentQ] === null || qData[currentQ] === undefined)) {
+                        qData[currentQ] = editingCart.cartQty;
+                    }
+
+                    Object.assign(editingQuarterly, qData);
                     showCartModal.value = true;
                 };
 
@@ -942,6 +955,14 @@
                     // Save Quarterly
                     const y = selectedYear.value.toString();
                     if (!copy.quarterly) copy.quarterly = {};
+
+                    // 현재 분기 데이터가 입력되지 않았다면 현재 수량을 자동으로 기록
+                    const currentQ = getCurrentQuarter();
+                    const isCurrentYear = new Date().getFullYear() === selectedYear.value;
+                    if (isCurrentYear && (editingQuarterly[currentQ] === null || editingQuarterly[currentQ] === undefined)) {
+                        editingQuarterly[currentQ] = copy.cartQty;
+                    }
+
                     copy.quarterly[y] = { ...editingQuarterly };
 
                     if (copy.id) {
@@ -968,17 +989,25 @@
 
                 // --- Util ---
                 const getCurrentQuarter = () => {
-                    const m = new Date().getMonth() + 1;
-                    if (m <= 3) return 'q1';
-                    if (m <= 6) return 'q2';
-                    if (m <= 9) return 'q3';
+                    const month = new Date().getMonth(); // 0-11
+                    if (month >= 0 && month <= 2) return 'q1';
+                    if (month >= 3 && month <= 5) return 'q2';
+                    if (month >= 6 && month <= 8) return 'q3';
                     return 'q4';
                 };
 
                 const getQuarterVal = (c, qKey) => {
                     const y = selectedYear.value.toString();
-                    if (!c.quarterly || !c.quarterly[y]) return '-';
-                    const val = c.quarterly[y][qKey];
+                    let val = (c.quarterly && c.quarterly[y]) ? c.quarterly[y][qKey] : null;
+
+                    // 해당 분기 데이터가 비어있고, '현재 분기'라면 현재 수량을 기반으로 미리보기
+                    const currentQ = getCurrentQuarter();
+                    const isCurrentYear = new Date().getFullYear() === selectedYear.value;
+
+                    if (isCurrentYear && qKey === currentQ && (val === null || val === undefined)) {
+                        val = c.cartQty;
+                    }
+
                     return (val === null || val === undefined) ? '-' : val;
                 };
                 const getTrend = (c, prevKey, currKey) => {
