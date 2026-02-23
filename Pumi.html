@@ -3,11 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-<<<<<<< HEAD
-    <title>설비 수리 품의서 V6.0 (Cloud Select)</title>
-=======
     <title>설비 수리 품의서 V6.1 (Cloud Select)</title>
->>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* [공통] 레이아웃 */
@@ -922,12 +918,6 @@
 
     <div class="input-panel" id="inputPanel">
         <h2>
-<<<<<<< HEAD
-
-            <span id="save-status" class="save-status"></span>
-        </h2>
-
-=======
             <span id="save-status" class="save-status"></span>
         </h2>
 
@@ -936,7 +926,7 @@
             <button class="btn-capture" onclick="captureImage()">📸 스크린샷 (Captura)</button>
         </div>
 
->>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
+
         <div class="btn-action">
             <button class="btn-cloud-save" onclick="saveToCloud()">☁️ 클라우드 저장 (Cloud Save)</button>
             <button class="btn-cloud-load" onclick="loadFromCloud()">☁️ 선택 불러오기 (Cloud Load)</button>
@@ -970,15 +960,6 @@
         <div class="form-section">
             <h3>1. 기본 정보 (Información Básica)</h3>
 
-<<<<<<< HEAD
-            <label style="color:#0dcaf0; font-weight:bold;">대상 공장 (Planta)</label>
-            <select id="in-plant" onchange="updateView()" style="background:#e7f1ff; font-weight:bold;">
-                <option value="1공장">1공장 (Planta 1)</option>
-                <option value="3공장">3공장 (Planta 3)</option>
-            </select>
-
-=======
->>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
             <label style="color:#d63384; font-weight:bold;">품의 구분 (Categoría)</label>
             <select id="in-category" onchange="updateView()" style="background:#fff0f6; font-weight:bold;">
                 <option value="수선 (Reparación)">수선 (Reparación)</option>
@@ -1071,21 +1052,11 @@
                 (Agregar Tarea)</button>
         </div>
 
-<<<<<<< HEAD
-        <div class="btn-output-group">
-            <button class="btn-print" onclick="window.print()">🖨️ PDF 저장 (Guardar PDF)</button>
-            <button class="btn-capture" onclick="captureImage()">📸 이미지 저장 (Guardar Img)</button>
-        </div>
-=======
->>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
     </div>
 
     <div class="resizer" id="dragMe"></div>
 
-<<<<<<< HEAD
     <!-- Sidebar Controls (Home + Toggle) -->
-=======
->>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
     <div class="sidebar-controls">
         <a class="home-btn" href="index.html">🏠 Home</a>
         <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
@@ -1153,16 +1124,18 @@
                 <div class="section-title">3. 비용 산출 <span class="section-sub">Detalle de Costos</span></div>
                 <table class="styled-table">
                     <colgroup>
-                        <col width="20%">
-                        <col width="15%">
-                        <col width="15%">
-                        <col width="10%">
+                        <col width="8%">
+                        <col width="18%">
+                        <col width="13%">
+                        <col width="13%">
+                        <col width="8%">
                         <col width="5%">
-                        <col width="15%">
-                        <col width="20%">
+                        <col width="13%">
+                        <col width="22%">
                     </colgroup>
                     <thead>
                         <tr>
+                            <th>공장 (Planta)</th>
                             <th>내역 (Item)</th>
                             <th>업체명 (Prov.)</th>
                             <th>재고/이력 (Stock)</th>
@@ -1175,28 +1148,28 @@
 
                     <tbody>
                         <tr>
-                            <td colspan="7" class="cost-header-mxn">■ 현지 구입 비용 (Costo Local - MXN)</td>
+                            <td colspan="8" class="cost-header-mxn">■ 현지 구입 비용 (Costo Local - MXN)</td>
                         </tr>
                     </tbody>
                     <tbody id="out-mxn-body"></tbody>
                     <tr class="total-row">
-                        <td colspan="6" style="text-align:right;">Subtotal (MXN)</td>
+                        <td colspan="7" style="text-align:right;">Subtotal (MXN)</td>
                         <td style="text-align:right;" id="out-total-mxn">0.00</td>
                     </tr>
 
                     <tbody>
                         <tr>
-                            <td colspan="7" class="cost-header-krw">■ 국내 구입 비용 (Costo Importación - KRW)</td>
+                            <td colspan="8" class="cost-header-krw">■ 국내 구입 비용 (Costo Importación - KRW)</td>
                         </tr>
                     </tbody>
                     <tbody id="out-krw-body"></tbody>
                     <tr class="total-row">
-                        <td colspan="6" style="text-align:right;">Subtotal (KRW)</td>
+                        <td colspan="7" style="text-align:right;">Subtotal (KRW)</td>
                         <td style="text-align:right;" id="out-total-krw">0</td>
                     </tr>
 
                     <tr class="grand-total-row">
-                        <td colspan="6" style="text-align:center;">총 합계 (Grand Total / MXN 환산)</td>
+                        <td colspan="7" style="text-align:center;">총 합계 (Grand Total / MXN 환산)</td>
                         <td style="text-align:right;" id="out-grand-total-mxn">0.00</td>
                     </tr>
                 </table>
@@ -1920,20 +1893,30 @@
 
             subTotalMXN = 0;
             subTotalKRW = 0;
+            let p1Cost = 0, p3Cost = 0;
+
             const renderCost = (type) => {
                 let html = "";
                 let sub = 0;
-                const names = document.querySelectorAll(`.c-name-${type}`);
-                const vendors = document.querySelectorAll(`.c-vendor-${type}`);
-                const stocks = document.querySelectorAll(`.c-stock-${type}`);
-                const qtys = document.querySelectorAll(`.c-qty-${type}`);
-                const prices = document.querySelectorAll(`.c-price-${type}`);
+                const names   = document.querySelectorAll(`.c-name-${type}`);
+                const vendors  = document.querySelectorAll(`.c-vendor-${type}`);
+                const stocks   = document.querySelectorAll(`.c-stock-${type}`);
+                const qtys     = document.querySelectorAll(`.c-qty-${type}`);
+                const prices   = document.querySelectorAll(`.c-price-${type}`);
+                const plants   = document.querySelectorAll(`.c-plant-${type}`);
                 for (let i = 0; i < names.length; i++) {
                     if (!names[i].value) continue;
-                    const q = parseFloat(qtys[i].value) || 0; const p = parseFloat(prices[i].value) || 0;
+                    const q = parseFloat(qtys[i].value) || 0;
+                    const p = parseFloat(prices[i].value) || 0;
                     const total = q * p;
                     sub += total;
+                    // 행별 공장 선택으로 예산 집계
+                    const rowPlant = plants[i] ? plants[i].value : '';
+                    const mxnEquiv = type === 'KRW' ? total / rate : total;
+                    if (rowPlant.includes('1공장')) p1Cost += mxnEquiv;
+                    else if (rowPlant.includes('3공장')) p3Cost += mxnEquiv;
                     html += `<tr>
+                    <td style="text-align:center; font-size:11px; font-weight:bold; color:${rowPlant.includes('1공장') ? '#0d6efd' : '#17a2b8'};">${rowPlant || '-'}</td>
                     <td>${names[i].value}</td>
                     <td>${vendors[i].value}</td>
                     <td style="color:#666;">${stocks[i].value}</td>
@@ -1961,8 +1944,9 @@
 
             renderCompareAll();
             renderHistory();
-            calcBudget('p1', grandTotal, plantName.includes('1공장'));
-            calcBudget('p3', grandTotal, plantName.includes('3공장'));
+            // 비용 산출의 행별 공장 선택을 예산 관리에 반영
+            calcBudget('p1', p1Cost, true);
+            calcBudget('p3', p3Cost, true);
 
             renderSchedule();
 
@@ -2084,7 +2068,6 @@
             };
 
             return {
-                plant: document.getElementById('in-plant').value,
                 date: document.getElementById('in-date').value,
                 dept: document.getElementById('in-dept').value,
                 docName: document.getElementById('in-doc-name').value,
@@ -2106,7 +2089,6 @@
         }
 
         function applyDataToForm(data) {
-            document.getElementById('in-plant').value = data.plant;
             document.getElementById('in-date').value = data.date;
             document.getElementById('in-dept').value = data.dept;
             document.getElementById('in-doc-name').value = data.docName;
