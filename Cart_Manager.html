@@ -1274,7 +1274,17 @@
                 const printReport = () => window.print();
                 const captureReport = async () => {
                     const el = document.getElementById('report-print-area');
-                    const canvas = await html2canvas(el, { scale: 2 });
+                    // 캡처 전: 스크롤 제한 해제 → 전체 높이 펼침
+                    const prev = { overflow: el.style.overflow, maxHeight: el.style.maxHeight, height: el.style.height };
+                    el.style.overflow = 'visible';
+                    el.style.maxHeight = 'none';
+                    el.style.height = 'auto';
+                    await new Promise(r => setTimeout(r, 50)); // 렌더링 대기
+                    const canvas = await html2canvas(el, { scale: 2, useCORS: true, scrollY: 0 });
+                    // 캡처 후: 원래 스타일 복원
+                    el.style.overflow = prev.overflow;
+                    el.style.maxHeight = prev.maxHeight;
+                    el.style.height = prev.height;
                     const a = document.createElement('a');
                     a.href = canvas.toDataURL();
                     a.download = `CartReport_${selectedYear.value}.png`;
