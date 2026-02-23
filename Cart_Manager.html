@@ -1152,28 +1152,12 @@
 
                     const buf = await file.arrayBuffer();
                     const wb = XLSX.read(buf, { type: 'array' });
-                    const sheetName = wb.SheetNames[0];  // 시트 이름 → 프로젝트 이름
-                    const ws = wb.Sheets[sheetName];
-                    const rows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-
-                    // 헤더 행 찾기 (TIPO 또는 UBIC 포함 행)
-                    let headerIdx = rows.findIndex(r => r.some(c => typeof c === 'string' && (c.includes('TIPO') || c.toUpperCase().includes('UBIC'))));
-                    if (headerIdx < 0) return alert("헤더를 찾을 수 없습니다.");
 
                     // 고정 컬럼 매핑 (0-based): A: Ubicación | B: TIPO DE CARRO | C: FOTO(스킵) | D: Ancho*Alto*Prof. | E: Capacidad de carga | F: 1Q | G: 2Q | H: 3Q | I: 4Q
                     const colIdx = {
-                        location:  0,  // A: Ubicación
-                        modelName: 1,  // B: TIPO DE CARRO
-                        // C(2): FOTO - 이미지 추출 불가, 스킵
-                        size:      3,  // D: Ancho * Alto * Profundidad
-                        qtyPerCart:4,  // E: Capacidad de carga
-                        q1:        5,  // F: 1Q
-                        q2:        6,  // G: 2Q
-                        q3:        7,  // H: 3Q
-                        q4:        8,  // I: 4Q
+                        location:  0, modelName: 1, size: 3,
+                        qtyPerCart:4, q1: 5, q2: 6, q3: 7, q4: 8,
                     };
-
-                    // Ubicación → 공장 변환
                     const toFactory = (val) => {
                         if (!val) return '1공장';
                         const s = String(val).trim();
@@ -1181,92 +1165,80 @@
                         if (s.includes('1')) return '1공장';
                         return s;
                     };
-
                     const getNum = (r, idx) => (idx >= 0 && r[idx] != null && r[idx] !== '') ? Number(r[idx]) : null;
 
-                    const dataRows = rows.slice(headerIdx + 1).filter(r => r[colIdx.modelName] && String(r[colIdx.modelName]).trim() !== '');
+                    // 유효한 시트만 필터 (헤더 행 있는 시트)
+                    const validSheets = wb.SheetNames.map(sheetName => {
+                        const rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1 });
+                        const headerIdx = rows.findIndex(r => r.some(c => typeof c === 'string' && (c.includes('TIPO') || c.toUpperCase().includes('UBIC'))));
+                        const dataRows = headerIdx >= 0 ? rows.slice(headerIdx + 1).filter(r => r[colIdx.modelName] && String(r[colIdx.modelName]).trim() !== '') : [];
+                        return { sheetName, dataRows };
+                    }).filter(s => s.dataRows.length > 0);
 
-                    if (dataRows.length === 0) return alert("가져올 데이터가 없습니다.");
-                    if (!confirm(`시트 "${sheetName}" → 프로젝트로 ${dataRows.length}개 항목을 가져오시겠습니까?`)) return;
-
-                    // 시트 이름으로 프로젝트 찾거나 자동 생성
-                    let proj = projects.value.find(p => p.name === sheetName);
-                    if (!proj) {
-                        const newId = await db.projects.add({ name: sheetName, updated: new Date() });
-                        await loadProjects();
-                        proj = projects.value.find(p => p.id === newId);
-                    }
-                    await selectProject(proj);
+                    if (validSheets.length === 0) return alert("가져올 데이터가 없습니다.");
+                    if (!confirm(`${validSheets.length}개 시트를 프로젝트로 가져오시겠습니까?\n${validSheets.map(s => `• "${s.sheetName}" (${s.dataRows.length}개)`).join('\n')}`)) return;
 
                     const y = selectedYear.value.toString();
                     const currentQ = getCurrentQuarter();
+                    const results = [];
+                    let lastProj = null;
 
-                    // DB에서 직접 최신 목록을 가져와 모델명으로 인덱싱
-                    const dbCarts = await db.carts.where('projectId').equals(proj.id).toArray();
-                    const existingByModel = {};
-                    dbCarts.forEach(c => {
-                        const key = String(c.modelName || '').trim();
-                        if (key) existingByModel[key] = c;
-                    });
-                    console.log('[ExcelImport] 기존 모델 목록:', Object.keys(existingByModel));
-
-                    let added = 0, updated = 0;
-                    for (const r of dataRows) {
-                        const modelName = String(r[colIdx.modelName]).trim();
-                        const factory = toFactory(colIdx.location >= 0 ? r[colIdx.location] : null);
-                        const size = (colIdx.size >= 0 && r[colIdx.size] != null) ? String(r[colIdx.size]).trim() : '';
-                        const qtyPerCart = getNum(r, colIdx.qtyPerCart) ?? 0;
-
-                        // 분기 데이터
-                        const qData = {};
-                        const v1 = getNum(r, colIdx.q1);
-                        const v2 = getNum(r, colIdx.q2);
-                        const v3 = getNum(r, colIdx.q3);
-                        const v4 = getNum(r, colIdx.q4);
-                        if (v1 !== null) qData.q1 = v1;
-                        if (v2 !== null) qData.q2 = v2;
-                        if (v3 !== null) qData.q3 = v3;
-                        if (v4 !== null) qData.q4 = v4;
-
-                        const cartQty = qData[currentQ] ?? qData.q4 ?? qData.q3 ?? qData.q2 ?? qData.q1 ?? 0;
-
-                        console.log(`[ExcelImport] 처리중: "${modelName}", 기존존재:`, !!existingByModel[modelName]);
-                        if (existingByModel[modelName]) {
-                            // 동일 모델 → 업데이트
-                            const existing = existingByModel[modelName];
-                            if (!existing.quarterly) existing.quarterly = {};
-                            if (!existing.quarterly[y]) existing.quarterly[y] = {};
-
-                            // 엑셀에서 가져온 분기 데이터 덮어쓰기
-                            Object.assign(existing.quarterly[y], qData);
-
-                            existing.cartQty = cartQty;
-                            existing.factory = factory;
-                            existing.size = size || existing.size || '';
-                            existing.qtyPerCart = qtyPerCart;
-                            await db.carts.put(existing);
-                            updated++;
-                        } else {
-                            // 신규 추가
-                            const newCart = {
-                                projectId: proj.id,
-                                modelName,
-                                factory,
-                                size,
-                                qtyPerCart,
-                                cartQty: (qData.q4 ?? qData.q3 ?? qData.q2 ?? qData.q1 ?? 0),
-                                img: '',
-                                quarterly: Object.keys(qData).length > 0 ? { [y]: qData } : {}
-                            };
-                            const id = await db.carts.add(newCart);
-                            newCart.id = id;
-                            existingByModel[modelName] = newCart;
-                            added++;
+                    for (const { sheetName, dataRows } of validSheets) {
+                        // 시트 이름으로 프로젝트 찾거나 자동 생성
+                        let proj = projects.value.find(p => p.name === sheetName);
+                        if (!proj) {
+                            const newId = await db.projects.add({ name: sheetName, updated: new Date() });
+                            await loadProjects();
+                            proj = projects.value.find(p => p.id === newId);
                         }
+
+                        const dbCarts = await db.carts.where('projectId').equals(proj.id).toArray();
+                        const existingByModel = {};
+                        dbCarts.forEach(c => { const k = String(c.modelName || '').trim(); if (k) existingByModel[k] = c; });
+
+                        let added = 0, updated = 0;
+                        for (const r of dataRows) {
+                            const modelName = String(r[colIdx.modelName]).trim();
+                            const factory = toFactory(r[colIdx.location]);
+                            const size = r[colIdx.size] != null ? String(r[colIdx.size]).trim() : '';
+                            const qtyPerCart = getNum(r, colIdx.qtyPerCart) ?? 0;
+                            const qData = {};
+                            const v1 = getNum(r, colIdx.q1); if (v1 !== null) qData.q1 = v1;
+                            const v2 = getNum(r, colIdx.q2); if (v2 !== null) qData.q2 = v2;
+                            const v3 = getNum(r, colIdx.q3); if (v3 !== null) qData.q3 = v3;
+                            const v4 = getNum(r, colIdx.q4); if (v4 !== null) qData.q4 = v4;
+                            const cartQty = qData[currentQ] ?? qData.q4 ?? qData.q3 ?? qData.q2 ?? qData.q1 ?? 0;
+
+                            if (existingByModel[modelName]) {
+                                const existing = existingByModel[modelName];
+                                if (!existing.quarterly) existing.quarterly = {};
+                                if (!existing.quarterly[y]) existing.quarterly[y] = {};
+                                Object.assign(existing.quarterly[y], qData);
+                                existing.cartQty = cartQty;
+                                existing.factory = factory;
+                                existing.size = size || existing.size || '';
+                                existing.qtyPerCart = qtyPerCart;
+                                await db.carts.put(existing);
+                                updated++;
+                            } else {
+                                const newCart = {
+                                    projectId: proj.id, modelName, factory, size, qtyPerCart,
+                                    cartQty: (qData.q4 ?? qData.q3 ?? qData.q2 ?? qData.q1 ?? 0),
+                                    img: '', quarterly: Object.keys(qData).length > 0 ? { [y]: qData } : {}
+                                };
+                                const id = await db.carts.add(newCart);
+                                newCart.id = id;
+                                existingByModel[modelName] = newCart;
+                                added++;
+                            }
+                        }
+                        results.push(`• "${sheetName}": 신규 ${added}개, 업데이트 ${updated}개`);
+                        lastProj = proj;
                     }
 
-                    projectCarts.value = await db.carts.where('projectId').equals(proj.id).toArray();
-                    alert(`완료! 프로젝트: "${sheetName}"\n신규: ${added}개 추가\n업데이트: ${updated}개`);
+                    // 마지막으로 처리된 프로젝트 선택
+                    if (lastProj) await selectProject(lastProj);
+                    alert(`가져오기 완료!\n${results.join('\n')}`);
                 };
 
                 // --- Report ---
