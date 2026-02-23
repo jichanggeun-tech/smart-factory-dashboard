@@ -1620,30 +1620,34 @@
                     r.onload = (ev) => {
                         const img = new Image();
                         img.onload = () => {
-                            const c = document.createElement('canvas');
-                            // Limit max dimension to 800px to save space (Optimized for Cloud)
-                            const MAX_SIZE = 800;
+                            const TARGET_KB = 200; // 목표 크기 (KB)
+                            const MAX_SIZE = 800;  // 최대 픽셀 크기
                             let width = img.width;
                             let height = img.height;
 
                             if (width > height) {
-                                if (width > MAX_SIZE) {
-                                    height *= MAX_SIZE / width;
-                                    width = MAX_SIZE;
-                                }
+                                if (width > MAX_SIZE) { height = Math.round(height * MAX_SIZE / width); width = MAX_SIZE; }
                             } else {
-                                if (height > MAX_SIZE) {
-                                    width *= MAX_SIZE / height;
-                                    height = MAX_SIZE;
-                                }
+                                if (height > MAX_SIZE) { width = Math.round(width * MAX_SIZE / height); height = MAX_SIZE; }
                             }
 
+                            const c = document.createElement('canvas');
                             c.width = width;
                             c.height = height;
                             c.getContext('2d').drawImage(img, 0, 0, width, height);
 
-                            // Compress
-                            editingPart.img = c.toDataURL('image/jpeg', 0.7);
+                            // 자동 압축: 목표 크기 이하가 될 때까지 품질 단계적 감소
+                            let quality = 0.85;
+                            let dataUrl;
+                            do {
+                                dataUrl = c.toDataURL('image/jpeg', quality);
+                                // base64 → 실제 바이트 추정
+                                const estimatedKB = Math.round((dataUrl.length - 22) * 3 / 4 / 1024);
+                                if (estimatedKB <= TARGET_KB || quality <= 0.3) break;
+                                quality = Math.round((quality - 0.05) * 100) / 100;
+                            } while (true);
+
+                            editingPart.img = dataUrl;
                             isImageProcessing.value = false;
                         };
                         img.src = ev.target.result;
@@ -1672,16 +1676,20 @@
                                 isMarker: true
                             }];
                         } else {
-                            // 데이터 저장: 모든 부품에 같은 Batch ID 부여 (Tag all parts with Batch ID)
-                            partsToSend = projectParts.value.map(p => ({
-                                ...p,
-                                project: currentProject.value.name,
-                                batchId: batchId // Removed underscore
-                            }));
+                            // 데이터 저장: 이미지(img)는 셀 용량 초과로 제외, 로컬에만 보관
+                            partsToSend = projectParts.value.map(p => {
+                                const { img, ...rest } = p;
+                                return {
+                                    ...rest,
+                                    project: currentProject.value.name,
+                                    batchId: batchId
+                                };
+                            });
                         }
 
                         const r = await fetch(CLOUD_URL, {
                             method: 'POST',
+                            redirect: 'follow',
                             body: JSON.stringify({ action: 'save', project: currentProject.value.name, parts: partsToSend })
                         });
                         const res = await r.json();

@@ -504,6 +504,7 @@
             background: #f8f9fa;
             text-align: left;
             padding-left: 8px;
+            color: #555;
         }
 
         .kpi-blue .value {
@@ -1269,10 +1270,10 @@
 
             document.getElementById('kpi-loss-total').innerText = loss.toLocaleString() + " min";
             document.getElementById('kpi-loss-content').innerHTML = `
-            <div class="kpi-split-row"><span>PRESS A</span><span class="kpi-val-big">${cA.toLocaleString()}</span></div>
-            <div class="kpi-split-row"><span>PRESS B</span><span class="kpi-val-big">${cB.toLocaleString()}</span></div>
-            <div class="kpi-split-row"><span>PRESS C</span><span class="kpi-val-big">${cC.toLocaleString()}</span></div>
-            <div class="kpi-split-row"><span>ESPUMADO</span><span class="kpi-val-big">${cE.toLocaleString()}</span></div>
+            <div class="kpi-split-row"><span style="color:#555; font-weight:bold;">PRESS A</span><span class="kpi-val-big" style="color:#555;">${cA.toLocaleString()}</span></div>
+            <div class="kpi-split-row"><span style="color:#555; font-weight:bold;">PRESS B</span><span class="kpi-val-big" style="color:#555;">${cB.toLocaleString()}</span></div>
+            <div class="kpi-split-row"><span style="color:#555; font-weight:bold;">PRESS C</span><span class="kpi-val-big" style="color:#555;">${cC.toLocaleString()}</span></div>
+            <div class="kpi-split-row"><span style="color:#555; font-weight:bold;">ESPUMADO</span><span class="kpi-val-big" style="color:#555;">${cE.toLocaleString()}</span></div>
         `;
 
             document.getElementById('kpi-mttr').innerText = avgMttr;
@@ -1307,9 +1308,9 @@
             const body = document.getElementById('pivot-body');
             const foot = document.getElementById('pivot-footer');
 
-            let hHtml = `<th style="width:100px;">설비</th><th style="width:120px;">부품</th>`;
+            let hHtml = `<th style="width:100px; background:#d1d5db; color:#111827;">설비</th><th style="width:120px; background:#d1d5db; color:#111827;">부품</th>`;
             weekHeaders.forEach((h, i) => hHtml += `<th class="col-wk-${i}" style="${colVisibility[i] ? '' : 'display:none'}">${h.label}</th>`);
-            hHtml += `<th style="background:#333;">Total</th>`;
+            hHtml += `<th style="background:#333; color:#fff;">Total</th>`;
             head.innerHTML = hHtml;
 
             const map = {}, totals = new Array(weekHeaders.length).fill(0);
@@ -1356,7 +1357,7 @@
                 map[k].c++; map[k].t += i.min;
             }));
             const sorted = Object.keys(map).map(k => map[k]).sort((a, b) => b.t - a.t).slice(0, 15);
-            document.getElementById('reason-table-body').innerHTML = sorted.map((d, i) => `<tr><td>${i + 1}</td><td style="text-align:left">${d.m}</td><td style="text-align:left;color:#0d6efd;">${d.p}</td><td style="text-align:left">${d.r}</td><td style="text-align:left; color:#555; font-size:10px;">${d.cm}</td><td>${d.c}</td><td style="font-weight:bold">${d.t}</td><td>${d.isImproved ? '<span class="badge bg-good">개선 (Done)</span>' : '<span class="badge bg-neutral">-</span>'}</td></tr>`).join('');
+            document.getElementById('reason-table-body').innerHTML = sorted.map((d, i) => `<tr><td style="color:#555;">${i + 1}</td><td style="text-align:left; color:#555;">${d.m}</td><td style="text-align:left;color:#0d6efd;">${d.p}</td><td style="text-align:left; color:#555; font-weight:600;">${d.r}</td><td style="text-align:left; color:#555; font-size:10px;">${d.cm}</td><td style="color:#555; font-weight:600;">${d.c}</td><td style="font-weight:bold; color:#555;">${d.t}</td><td>${d.isImproved ? '<span class="badge bg-good">개선 (Done)</span>' : '<span class="badge bg-neutral">-</span>'}</td></tr>`).join('');
         }
 
         function renderPareto(curr, statusMap) {
@@ -1380,7 +1381,7 @@
             const refBody = document.getElementById('pareto-ref-body');
             refBody.innerHTML = "";
             sorted.forEach((d, i) => {
-                refBody.innerHTML += `<tr><td style="text-align:center; font-weight:bold; color:#0d6efd;">#${i + 1}</td><td>${d.k}</td><td style="text-align:center; font-weight:bold;">${d.v}</td></tr>`;
+                refBody.innerHTML += `<tr><td style="text-align:center; font-weight:bold; color:#0d6efd;">#${i + 1}</td><td style="color:#555; font-weight:600;">${d.k}</td><td style="text-align:center; font-weight:bold; color:#555;">${d.v}</td></tr>`;
             });
 
             const maxVal = sorted.length > 0 ? sorted[0].v : 0;

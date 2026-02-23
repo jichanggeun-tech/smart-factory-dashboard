@@ -1010,25 +1010,39 @@
                 // 현재 프로젝트 카드에 Prev 자동 입력
                 let matched = 0;
                 document.querySelectorAll('.project-card').forEach(card => {
-                    const model = card.querySelector('.p-model').value.toUpperCase();
-                    const loc = card.querySelector('.p-loc').value.toUpperCase();
+                    const modelEl = card.querySelector('.p-model');
+                    const locEl = card.querySelector('.p-loc');
+                    // disabled 상태여도 값을 읽을 수 있도록 처리
+                    const model = (modelEl.value || '').toUpperCase();
+                    const loc = (locEl.value || '').toUpperCase();
                     const key = `${model}_${loc}`;
                     if (prevTotals[key] !== undefined) {
-                        card.querySelector('.p-prev').value = prevTotals[key];
+                        const prevEl = card.querySelector('.p-prev');
+                        const wasDisabled = prevEl.disabled;
+                        prevEl.disabled = false;  // 임시 해제
+                        prevEl.value = prevTotals[key];
+                        if (wasDisabled) prevEl.disabled = true;  // 복원
                         matched++;
                     }
                 });
 
                 // 보고 날짜의 요일 이후 요일들을 0으로 초기화
+                // 이번 주 모든 일별 실적 초기화 (전주 데이터를 Prev로 넘기고 새 주 시작)
                 const inDate = document.getElementById('in-date').value;
                 if (inDate) {
-                    const dayOfWeek = new Date(inDate).getDay(); // 0=일, 1=월, ..., 6=토
-                    const dayFields = ['p-mon', 'p-tue', 'p-wed', 'p-thu', 'p-fri', 'p-sat']; // index 0=월(1), ..., 5=토(6)
+                    // 날짜 파싱 시 타임존 오류 방지 (로컬 날짜 기준)
+                    const [y, mo, dy] = inDate.split('-').map(Number);
+                    const localDate = new Date(y, mo - 1, dy);
+                    const dayOfWeek = localDate.getDay(); // 0=일, 1=월, ..., 6=토
+                    const dayFields = ['p-mon', 'p-tue', 'p-wed', 'p-thu', 'p-fri', 'p-sat'];
+                    // 월~토 인덱스: 0=월(dayNum=1), 1=화(2), 2=수(3), 3=목(4), 4=금(5), 5=토(6)
                     document.querySelectorAll('.project-card').forEach(card => {
                         for (let i = 0; i < dayFields.length; i++) {
                             const fieldDayNum = i + 1; // 월=1, 화=2, ..., 토=6
+                            // 보고 날짜의 요일 포함 이후 요일만 초기화
                             if (fieldDayNum >= dayOfWeek) {
-                                card.querySelector('.' + dayFields[i]).value = 0;
+                                const el = card.querySelector('.' + dayFields[i]);
+                                if (el) el.value = 0;
                             }
                         }
                     });
@@ -1158,19 +1172,21 @@
                     </div>
                 </div>
                 <div class="card-actions">
-                    <button class="btn-sm btn-dup" onclick="event.stopPropagation(); duplicateProjectRow(this);" title="복제">📑</button>
-                    <button class="btn-sm btn-del" onclick="event.stopPropagation(); this.closest('.project-card').remove(); renderReport();" title="삭제">×</button>
+                    <label title="완료 처리" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; color:#fff; margin:0; padding:0 8px; white-space:nowrap; background:rgba(0,0,0,0.2); border-radius:4px; height:28px;">
+                        <input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer; accent-color:#10b981;"> <span style="font-weight:bold;">완료</span>
+                    </label>
+                    <button class="btn-sm btn-dup" onclick="event.stopPropagation(); duplicateProjectRow(this);" title="복제" style="width:28px; height:28px;">📑</button>
+                    <button class="btn-sm btn-del" onclick="event.stopPropagation(); if(confirm('이 항목을 삭제하시겠습니까?')) { this.closest('.project-card').remove(); renderReport(); }" title="삭제" style="width:28px; height:28px;">×</button>
                 </div>
             </div>
             <div class="card-body">
-                <div style="display:grid; grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.6fr 0.8fr 0.3fr; gap:8px; margin-bottom:15px;">
+                <div style="display:grid; grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.6fr 0.8fr; gap:8px; margin-bottom:15px;">
                     <div><label>Model</label><input type="text" class="p-model" list="model-list" value="${d.model}"></div>
                     <div><label>Class</label><select class="p-class"><option value="전용" ${d.class === '전용' ? 'selected' : ''}>전용</option><option value="공용" ${d.class === '공용' ? 'selected' : ''}>공용</option></select></div>
                     <div><label>Loc.</label><input type="text" class="p-loc" list="loc-list" value="${d.loc}"></div>
                     <div><label>Type</label><select class="p-type"><option value="신규" ${d.type === '신규' ? 'selected' : ''}>신규</option><option value="개조" ${d.type === '개조' ? 'selected' : ''}>개조</option></select></div>
                     <div><label>Cap</label><input type="number" class="p-loadCap" value="${d.loadCap}"></div>
                     <div><label>Target</label><input type="number" class="p-target" value="${d.target}"></div>
-                    <div style="padding-top:22px;"><input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''}></div>
                 </div>
                 <div class="grid-days-labels"><span>Prev</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
                 <div class="grid-days">
@@ -1189,24 +1205,54 @@
             doneCheckbox.addEventListener('change', () => { applyDoneState(div); renderReport(); });
 
             document.getElementById('project-inputs').appendChild(div);
-            updateCardHeader(div);
-            applyDoneState(div);
+            // 초기 상태 적용 (렌더링 시점에 한 번 더 명확히 호출)
+            setTimeout(() => {
+                updateCardHeader(div);
+                applyDoneState(div);
+            }, 10);
         }
 
-        // 완료된 항목 입력 숨기기 + 데이터 보호
+        // 완료된 항목 입력 숨기기 + 데이터 보호 로직 개선
         function applyDoneState(cardDiv) {
             const isDone = cardDiv.querySelector('.p-done').checked;
             const body = cardDiv.querySelector('.card-body');
+            const header = cardDiv.querySelector('.card-header');
+            const titleEl = cardDiv.querySelector('.card-title');
 
             if (isDone) {
                 body.style.display = 'none';
-                cardDiv.style.opacity = '0.6';
-                // 완료 시 입력 비활성화 (데이터 보호)
-                body.querySelectorAll('input, select').forEach(el => el.disabled = true);
+                cardDiv.style.opacity = '0.7';
+                cardDiv.style.border = '1px solid #10b981';
+                header.style.background = '#064e3b'; // 완료 상태 배경색 (어두운 초록)
+
+                // 폰트 강조: 완료됨을 제목 앞에 명시
+                if (!titleEl.innerText.startsWith('[완료]')) {
+                    titleEl.innerText = '[완료] ' + titleEl.innerText.replace('[완료] ', '');
+                }
+                titleEl.style.color = '#10b981';
+
+                // 완료 시 입력 비활성화 (보호)
+                body.querySelectorAll('input, select').forEach(el => {
+                    el.disabled = true;
+                    el.style.backgroundColor = '#1f2937'; // 비활성화 느낌 강조
+                    el.style.color = '#4b5563';
+                });
             } else {
                 body.style.display = 'block';
                 cardDiv.style.opacity = '1';
-                body.querySelectorAll('input, select').forEach(el => el.disabled = false);
+                cardDiv.style.border = '1px solid #495057';
+                header.style.background = '#3c4249'; // 원래 헤더 색상
+
+                // [완료] 문구 제거 및 색상 복구
+                titleEl.innerText = titleEl.innerText.replace('[완료] ', '');
+                titleEl.style.color = '#e9ecef';
+
+                // 모든 필드 즉시 활성화
+                body.querySelectorAll('input, select').forEach(el => {
+                    el.disabled = false;
+                    el.style.backgroundColor = '#fff';
+                    el.style.color = '#212529';
+                });
             }
         }
 

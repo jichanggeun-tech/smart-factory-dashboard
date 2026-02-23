@@ -481,6 +481,12 @@
                         <i class="fa-solid fa-chart-line"></i> 리포트 (Reporte)
                     </button>
 
+                    <button class="btn" @click="triggerExcelImport">
+                        <i class="fa-solid fa-file-excel"></i> 엑셀 가져오기
+                    </button>
+                    <input type="file" id="excel-import-input" accept=".xlsx,.xls" style="display:none;"
+                        @change="importFromExcel">
+
                     <button class="btn primary" @click="openAddModal">
                         <i class="fa-solid fa-plus"></i> 추가 (Agregar)
                     </button>
@@ -505,6 +511,7 @@
                             <th style="width:60px; text-align:center;">Img</th>
                             <th>공장 (Fábrica)</th>
                             <th>모델명 (Modelo)</th>
+<<<<<<< HEAD
                             <th style="text-align:center;">가로×세로×폭</th>
                             <th style="text-align:center;">적재수량</th>
                             <th style="text-align:center;">총수량</th>
@@ -513,6 +520,15 @@
                             <th style="text-align:center;">Q2</th>
                             <th style="text-align:center;">Q3</th>
                             <th style="text-align:center;">Q4</th>
+=======
+                            <th style="text-align:center;">적재 수량 (Ctd/Carro)</th>
+                            <th style="text-align:center;">대차수량 (Cant. Carros)</th>
+                            <th style="text-align:right;">총 적재량 (Cap. Total)</th>
+                            <th style="text-align:center;">Q1 수량</th>
+                            <th style="text-align:center;">Q2 수량</th>
+                            <th style="text-align:center;">Q3 수량</th>
+                            <th style="text-align:center;">Q4 수량</th>
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
                             <th style="width:50px;">편집</th>
                         </tr>
                     </thead>
@@ -528,12 +544,20 @@
                             </td>
                             <td>{{ c.factory }}</td>
                             <td style="font-weight:bold; color:var(--blue);">{{ c.modelName }}</td>
+<<<<<<< HEAD
                             <td style="text-align:center; font-size:12px; color:#aaa;">{{ c.size || '-' }}</td>
                             <td style="text-align:center; color:#ccc;">{{ c.qtyPerCart ?? 0 }}</td>
                             <td style="text-align:center; font-weight:bold; color:var(--accent);">{{ c.cartQty ?? 0 }}
                             </td>
                             <td style="text-align:right; font-family:monospace;">{{ ((c.cartQty ?? 0) *
                                 (c.qtyPerCart ?? 0)).toLocaleString() }}</td>
+=======
+                            <td style="text-align:center; color:#ccc;">{{ c.qtyPerCart ?? 0 }}</td>
+                            <td style="text-align:center; font-weight:bold; color:var(--accent);">{{ c.cartQty ?? 0 }}
+                            </td>
+                            <td style="text-align:right; font-family:monospace;">{{ (c.cartQty *
+                                c.qtyPerCart).toLocaleString() }}</td>
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
 
                             <!-- Quarterly -->
                             <td style="text-align:center; font-size:12px;">{{ getQuarterVal(c, 'q1') }}</td>
@@ -586,8 +610,13 @@
                                 <th style="border:1px solid #000; padding:6px;">Img (사진)</th>
                                 <th style="border:1px solid #000; padding:6px;">공장 (Fábrica)</th>
                                 <th style="border:1px solid #000; padding:6px;">모델명 (Modelo)</th>
+<<<<<<< HEAD
                                 <th style="border:1px solid #000; padding:6px; text-align:center;">가로×세로×폭</th>
                                 <th style="border:1px solid #000; padding:6px; text-align:center;">적재수량</th>
+=======
+                                <th style="border:1px solid #000; padding:6px; text-align:center;">적재 수량 (Ctd/Carro)
+                                </th>
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
 
                                 <th style="border:1px solid #000; padding:6px; text-align:center; background:#e0f7fa;">
                                     Q1</th>
@@ -615,10 +644,16 @@
                                 </td>
                                 <td style="border:1px solid #ccc; padding:4px;">{{ c.factory }}</td>
                                 <td style="border:1px solid #ccc; padding:4px; font-weight:bold;">{{ c.modelName }}</td>
+<<<<<<< HEAD
                                 <td style="border:1px solid #ccc; padding:4px; text-align:center; font-size:10px;">{{
                                     c.size || '-' }}</td>
                                 <td style="border:1px solid #ccc; padding:4px; text-align:center;">{{ c.qtyPerCart ?? 0
                                     }}</td>
+=======
+                                <td style="border:1px solid #ccc; padding:4px; text-align:center;">{{ c.qtyPerCart ?? 0
+                                    }}
+                                </td>
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
 
                                 <!-- Quarterly Data with Trend Arrows -->
                                 <td style="border:1px solid #ccc; padding:4px; text-align:center; background:#e0f7fa;">
@@ -922,8 +957,13 @@
                 // --- Cart Actions ---
                 const openAddModal = () => {
                     if (!currentProject.value) return alert("프로젝트를 선택하세요! (Seleccione un proyecto!)");
-                    Object.assign(editingCart, { ...defaultCart, projectId: currentProject.value.id, quarterly: {} });
+                    Object.assign(editingCart, { ...defaultPart, projectId: currentProject.value.id, quarterly: {} });
                     Object.assign(editingQuarterly, { q1: null, q2: null, q3: null, q4: null });
+
+                    // 현재 분기에 현재 수량 제안
+                    const currentQ = getCurrentQuarter();
+                    editingQuarterly[currentQ] = editingCart.cartQty;
+
                     showCartModal.value = true;
                 };
 
@@ -932,9 +972,17 @@
                     if (!editingCart.quarterly) editingCart.quarterly = {};
 
                     const y = selectedYear.value.toString();
-                    const q = editingCart.quarterly[y] || { q1: null, q2: null, q3: null, q4: null };
-                    Object.assign(editingQuarterly, q);
+                    const qData = editingCart.quarterly[y] || { q1: null, q2: null, q3: null, q4: null };
 
+                    // 현재 분기 데이터가 비어있다면, 현재 수량을 기반으로 초기화 제안
+                    const currentQ = getCurrentQuarter();
+                    const isCurrentYear = new Date().getFullYear() === selectedYear.value;
+
+                    if (isCurrentYear && (qData[currentQ] === null || qData[currentQ] === undefined)) {
+                        qData[currentQ] = editingCart.cartQty;
+                    }
+
+                    Object.assign(editingQuarterly, qData);
                     showCartModal.value = true;
                 };
 
@@ -947,6 +995,14 @@
                     // Save Quarterly
                     const y = selectedYear.value.toString();
                     if (!copy.quarterly) copy.quarterly = {};
+
+                    // 현재 분기 데이터가 입력되지 않았다면 현재 수량을 자동으로 기록
+                    const currentQ = getCurrentQuarter();
+                    const isCurrentYear = new Date().getFullYear() === selectedYear.value;
+                    if (isCurrentYear && (editingQuarterly[currentQ] === null || editingQuarterly[currentQ] === undefined)) {
+                        editingQuarterly[currentQ] = copy.cartQty;
+                    }
+
                     copy.quarterly[y] = { ...editingQuarterly };
 
                     // 현재 분기에 총수량 자동 등록 (사용자가 Q값을 비워둔 경우)
@@ -988,8 +1044,16 @@
 
                 const getQuarterVal = (c, qKey) => {
                     const y = selectedYear.value.toString();
-                    if (!c.quarterly || !c.quarterly[y]) return '-';
-                    const val = c.quarterly[y][qKey];
+                    let val = (c.quarterly && c.quarterly[y]) ? c.quarterly[y][qKey] : null;
+
+                    // 해당 분기 데이터가 비어있고, '현재 분기'라면 현재 수량을 기반으로 미리보기
+                    const currentQ = getCurrentQuarter();
+                    const isCurrentYear = new Date().getFullYear() === selectedYear.value;
+
+                    if (isCurrentYear && qKey === currentQ && (val === null || val === undefined)) {
+                        val = c.cartQty;
+                    }
+
                     return (val === null || val === undefined) ? '-' : val;
                 };
                 const getTrend = (c, prevKey, currKey) => {
@@ -1174,7 +1238,6 @@
                         const key = String(c.modelName || '').trim();
                         if (key) existingByModel[key] = c;
                     });
-
                     console.log('[ExcelImport] 기존 모델 목록:', Object.keys(existingByModel));
 
                     let added = 0, updated = 0;

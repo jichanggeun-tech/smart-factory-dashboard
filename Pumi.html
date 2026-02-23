@@ -3,7 +3,11 @@
 
 <head>
     <meta charset="UTF-8">
+<<<<<<< HEAD
     <title>설비 수리 품의서 V6.0 (Cloud Select)</title>
+=======
+    <title>설비 수리 품의서 V6.1 (Cloud Select)</title>
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         /* [공통] 레이아웃 */
@@ -918,10 +922,21 @@
 
     <div class="input-panel" id="inputPanel">
         <h2>
+<<<<<<< HEAD
 
             <span id="save-status" class="save-status"></span>
         </h2>
 
+=======
+            <span id="save-status" class="save-status"></span>
+        </h2>
+
+        <div class="btn-output-group">
+            <button class="btn-print" onclick="window.print()">🖨️ PDF 변환 (PDF)</button>
+            <button class="btn-capture" onclick="captureImage()">📸 스크린샷 (Captura)</button>
+        </div>
+
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
         <div class="btn-action">
             <button class="btn-cloud-save" onclick="saveToCloud()">☁️ 클라우드 저장 (Cloud Save)</button>
             <button class="btn-cloud-load" onclick="loadFromCloud()">☁️ 선택 불러오기 (Cloud Load)</button>
@@ -955,12 +970,15 @@
         <div class="form-section">
             <h3>1. 기본 정보 (Información Básica)</h3>
 
+<<<<<<< HEAD
             <label style="color:#0dcaf0; font-weight:bold;">대상 공장 (Planta)</label>
             <select id="in-plant" onchange="updateView()" style="background:#e7f1ff; font-weight:bold;">
                 <option value="1공장">1공장 (Planta 1)</option>
                 <option value="3공장">3공장 (Planta 3)</option>
             </select>
 
+=======
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
             <label style="color:#d63384; font-weight:bold;">품의 구분 (Categoría)</label>
             <select id="in-category" onchange="updateView()" style="background:#fff0f6; font-weight:bold;">
                 <option value="수선 (Reparación)">수선 (Reparación)</option>
@@ -999,7 +1017,8 @@
 
         <div class="form-section">
             <h3>4. 비용 산출 (Cálculo de Costos)</h3>
-            <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 재고/이력 포함 (Incluir Stock/Historial)</div>
+
+            <div style="font-size:0.8rem; color:#aaa; margin-bottom:5px;">* 항목별 대상 공장 및 재고/이력 포함 입력</div>
             <div style="margin-bottom:10px;">
                 <div id="mxn-inputs"></div>
                 <button class="btn-add" onclick="addCostRow('MXN'); updateView()">+ MXN 추가 (Agregar MXN)</button>
@@ -1052,15 +1071,21 @@
                 (Agregar Tarea)</button>
         </div>
 
+<<<<<<< HEAD
         <div class="btn-output-group">
             <button class="btn-print" onclick="window.print()">🖨️ PDF 저장 (Guardar PDF)</button>
             <button class="btn-capture" onclick="captureImage()">📸 이미지 저장 (Guardar Img)</button>
         </div>
+=======
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
     </div>
 
     <div class="resizer" id="dragMe"></div>
 
+<<<<<<< HEAD
     <!-- Sidebar Controls (Home + Toggle) -->
+=======
+>>>>>>> 14a6f94f2fbbb6aea27d1dcea0020e19def4dcaa
     <div class="sidebar-controls">
         <a class="home-btn" href="index.html">🏠 Home</a>
         <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
@@ -1071,7 +1096,7 @@
 
             <div class="modern-header">
                 <div class="header-left">
-                    <h1 class="doc-title" id="out-title">1공장 설비 수리 품의서</h1>
+                    <h1 class="doc-title" id="out-title">설비 수리 품의서</h1>
                     <div class="doc-subtitle" id="out-subtitle">Repair Request Form & Cost Analysis</div>
                 </div>
                 <div class="header-right">
@@ -1235,9 +1260,13 @@
             <div id="sec-budget">
                 <div class="section-title">5. 예산 관리 <span class="section-sub">Control Presupuestario (MXN)</span></div>
 
-                <div
-                    style="font-size:12px; font-weight:bold; color:#28a745; border-bottom:1px solid #28a745; margin-bottom:5px;">
-                    Planta 1</div>
+                <div id="budget-section-label-p1"
+                    style="font-size:12px; font-weight:bold; color:#28a745; border-bottom:1px solid #28a745; margin-bottom:5px; display:flex; align-items:center; gap:8px; padding:4px 0;">
+                    Planta 1
+                    <span class="plant-tag"
+                        style="display:none; background:#28a745; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶
+                        금번 품의 반영</span>
+                </div>
                 <table class="styled-table" style="margin-bottom:2px;">
                     <thead>
                         <tr>
@@ -1286,9 +1315,13 @@
                     <tbody id="out-month-p1"></tbody>
                 </table>
 
-                <div
-                    style="font-size:12px; font-weight:bold; color:#17a2b8; border-bottom:1px solid #17a2b8; margin-bottom:5px; margin-top:20px;">
-                    Planta 3</div>
+                <div id="budget-section-label-p3"
+                    style="font-size:12px; font-weight:bold; color:#17a2b8; border-bottom:1px solid #17a2b8; margin-bottom:5px; margin-top:20px; display:flex; align-items:center; gap:8px; padding:4px 0;">
+                    Planta 3
+                    <span class="plant-tag"
+                        style="display:none; background:#17a2b8; color:#fff; font-size:10px; padding:1px 7px; border-radius:10px;">▶
+                        금번 품의 반영</span>
+                </div>
                 <table class="styled-table" style="margin-bottom:2px;">
                     <thead>
                         <tr>
@@ -1358,7 +1391,6 @@
         // ==========================================
 
         let subTotalMXN = 0; let subTotalKRW = 0;
-        const SAVE_KEY = "pumi_autosave_v2";
 
         // --- Cloud Functions ---
 
@@ -1467,7 +1499,6 @@
         function toggleSection(id, isChecked) {
             const el = document.getElementById(id);
             if (el) el.style.display = isChecked ? 'block' : 'none';
-            performAutoSave();
         }
 
         function fmt(num, currency) {
@@ -1584,12 +1615,42 @@
             div.style.marginBottom = "5px";
             div.style.display = "flex";
             div.style.alignItems = "center";
+            div.style.flexWrap = "wrap";
+
+            // --- 변경점: 붙여넣기 영역 시각적 강조 및 포커스 속성 추가 ---
+            div.style.border = "1px dashed #adb5bd";
+            div.style.padding = "8px";
+            div.style.borderRadius = "4px";
+            div.style.background = "#343a40";
+            div.tabIndex = 0; // 마우스 클릭 시 요소가 포커스를 받도록 설정하여 붙여넣기 이벤트를 대기합니다.
 
             div.innerHTML = `
-            <input type="file" accept="image/*" onchange="processOverviewImage(this)" style="font-size:0.8rem; width:80%;">
-            <input type="hidden" class="ov-img-data">
-            <button class="btn-del-mini" onclick="this.parentElement.remove(); updateView()">삭제</button>
-        `;
+                <input type="file" accept="image/*" onchange="processOverviewImage(this)" style="font-size:0.8rem; width:70%; margin-bottom:5px;">
+                <button class="btn-del-mini" onclick="this.parentElement.remove(); updateView()">삭제</button>
+                <span style="font-size:0.75rem; color:#ffc107; display:block; width:100%;">💡 이 점선 박스를 마우스로 클릭한 후 Ctrl+V를 누르면 캡처한 이미지가 바로 입력됩니다.</span>
+                <input type="hidden" class="ov-img-data">
+            `;
+
+            // --- 변경점: 클립보드 붙여넣기(Paste) 이벤트 감지 ---
+            div.addEventListener('paste', function (e) {
+                // 클립보드 데이터에서 아이템을 가져옵니다.
+                const items = (e.clipboardData || window.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    // 복사된 항목이 이미지 형식인지 확인합니다.
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const file = items[i].getAsFile();
+                        // 기존에 작성된 이미지 압축 함수를 활용해 화면에 적용합니다.
+                        compressImage(file, (base64) => {
+                            div.querySelector('.ov-img-data').value = base64;
+                            updateView();
+                            showToast("📸 개요 사진이 붙여넣기 되었습니다.");
+                        });
+                        e.preventDefault(); // 기본 붙여넣기 동작을 막습니다.
+                        break; // 이미지를 찾았으므로 반복을 종료합니다.
+                    }
+                }
+            });
+
             container.appendChild(div);
         }
 
@@ -1604,8 +1665,43 @@
 
         function addIssueRow() {
             const div = document.createElement('div');
-            div.style.marginBottom = "5px"; div.style.background = "#2c3034"; div.style.padding = "5px"; div.style.borderRadius = "4px";
-            div.innerHTML = `<input type="file" accept="image/*" onchange="handleImage(this)" style="font-size:0.8rem"><input type="text" class="issue-loc" placeholder="위치 (Ubicación)" onkeyup="updateView()"><input type="text" class="issue-desc" placeholder="설명 (Descripción)" onkeyup="updateView()"><img class="temp-img" style="display:none;" src="">`;
+            div.style.marginBottom = "8px";
+            div.style.background = "#2c3034";
+            div.style.padding = "10px";
+            div.style.borderRadius = "4px";
+
+            // --- 변경점: 붙여넣기 영역 시각적 강조 및 포커스 속성 추가 ---
+            div.style.border = "1px dashed #adb5bd";
+            div.tabIndex = 0; // 마우스 클릭 시 요소가 포커스를 받도록 설정합니다.
+
+            div.innerHTML = `
+                <div style="margin-bottom:8px;">
+                    <input type="file" accept="image/*" onchange="handleImage(this)" style="font-size:0.8rem; width:70%;">
+                    <button class="btn-del-mini" onclick="this.parentElement.parentElement.remove(); updateView()" style="float:right;">삭제</button>
+                    <span style="font-size:0.75rem; color:#17a2b8; display:block; margin-top:5px;">💡 이 점선 박스를 클릭하고 Ctrl+V (복사/캡처한 이미지 붙여넣기)</span>
+                </div>
+                <input type="text" class="issue-loc" placeholder="위치 (Ubicación)" onkeyup="updateView()">
+                <input type="text" class="issue-desc" placeholder="설명 (Descripción)" onkeyup="updateView()">
+                <img class="temp-img" style="display:none;" src="">
+            `;
+
+            // --- 변경점: 클립보드 붙여넣기(Paste) 이벤트 감지 ---
+            div.addEventListener('paste', function (e) {
+                const items = (e.clipboardData || window.clipboardData).items;
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type.indexOf('image') !== -1) {
+                        const file = items[i].getAsFile();
+                        compressImage(file, (base64) => {
+                            div.querySelector('.temp-img').src = base64;
+                            updateView();
+                            showToast("📸 점검 결과 사진이 붙여넣기 되었습니다.");
+                        });
+                        e.preventDefault();
+                        break;
+                    }
+                }
+            });
+
             document.getElementById('issue-inputs').appendChild(div);
         }
 
@@ -1623,6 +1719,10 @@
             div.className = "cost-input-group";
             div.innerHTML = `
             <div class="cost-row">
+                <select class="c-plant-${type}" onchange="updateView()" style="width: 75px; padding: 4px; font-weight: bold; font-size: 0.8rem; background: #e9ecef;">
+                    <option value="1공장">1공장</option>
+                    <option value="3공장">3공장</option>
+                </select>
                 <input type="text" class="c-name-${type}" placeholder="품명 (Item)" style="flex:2" onkeyup="updateView()">
                 <input type="text" class="c-vendor-${type}" placeholder="업체명 (Proveedor)" style="flex:2" onkeyup="updateView()">
             </div>
@@ -1783,10 +1883,9 @@
         }
 
         function updateView() {
-            const plantName = document.getElementById('in-plant').value;
             const docName = document.getElementById('in-doc-name').value;
-            document.getElementById('out-title').innerText = plantName + " " + docName;
-            document.getElementById('out-subtitle').innerText = plantName.includes("1") ? "Planta 1 Maintenance Request" : "Planta 3 Maintenance Request";
+            document.getElementById('out-title').innerText = docName || "설비 수리 품의서";
+            document.getElementById('out-subtitle').innerText = "Repair Request Form & Cost Analysis";
 
             document.getElementById('out-date').innerText = document.getElementById('in-date').value;
             document.getElementById('out-category').innerText = document.getElementById('in-category').value;
