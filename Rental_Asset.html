@@ -579,7 +579,7 @@
                 <div class="actions">
                     <button class="btn" @click="syncFromCloud" title="Download Projects"><i
                             class="fa-solid fa-cloud-arrow-down"></i> 불러오기 (Cargar)</button>
-                    <button class="btn" @click="syncToCloud" title="Upload Current Project"><i
+                    <button class="btn" @click="openSaveModal" title="Upload Projects"><i
                             class="fa-solid fa-cloud-arrow-up"></i> 저장 (Guardar)</button>
                     <div style="width:1px; height:20px; background:var(--border); margin:0 5px;"></div>
 
@@ -970,25 +970,64 @@
 
         <!-- CLOUD MODAL -->
         <div v-if="showCloudModal" class="modal-overlay" @click.self="showCloudModal=false">
-            <div class="modal" style="width:400px;">
-                <div class="modal-header">클라우드 프로젝트 선택 (Sel. Proyecto Nube) <i class="fa-solid fa-times"
+            <div class="modal" style="width:420px;">
+                <div class="modal-header">클라우드 불러오기 (Cargar desde Nube) <i class="fa-solid fa-times"
                         style="cursor:pointer;" @click="showCloudModal=false"></i></div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:15px;">복원할 프로젝트 선택 (Sel. proyecto
-                        para restaurar)<br>현재 데이터가 덮어씌워집니다. (Se sobrescribirán los datos actuales.)</p>
+                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">불러올 프로젝트를 선택하세요. 기존 로컬 데이터가 덮어씌워집니다.<br>(Seleccione proyectos a restaurar.)</p>
+                    <div style="display:flex; gap:6px; margin-bottom:12px;">
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(true)">전체 선택</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(false)">전체 해제</button>
+                    </div>
                     <div v-for="p in cloudProjectsList" :key="p.name"
-                        style="display:flex; align-items:center; gap:5px; margin-bottom:5px;">
-                        <button class="btn" style="text-align:left; justify-content:flex-start; flex:1;"
-                            @click="loadSelectedCloudProject(p.name)">
-                            <i class="fa-solid fa-folder" style="color:var(--blue); margin-right:10px;"></i>
-                            {{ p.name }} <span style="margin-left:auto; font-size:11px; color:#888;">({{ p.count
-                                }})</span>
-                        </button>
-                        <button class="btn danger" style="padding:0 10px;" @click.stop="deleteCloudProject(p.name)"
+                        style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
+                        <div style="display:flex; align-items:center; gap:10px; flex:1; padding:8px 10px; border-radius:6px; background:var(--bg-input); cursor:pointer;"
+                            @click="toggleLoadProject(p.name)">
+                            <input type="checkbox" :checked="loadProjectsSelected.includes(p.name)" style="width:16px; height:16px; pointer-events:none;">
+                            <i class="fa-solid fa-folder" style="color:var(--blue);"></i>
+                            <span style="flex:1;">{{ p.name }}</span>
+                            <span style="font-size:11px; color:#888;">({{ p.count }})</span>
+                        </div>
+                        <button class="btn danger" style="padding:0 10px; flex-shrink:0;" @click.stop="deleteCloudProject(p.name)"
                             title="삭제 (Eliminar)">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
+                </div>
+                <div class="modal-footer">
+                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{ loadProjectsSelected.length }}개 선택됨</span>
+                    <button class="btn" @click="showCloudModal=false">취소 (Cancelar)</button>
+                    <button class="btn primary" @click="loadSelectedProjects" :disabled="!loadProjectsSelected.length || isSyncing">
+                        <i class="fa-solid fa-cloud-arrow-down"></i> 불러오기 (Cargar)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLOUD SAVE SELECT MODAL -->
+        <div v-if="showSaveModal" class="modal-overlay" @click.self="showSaveModal=false">
+            <div class="modal" style="width:420px;">
+                <div class="modal-header">클라우드 저장 선택 (Guardar en Nube) <i class="fa-solid fa-times"
+                        style="cursor:pointer;" @click="showSaveModal=false"></i></div>
+                <div class="modal-body">
+                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">저장할 프로젝트를 선택하세요. (Seleccione proyectos a guardar.)</p>
+                    <div style="display:flex; gap:6px; margin-bottom:12px;">
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(true)">전체 선택</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(false)">전체 해제</button>
+                    </div>
+                    <div v-for="p in projects" :key="p.id"
+                        style="display:flex; align-items:center; gap:10px; margin-bottom:5px; padding:8px 10px; border-radius:6px; background:var(--bg-input); cursor:pointer;"
+                        @click="toggleSaveProject(p.id)">
+                        <input type="checkbox" :checked="saveProjectsSelected.includes(p.id)" style="width:16px; height:16px; pointer-events:none;">
+                        <span style="flex:1;">{{ p.name }}</span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{ saveProjectsSelected.length }}개 선택됨</span>
+                    <button class="btn" @click="showSaveModal=false">취소 (Cancelar)</button>
+                    <button class="btn primary" @click="syncSelectedToCloud" :disabled="!saveProjectsSelected.length || isSyncing">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> 저장 (Guardar)
+                    </button>
                 </div>
             </div>
         </div>
@@ -1021,6 +1060,8 @@
                 const showPartModal = ref(false);
                 const showDataModal = ref(false);
                 const showCloudModal = ref(false);
+                const showSaveModal = ref(false);
+                const saveProjectsSelected = ref([]);
                 const isSyncing = ref(false);
                 const isImageProcessing = ref(false);
                 const zoomedImage = ref(null);
@@ -1032,6 +1073,7 @@
 
                 const cloudProjectsList = ref([]);
                 const rawCloudData = ref([]);
+                const loadProjectsSelected = ref([]);
 
                 const columns = ref([
                     { key: 'no', label: 'No.', width: 40, visible: true, sortable: false },
@@ -1368,44 +1410,79 @@
                 };
 
                 // --- Cloud Logic ---
+                // 단일 프로젝트를 클라우드에 저장하는 헬퍼
+                const saveOneProjectToCloud = async (proj) => {
+                    const batchId = Date.now();
+                    const parts = await db.assets.where('projectId').equals(proj.id).toArray();
+                    let partsToSend;
+
+                    if (parts.length === 0) {
+                        partsToSend = [{ project: proj.name, batchId, assetCode: 'EMPTY_PROJECT_MARKER', isMarker: true }];
+                    } else {
+                        partsToSend = await Promise.all(parts.map(async p => {
+                            const { img1, img2, ...rest } = p;
+                            const cImg1 = img1 ? await compressImageForCloud(img1) : '';
+                            const cImg2 = img2 ? await compressImageForCloud(img2) : '';
+                            return {
+                                ...rest,
+                                ...(cImg1 ? { img1: cImg1 } : {}),
+                                ...(cImg2 ? { img2: cImg2 } : {}),
+                                project: proj.name,
+                                batchId
+                            };
+                        }));
+                    }
+
+                    const r = await fetch(CLOUD_URL, {
+                        method: 'POST',
+                        redirect: 'follow',
+                        body: JSON.stringify({ action: 'save', project: proj.name, parts: partsToSend })
+                    });
+                    const res = await r.json();
+                    if (res.result === 'error') throw new Error(res.message);
+                    return partsToSend.length;
+                };
+
+                // 현재 프로젝트 저장 (기존 호환)
                 const syncToCloud = async () => {
-                    if (!currentProject.value) return alert("프로젝트를 먼저 선택하세요! (¡Seleccione proyecto primero!)");
-                    if (!confirm("클라우드에 저장하시겠습니까? (현재 데이터 덮어쓰기)\nSave to Cloud? (Overwrite)")) return;
+                    if (!currentProject.value) return alert("프로젝트를 먼저 선택하세요!");
+                    if (!confirm("클라우드에 저장하시겠습니까?\nSave to Cloud? (Overwrite)")) return;
                     isSyncing.value = true;
                     try {
-                        const batchId = Date.now();
-                        let partsToSend;
+                        const count = await saveOneProjectToCloud(currentProject.value);
+                        alert(`저장 완료! (Guardado!) (${count} items)`);
+                    } catch (e) { alert("Error: " + e); } finally { isSyncing.value = false; }
+                };
 
-                        if (projectParts.value.length === 0) {
-                            partsToSend = [{
-                                project: currentProject.value.name,
-                                batchId: batchId,
-                                assetCode: 'EMPTY_PROJECT_MARKER',
-                                isMarker: true
-                            }];
-                        } else {
-                            partsToSend = await Promise.all(projectParts.value.map(async p => {
-                                const { img1, img2, ...rest } = p;
-                                const cImg1 = img1 ? await compressImageForCloud(img1) : '';
-                                const cImg2 = img2 ? await compressImageForCloud(img2) : '';
-                                return {
-                                    ...rest,
-                                    ...(cImg1 ? { img1: cImg1 } : {}),
-                                    ...(cImg2 ? { img2: cImg2 } : {}),
-                                    project: currentProject.value.name,
-                                    batchId: batchId
-                                };
-                            }));
+                // 프로젝트 선택 모달 열기
+                const openSaveModal = () => {
+                    saveProjectsSelected.value = projects.value.map(p => p.id); // 기본: 전체 선택
+                    showSaveModal.value = true;
+                };
+
+                const toggleSaveProject = (id) => {
+                    const idx = saveProjectsSelected.value.indexOf(id);
+                    if (idx >= 0) saveProjectsSelected.value.splice(idx, 1);
+                    else saveProjectsSelected.value.push(id);
+                };
+
+                const selectAllSave = (val) => {
+                    saveProjectsSelected.value = val ? projects.value.map(p => p.id) : [];
+                };
+
+                // 선택된 프로젝트 전체 저장
+                const syncSelectedToCloud = async () => {
+                    const selected = projects.value.filter(p => saveProjectsSelected.value.includes(p.id));
+                    if (!selected.length) return;
+                    if (!confirm(`${selected.length}개 프로젝트를 클라우드에 저장하시겠습니까? (Overwrite)`)) return;
+                    isSyncing.value = true;
+                    showSaveModal.value = false;
+                    try {
+                        let totalItems = 0;
+                        for (const proj of selected) {
+                            totalItems += await saveOneProjectToCloud(proj);
                         }
-
-                        const r = await fetch(CLOUD_URL, {
-                            method: 'POST',
-                            redirect: 'follow', // GAS 리다이렉트 처리 필수
-                            body: JSON.stringify({ action: 'save', project: currentProject.value.name, parts: partsToSend })
-                        });
-                        const res = await r.json();
-                        if (res.result === 'error') throw new Error(res.message);
-                        alert(`저장 완료! (Guardado!) (${partsToSend.length} items)`);
+                        alert(`저장 완료! (${selected.length}개 프로젝트, ${totalItems} 항목)`);
                     } catch (e) { alert("Error: " + e); } finally { isSyncing.value = false; }
                 };
 
@@ -1434,13 +1511,14 @@
                             count: counts[name]
                         })).sort((a, b) => b.count - a.count);
 
+                        // 기본: 전체 선택
+                        loadProjectsSelected.value = cloudProjectsList.value.map(p => p.name);
                         showCloudModal.value = true;
                     } catch (e) { alert("Error: " + e); } finally { isSyncing.value = false; }
                 };
 
-                const loadSelectedCloudProject = async (pName) => {
-                    if (!confirm(`현재 프로젝트를 교체하시겠습니까? (Replace current project with '${pName}'?)`)) return;
-
+                // 단일 프로젝트 로드 헬퍼 (confirm/alert 없이 순수 로직)
+                const loadOneProjectFromCloud = async (pName) => {
                     let targetProj = projects.value.find(p => p.name === pName);
                     if (!targetProj) {
                         const id = await db.projects.add({ name: pName, updated: new Date() });
@@ -1448,36 +1526,67 @@
                         targetProj = projects.value.find(p => p.id === id);
                     }
 
-                    await selectProject(targetProj);
-
                     const cloudParts = JSON.parse(JSON.stringify(rawCloudData.value.filter(p => (p.project || 'Unknown') === pName)));
-                    if (cloudParts.length === 0) return alert("데이터를 찾을 수 없습니다. (No data found.)");
+                    if (cloudParts.length === 0) return 0;
 
                     const latestBatchId = cloudParts.reduce((max, p) => Math.max(max, p.batchId || 0), 0);
                     let latestParts = cloudParts.filter(p => (p.batchId || 0) === latestBatchId);
-
-                    // Filter out markers
                     latestParts = latestParts.filter(p => !p.isMarker && p.assetCode !== 'EMPTY_PROJECT_MARKER');
 
-                    projectParts.value = [];
                     await db.assets.where('projectId').equals(targetProj.id).delete();
 
                     if (latestParts.length > 0) {
                         const toAdd = latestParts.map(p => {
                             const { id, project, batchId, _syncId, ...rest } = p;
-                            // Ensure projectId is a primitive number
-                            const pid = Number(targetProj.id);
-                            return { ...rest, projectId: pid };
+                            return { ...rest, projectId: Number(targetProj.id) };
                         });
-
-                        // [Fix] Remove ANY reactivity or proxies by deep cloning the final array
-                        const cleanToAdd = JSON.parse(JSON.stringify(toAdd));
-                        await db.assets.bulkAdd(cleanToAdd);
+                        await db.assets.bulkAdd(JSON.parse(JSON.stringify(toAdd)));
                     }
 
-                    projectParts.value = await db.assets.where('projectId').equals(targetProj.id).toArray();
-                    alert(`로드 완료. ('${pName}' Loaded.)`);
+                    // 현재 선택 프로젝트면 화면 갱신
+                    if (currentProject.value?.id === targetProj.id) {
+                        projectParts.value = await db.assets.where('projectId').equals(targetProj.id).toArray();
+                    }
+                    return latestParts.length;
+                };
+
+                // 기존 단건 로드 (호환)
+                const loadSelectedCloudProject = async (pName) => {
+                    if (!confirm(`'${pName}' 프로젝트를 불러오시겠습니까? 기존 데이터가 덮어씌워집니다.`)) return;
+                    isSyncing.value = true;
+                    try {
+                        const count = await loadOneProjectFromCloud(pName);
+                        await selectProject(projects.value.find(p => p.name === pName));
+                        alert(`로드 완료. ('${pName}' Loaded. ${count} items)`);
+                        showCloudModal.value = false;
+                    } catch (e) { alert("Error: " + e); } finally { isSyncing.value = false; }
+                };
+
+                const toggleLoadProject = (name) => {
+                    const idx = loadProjectsSelected.value.indexOf(name);
+                    if (idx >= 0) loadProjectsSelected.value.splice(idx, 1);
+                    else loadProjectsSelected.value.push(name);
+                };
+
+                const selectAllLoad = (val) => {
+                    loadProjectsSelected.value = val ? cloudProjectsList.value.map(p => p.name) : [];
+                };
+
+                // 선택된 프로젝트 전체 불러오기
+                const loadSelectedProjects = async () => {
+                    const names = [...loadProjectsSelected.value];
+                    if (!names.length) return;
+                    if (!confirm(`${names.length}개 프로젝트를 불러오시겠습니까? 기존 로컬 데이터가 덮어씌워집니다.`)) return;
+                    isSyncing.value = true;
                     showCloudModal.value = false;
+                    try {
+                        let totalItems = 0;
+                        for (const name of names) {
+                            totalItems += await loadOneProjectFromCloud(name);
+                        }
+                        await loadProjects();
+                        alert(`로드 완료! (${names.length}개 프로젝트, ${totalItems} 항목)`);
+                    } catch (e) { alert("Error: " + e); } finally { isSyncing.value = false; }
                 };
 
                 const deleteCloudProject = async (pName) => {
@@ -1617,12 +1726,14 @@
                     projects, currentProject, filteredParts, searchQuery,
                     showPartModal, showDataModal, isSyncing, isImageProcessing,
                     editingPart, zoomedImage, visibleColumns, sortKey, sortOrder,
-                    showCloudModal, cloudProjectsList, selectedYear, editingQuarterly,
-                    showReportModal, // Added
+                    showCloudModal, cloudProjectsList, loadProjectsSelected, selectedYear, editingQuarterly,
+                    showReportModal,
+                    showSaveModal, saveProjectsSelected,
                     createProject, selectProject, deleteProject,
                     openAddModal, editPart, savePart, deletePart,
                     handleImageUpload, setModalImage, sortTable, getQuarterSymbol, getQuarterSymbolClass, getQuarterColor,
-                    syncToCloud, syncFromCloud, loadSelectedCloudProject, deleteCloudProject,
+                    syncToCloud, openSaveModal, toggleSaveProject, selectAllSave, syncSelectedToCloud,
+                    syncFromCloud, loadSelectedCloudProject, loadSelectedProjects, toggleLoadProject, selectAllLoad, deleteCloudProject,
                     downloadJsonBackup, uploadJsonRestore, clearAllData, openReport,
                     importExcelData,
                     printReport: () => window.print(),
