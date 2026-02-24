@@ -369,7 +369,7 @@
         @media print {
             @page {
                 size: landscape;
-                margin: 0;
+                margin: 10mm;
             }
 
             aside,
@@ -382,91 +382,109 @@
                 display: none !important;
             }
 
-
-
+            /* body: 높이·overflow 제한 완전 해제 (표 잘림 방지) */
             body {
-                height: auto;
-                display: block;
-                background: white;
-                color: black;
-                margin: 0;
-                padding: 0;
+                height: auto !important;
+                overflow: visible !important;
+                display: block !important;
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
+            /* main 영역도 overflow 해제 */
+            main {
+                overflow: visible !important;
+                height: auto !important;
+                display: block !important;
             }
 
             .modal-overlay {
-                position: static;
-                background: white;
-                display: block;
-                padding: 0;
+                position: static !important;
+                background: white !important;
+                display: block !important;
+                padding: 0 !important;
+                overflow: visible !important;
             }
 
             .modal {
-                border: none;
-                box-shadow: none;
-                max-width: 100%;
-                width: 100%;
-                position: static;
-                height: auto;
-                background: white;
-                color: black;
+                border: none !important;
+                box-shadow: none !important;
+                max-width: 100% !important;
+                width: 100% !important;
+                position: static !important;
+                height: auto !important;
+                max-height: none !important;
+                background: white !important;
+                color: black !important;
+                display: block !important;
+                overflow: visible !important;
+            }
+
+            .modal-body {
+                overflow: visible !important;
+                height: auto !important;
+                max-height: none !important;
             }
 
             .table-container {
-                overflow: visible;
-            }
-
-            table {
-                font-size: 10px;
-                width: 100%;
-                border-collapse: collapse;
-            }
-
-            th,
-            td {
-                border: 1px solid #000 !important;
-                padding: 4px;
-                color: black !important;
-                page-break-inside: avoid;
-            }
-
-            th {
-                background: #eee !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .status-badge {
-                border: 1px solid #000;
-                color: black !important;
-                background: transparent !important;
+                overflow: visible !important;
+                height: auto !important;
             }
 
             /* Report Print Specifics */
             #report-print-area {
-                display: block;
+                display: block !important;
                 width: 100% !important;
-                margin: 0;
-                padding: 0;
+                margin: 0 !important;
+                padding: 0 !important;
                 overflow: visible !important;
                 height: auto !important;
-                zoom: 0.80;
-                /* Stronger zoom out for Mold Manager potentially wider content */
+                max-height: none !important;
             }
 
             table {
                 width: 100% !important;
                 min-width: 0 !important;
                 font-size: 8px !important;
-                table-layout: fixed;
+                /* 고정 레이아웃으로 열 너비 균등 분배 */
+                table-layout: fixed !important;
+                border-collapse: collapse !important;
+                page-break-inside: auto !important;
+            }
+
+            thead {
+                /* 인쇄 시 각 페이지 상단에 헤더 반복 */
+                display: table-header-group !important;
+            }
+
+            tbody tr {
+                page-break-inside: avoid !important;
             }
 
             th,
             td {
+                border: 1px solid #000 !important;
+                padding: 3px !important;
+                color: black !important;
                 word-wrap: break-word !important;
                 white-space: normal !important;
                 font-size: 8px !important;
+                overflow: hidden !important;
             }
 
+            th {
+                background: #eee !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            .status-badge {
+                border: 1px solid #000 !important;
+                color: black !important;
+                background: transparent !important;
+            }
 
             /* QR Label */
             .print-label {
@@ -592,7 +610,7 @@
                         초기화 (Reiniciar)</button>
                     <button class="btn btn-primary" style="background:#8b5cf6; border-color:#8b5cf6;"
                         @click="openAddModal">
-                        <i class="fa-solid fa-plus"></i> 자산 추가 (Agregar Activo)
+                        <i class="fa-solid fa-plus"></i> 추가 (Agregar)
                     </button>
                     <button class="btn btn-primary" @click="openReport"><i class="fa-solid fa-chart-simple"></i>
                         리포트 (Reporte)</button>
@@ -893,30 +911,36 @@
                 <div class="modal-header">클라우드 불러오기 (Cargar desde Nube) <i class="fa-solid fa-times"
                         style="cursor:pointer;" @click="showCloudModal=false"></i></div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">불러올 프로젝트를 선택하세요. 기존 로컬 데이터가 덮어씌워집니다.<br>(Seleccione proyectos a restaurar.)</p>
+                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">불러올 프로젝트를 선택하세요. 기존 로컬 데이터가
+                        덮어씌워집니다.<br>(Seleccione proyectos a restaurar.)</p>
                     <div style="display:flex; gap:6px; margin-bottom:12px;">
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(true)">전체 선택</button>
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(false)">전체 해제</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(true)">전체
+                            선택</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(false)">전체
+                            해제</button>
                     </div>
                     <div v-for="p in cloudProjectsList" :key="p.name"
                         style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
                         <div style="display:flex; align-items:center; gap:10px; flex:1; padding:8px 10px; border-radius:6px; background:var(--bg-input); cursor:pointer;"
                             @click="toggleLoadProject(p.name)">
-                            <input type="checkbox" :checked="loadProjectsSelected.includes(p.name)" style="width:16px; height:16px; pointer-events:none;">
+                            <input type="checkbox" :checked="loadProjectsSelected.includes(p.name)"
+                                style="width:16px; height:16px; pointer-events:none;">
                             <i class="fa-solid fa-folder" style="color:var(--blue);"></i>
                             <span style="flex:1;">{{ p.name }}</span>
                             <span style="font-size:11px; color:#888;">({{ p.count }})</span>
                         </div>
-                        <button class="btn danger" style="padding:0 10px; flex-shrink:0;" @click.stop="deleteCloudProject(p.name)"
-                            title="삭제 (Eliminar)">
+                        <button class="btn danger" style="padding:0 10px; flex-shrink:0;"
+                            @click.stop="deleteCloudProject(p.name)" title="삭제 (Eliminar)">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{ loadProjectsSelected.length }}개 선택됨</span>
+                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{
+                        loadProjectsSelected.length }}개 선택됨</span>
                     <button class="btn" @click="showCloudModal=false">취소 (Cancelar)</button>
-                    <button class="btn primary" @click="loadSelectedProjects" :disabled="!loadProjectsSelected.length || isSyncing">
+                    <button class="btn primary" @click="loadSelectedProjects"
+                        :disabled="!loadProjectsSelected.length || isSyncing">
                         <i class="fa-solid fa-cloud-arrow-down"></i> 불러오기 (Cargar)
                     </button>
                 </div>
@@ -929,22 +953,28 @@
                 <div class="modal-header">클라우드 저장 선택 (Guardar en Nube) <i class="fa-solid fa-times"
                         style="cursor:pointer;" @click="showSaveModal=false"></i></div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">저장할 프로젝트를 선택하세요. (Seleccione proyectos a guardar.)</p>
+                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">저장할 프로젝트를 선택하세요. (Seleccione
+                        proyectos a guardar.)</p>
                     <div style="display:flex; gap:6px; margin-bottom:12px;">
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(true)">전체 선택</button>
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(false)">전체 해제</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(true)">전체
+                            선택</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(false)">전체
+                            해제</button>
                     </div>
                     <div v-for="p in projects" :key="p.id"
                         style="display:flex; align-items:center; gap:10px; margin-bottom:5px; padding:8px 10px; border-radius:6px; background:var(--bg-input); cursor:pointer;"
                         @click="toggleSaveProject(p.id)">
-                        <input type="checkbox" :checked="saveProjectsSelected.includes(p.id)" style="width:16px; height:16px; pointer-events:none;">
+                        <input type="checkbox" :checked="saveProjectsSelected.includes(p.id)"
+                            style="width:16px; height:16px; pointer-events:none;">
                         <span style="flex:1;">{{ p.name }}</span>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{ saveProjectsSelected.length }}개 선택됨</span>
+                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{
+                        saveProjectsSelected.length }}개 선택됨</span>
                     <button class="btn" @click="showSaveModal=false">취소 (Cancelar)</button>
-                    <button class="btn primary" @click="syncSelectedToCloud" :disabled="!saveProjectsSelected.length || isSyncing">
+                    <button class="btn primary" @click="syncSelectedToCloud"
+                        :disabled="!saveProjectsSelected.length || isSyncing">
                         <i class="fa-solid fa-cloud-arrow-up"></i> 저장 (Guardar)
                     </button>
                 </div>
@@ -1565,10 +1595,38 @@
                 };
 
                 const captureReportModal = async () => {
-                    const h = document.getElementById('report-header'); h.style.display = 'flex';
-                    const c = await html2canvas(document.getElementById('report-print-area'), { scale: 2 });
+                    const target = document.getElementById('report-print-area');
+                    const h = document.getElementById('report-header');
+
+                    // 헤더 표시 및 스크롤 위치 초기화
+                    h.style.display = 'flex';
+                    const origScrollTop = target.scrollTop;
+                    const origScrollLeft = target.scrollLeft;
+                    target.scrollTop = 0;
+                    target.scrollLeft = 0;
+
+                    // 전체 콘텐츠 크기(스크롤 포함)로 캡처
+                    const c = await html2canvas(target, {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        scrollX: 0,
+                        scrollY: 0,
+                        width: target.scrollWidth,
+                        height: target.scrollHeight,
+                        windowWidth: target.scrollWidth,
+                        windowHeight: target.scrollHeight
+                    });
+
+                    // 원래 상태로 복원
                     h.style.display = 'none';
-                    const a = document.createElement('a'); a.href = c.toDataURL(); a.download = 'Report.png'; a.click();
+                    target.scrollTop = origScrollTop;
+                    target.scrollLeft = origScrollLeft;
+
+                    const a = document.createElement('a');
+                    a.href = c.toDataURL('image/png');
+                    a.download = `MoldReport_${new Date().toISOString().slice(0, 10)}.png`;
+                    a.click();
                 };
 
                 const editPartFromReport = (id) => {
@@ -1712,7 +1770,7 @@
                                 { size: 250, quality: 0.3 },
                                 { size: 180, quality: 0.3 },
                                 { size: 120, quality: 0.2 },
-                                { size: 80,  quality: 0.2 },
+                                { size: 80, quality: 0.2 },
                             ];
                             for (const { size, quality } of steps) {
                                 const c = document.createElement('canvas');
