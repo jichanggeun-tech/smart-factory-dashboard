@@ -556,10 +556,10 @@
         }
 
         tfoot tr {
-            background: #ecf0f1;
-            color: #333;
+            background: #374151;
+            color: white;
             font-weight: bold;
-            border-top: 2px solid #333;
+            border-top: 2px solid #111827;
         }
 
         /* 파레토 참조표 */
@@ -723,8 +723,11 @@
                 (Click para agregar datos)
             </div>
             <ul id="cloud-list-ul" class="cloud-list"></ul>
-            <div style="text-align:right; margin-top:10px;">
-                <button class="btn btn-apply" style="width:100%; justify-content:center;"
+            <div style="text-align:right; margin-top:10px; display:flex; gap:10px;">
+                <button id="btn-load-all-cloud" class="btn btn-cloud"
+                    style="flex:1; justify-content:center; background:#2980b9;" onclick="loadAllCloudItems()">전체 불러오기
+                    (Cargar todo)</button>
+                <button class="btn btn-apply" style="width:120px; justify-content:center;"
                     onclick="document.getElementById('cloud-modal').style.display='none'">닫기 (Cerrar)</button>
             </div>
         </div>
@@ -826,80 +829,45 @@
                 </div>
             </div>
 
-            <div class="section-box">
-                <div class="sec-title">2. 금형별/모델별 Loss 발생 추이 (Mold/Model Trend)</div>
+            <div class="section-box" id="section-2-area">
+                <div class="sec-title">2. Mold Loss Trend</div>
+                <div id="mold-trend-container">
+                    <!-- 금형별로 표와 그래프가 여기에 동적으로 생성됨 -->
+                </div>
+            </div>
 
-                <!-- [추가] 추세 그래프 영역 -->
+
+            <div class="section-box">
+                <div class="sec-title">3. 주요 Loss</div>
                 <div
-                    style="margin-bottom:20px; height:350px; border:1px solid #e0e0e0; padding:10px; border-radius:6px;">
-                    <canvas id="chart-trend"></canvas>
+                    style="margin-bottom:15px; background:#f3f4f6; padding:10px; border-radius:6px; display:flex; align-items:center; gap:15px; font-size:12px;">
+                    <div style="font-weight:bold; color:#374151;">누적 기간 선택 (Cumulative Range):</div>
+                    <div>
+                        시작(From): <select id="acc-start-week" class="filter-input" style="width:100px;"></select>
+                    </div>
+                    <div>
+                        종료(To): <select id="acc-end-week" class="filter-input" style="width:100px;"></select>
+                    </div>
+                    <button class="btn btn-apply" onclick="renderPareto(processedData)"
+                        style="padding:4px 12px; font-size:11px;">합산 적용</button>
                 </div>
 
-                <div style="overflow-x:auto;">
-                    <table id="pivot-table">
+                <div style="border:1px solid #e0e0e0; border-radius:6px; padding:10px; background:#f9f9f9;">
+                    <h4 style="margin:0 0 10px 0; font-size:12px; color:#333; text-align:center;">📋 상세 항목 참조표 (Major
+                        Loss Breakdown)</h4>
+                    <table class="pareto-ref-table">
                         <thead>
-                            <tr id="pivot-header"></tr>
+                            <tr>
+                                <th style="width:40px;">No</th>
+                                <th style="width:120px;">금형 (Mold)</th>
+                                <th style="width:120px;">적용 모델 (Model)</th>
+                                <th>현상 / 원인 (Reason)</th>
+                                <th style="width:80px;">누적 Loss</th>
+                                <th style="width:100px;">상태</th>
+                            </tr>
                         </thead>
-                        <tbody id="pivot-body"></tbody>
-                        <tfoot id="pivot-footer"></tfoot>
+                        <tbody id="pareto-ref-body"></tbody>
                     </table>
-                </div>
-            </div>
-
-            <div class="section-box">
-                <div class="sec-title">3. 수리 및 불량 상세 현황 (Detail Breakdown)</div>
-                <table>
-                    <colgroup>
-                        <col width="5%">
-                        <col width="15%">
-                        <col width="12%">
-                        <col width="20%">
-                        <col width="25%">
-                        <col width="5%">
-                        <col width="8%">
-                        <col width="10%">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>금형명 (Mold)</th>
-                            <th>적용모델</th>
-                            <th>현상(원인)</th>
-                            <th>조치 내용 (Action)</th>
-                            <th>빈도</th>
-                            <th>시간</th>
-                            <th>상태</th>
-                        </tr>
-                    </thead>
-                    <tbody id="reason-table-body">
-                        <tr>
-                            <td colspan="8" style="padding:20px;">데이터 없음</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="section-box">
-                <div class="sec-title">4. 주요 개선 필요 항목 (Pareto Chart - Worst Loss)</div>
-                <div style="display:flex; gap:20px; align-items:flex-start;">
-                    <div style="flex:2; height:320px; border:1px solid #e0e0e0; padding:10px; border-radius:6px;">
-                        <canvas id="chart-pareto"></canvas>
-                    </div>
-                    <div
-                        style="flex:1; border:1px solid #e0e0e0; border-radius:6px; padding:10px; background:#f9f9f9; height:320px; overflow-y:auto;">
-                        <h4 style="margin:0 0 10px 0; font-size:12px; color:#333; text-align:center;">📋 상세 항목 참조표
-                            (Reference)</h4>
-                        <table class="pareto-ref-table">
-                            <thead>
-                                <tr>
-                                    <th>No</th>
-                                    <th>항목 (금형-현상)</th>
-                                    <th>Loss</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pareto-ref-body"></tbody>
-                        </table>
-                    </div>
                 </div>
             </div>
 
@@ -951,6 +919,7 @@
                     result.list.forEach(item => {
                         const li = document.createElement('li');
                         li.className = 'cloud-item';
+                        li.dataset.weekId = item.weekId; // data-attribute 추가
                         if (loadedWeekIds.has(item.weekId)) li.classList.add('loaded');
 
                         li.innerHTML = `
@@ -973,12 +942,24 @@
         }
 
         async function loadCloudItem(weekId, liElement) {
+            if (!liElement) {
+                // liElement가 없을 경우 (loadAllCloudItems에서 호출 시) 목록에서 해당 weekId를 가진 요소를 찾음
+                const items = document.querySelectorAll('.cloud-item');
+                for (let item of items) {
+                    if (item.dataset.weekId === weekId) {
+                        liElement = item;
+                        break;
+                    }
+                }
+            }
+
             if (loadedWeekIds.has(weekId)) {
-                if (!confirm("이미 로드된 주차입니다. 다시 추가하시겠습니까?")) return;
+                if (liElement && liElement.classList.contains('loaded')) return true; // 이미 로드됨
+                if (!confirm(`${weekId}는 이미 로드된 주차입니다. 다시 추가하시겠습니까?`)) return false;
             }
 
             try {
-                liElement.style.opacity = "0.5";
+                if (liElement) liElement.style.opacity = "0.5";
                 const fetchUrl = `${APPS_SCRIPT_URL}?cmd=load&weekId=${weekId}&t=${new Date().getTime()}`;
                 const response = await fetch(fetchUrl);
                 const responseText = await response.text();
@@ -987,11 +968,11 @@
                 try { rawObj = JSON.parse(responseText); } catch (pe) {
                     alert('서버 응답 파싱 실패');
                     console.error('Raw:', responseText);
-                    liElement.style.opacity = "1";
-                    return;
+                    if (liElement) liElement.style.opacity = "1";
+                    return false;
                 }
 
-                if (rawObj.error) { alert('서버 에러: ' + rawObj.error); liElement.style.opacity = "1"; return; }
+                if (rawObj.error) { alert('서버 에러: ' + rawObj.error); if (liElement) liElement.style.opacity = "1"; return false; }
 
                 const data = rawObj.data ? rawObj.data : rawObj;
 
@@ -1001,8 +982,10 @@
                 rawData.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
                 updateLoadedCount();
 
-                liElement.classList.add('loaded');
-                liElement.style.opacity = "1";
+                if (liElement) {
+                    liElement.classList.add('loaded');
+                    liElement.style.opacity = "1";
+                }
 
                 if (data.startDate) {
                     const info = getWeekInfo(data.startDate);
@@ -1010,12 +993,55 @@
                     document.getElementById('target-week').value = info.w;
                     document.getElementById('target-month').value = info.m;
                 }
+                return true;
 
             } catch (e) {
                 console.error('Load error:', e);
                 alert("데이터 로드 실패: " + e.toString());
-                liElement.style.opacity = "1";
+                if (liElement) liElement.style.opacity = "1";
+                return false;
             }
+        }
+
+        async function loadAllCloudItems() {
+            const items = document.querySelectorAll('.cloud-item');
+            if (items.length === 0) return;
+
+            const btn = document.getElementById('btn-load-all-cloud');
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = "불러오는 중...";
+
+            // 중복 로드 방지를 위해 목록에서 weekId들을 추출
+            const weekIds = [];
+            items.forEach(item => {
+                const wId = item.dataset.weekId;
+                if (wId && !loadedWeekIds.has(wId)) {
+                    weekIds.push(wId);
+                }
+            });
+
+            if (weekIds.length === 0) {
+                alert("이미 모든 데이터가 로드되어 있습니다.");
+                btn.disabled = false;
+                btn.innerText = originalText;
+                return;
+            }
+
+            if (!confirm(`아직 로드되지 않은 ${weekIds.length}개 데이터를 모두 불러오시겠습니까?`)) {
+                btn.disabled = false;
+                btn.innerText = originalText;
+                return;
+            }
+
+            for (let i = 0; i < weekIds.length; i++) {
+                btn.innerText = `불러오는 중 (${i + 1}/${weekIds.length})...`;
+                await loadCloudItem(weekIds[i]);
+            }
+
+            btn.disabled = false;
+            btn.innerText = originalText;
+            alert("전체 데이터 로드 완료");
         }
 
         function clearData() {
@@ -1161,15 +1187,210 @@
             document.getElementById('out-dept').innerText = currGroup[0].dept || '-';
 
             renderKPI(currGroup, prevGroup);
-            // [순서 변경 및 추가] PivotTable 먼저 렌더링하고 차트 그리기
-            renderPivotTable(processedData);
-            renderTrendChart(processedData);
+
+            // 기간 선택 Select 업데이트 (섹션 4용)
+            updateAccWeekSelects(processedData);
+
+            // [순서 변경 및 추가] PivotTable 및 TreantChart 렌더링 (금형별 분리)
+            renderMoldWiseAnalysis(processedData);
 
             const statusMap = getStatusMap(processedData);
-            renderReason(currGroup, statusMap);
-            renderPareto(currGroup, statusMap);
+            renderPareto(processedData); // 전체 데이터 기반 (또는 초기 선택 기반)
             renderImprov(currGroup);
             renderPM(currGroup);
+        }
+
+        function updateAccWeekSelects(data) {
+            const weeks = [...new Set(data.map(d => `${d.calYear}-W${d.calWeek.toString().padStart(2, '0')}`))].sort();
+            const startSel = document.getElementById('acc-start-week');
+            const endSel = document.getElementById('acc-end-week');
+
+            if (startSel.options.length === 0) {
+                weeks.forEach(w => {
+                    startSel.add(new Option(w, w));
+                    endSel.add(new Option(w, w));
+                });
+                // 기본값: 시작은 처음, 종료는 마지막
+                if (weeks.length > 0) {
+                    startSel.value = weeks[0];
+                    endSel.value = weeks[weeks.length - 1];
+                }
+            }
+        }
+
+        function renderMoldWiseAnalysis(data) {
+            const container = document.getElementById('mold-trend-container');
+            container.innerHTML = "";
+
+            // 1. 금형 목록 추출
+            const molds = [...new Set(data.flatMap(d => d.items.map(it => it.machine || "Unknown")))].sort();
+
+            // 2. 주차 목록 (X축용)
+            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+            const weekHeaders = weeks.map(w => {
+                const [y, wk] = w.split('-');
+                return { label: `${wk}W`, key: w };
+            });
+
+            // 3. 최근 3주 평균 계산용 주차 (마지막 3개)
+            const last3Weeks = weeks.slice(-3);
+
+            molds.forEach((mold, mIdx) => {
+                // 금형별 데이터 필터링
+                const moldData = data.map(d => ({
+                    ...d,
+                    items: d.items.filter(it => (it.machine || "Unknown") === mold)
+                }));
+
+                // 최근 3주 평균 계산
+                let last3Sum = 0;
+                let last3Cnt = 0;
+                last3Weeks.forEach(wk => {
+                    const weekData = moldData.find(d => `${d.calYear}-${d.calWeek}` === wk);
+                    if (weekData) {
+                        last3Sum += weekData.items.reduce((sum, it) => sum + it.min, 0);
+                        last3Cnt++;
+                    }
+                });
+                const avgLoss = last3Cnt > 0 ? last3Sum / 3 : 0; // 데이터가 없어도 분모는 3주 기준
+                const isStable = avgLoss <= 20 && last3Sum > 0; // 최소한 발생은 했어야 함 (0이면 무의미) 또는 발생했으나 낮은 경우
+
+                // 4. 주요 원인 Top 3 집계
+                const reasonMap = {};
+                moldData.forEach(d => {
+                    d.items.forEach(it => {
+                        const r = it.reason || "Etc";
+                        reasonMap[r] = (reasonMap[r] || 0) + it.min;
+                    });
+                });
+                const top3 = Object.entries(reasonMap).sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+                // 컨테이너 생성
+                const moldDiv = document.createElement('div');
+                moldDiv.style.marginBottom = "40px";
+                moldDiv.innerHTML = `
+                    <h3 style="font-size:15px; border-bottom:2px solid #374151; padding-bottom:5px; margin-bottom:15px; display:flex; align-items:center; gap:10px;">
+                        ${mold} 
+                        ${isStable ? '<span class="badge bg-good">✅ 안정</span> <span style="font-size:10px; color:#27ae60; font-weight:normal;">(최근 3주 평균: ' + avgLoss.toFixed(1) + '분)</span>' : ''}
+                    </h3>
+                    <div style="display:flex; gap:20px; align-items:flex-start;">
+                        <div style="flex:1; height:250px; border:1px solid #e0e0e0; padding:10px; border-radius:6px;">
+                            <canvas id="chart-trend-${mIdx}"></canvas>
+                        </div>
+                        <div style="flex:1.2; overflow-x:auto;">
+                            <table class="pivot-table-sub">
+                                <thead><tr id="head-${mIdx}"></tr></thead>
+                                <tbody id="body-${mIdx}"></tbody>
+                                <tfoot id="foot-${mIdx}"></tfoot>
+                            </table>
+                            
+                            <div style="margin-top:12px;">
+                                <div style="font-size:11px; font-weight:bold; color:#374151; margin-bottom:5px;">⚠️ 주요 원인 (Major Causes) Top 3</div>
+                                <table style="width:100%; font-size:10px; border:1px solid #eee;">
+                                    <thead style="background:#f8f9fa;">
+                                        <tr>
+                                            <th style="width:30px; padding:4px;">No</th>
+                                            <th style="text-align:left; padding:4px;">원인 내용 (Reason)</th>
+                                            <th style="width:80px; padding:4px;">Loss 시간</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${top3.length > 0
+                        ? top3.map((tr, i) => `
+                                                <tr>
+                                                    <td style="padding:4px; font-weight:bold; color:#e67e22;">${i + 1}</td>
+                                                    <td style="text-align:left; padding:4px;">${tr[0]}</td>
+                                                    <td style="padding:4px; font-weight:bold;">${tr[1].toLocaleString()} min</td>
+                                                </tr>`).join('')
+                        : '<tr><td colspan="3" style="padding:10px; color:#999;">데이터 없음</td></tr>'}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(moldDiv);
+
+                // 테이블 렌더링
+                renderSubPivot(mold, moldData, weekHeaders, mIdx);
+                // 차트 렌더링
+                renderSubTrend(mold, moldData, weekHeaders, mIdx);
+            });
+        }
+
+        function renderSubPivot(moldName, data, weekHeaders, idx) {
+            const head = document.getElementById(`head-${idx}`);
+            const body = document.getElementById(`body-${idx}`);
+            const foot = document.getElementById(`foot-${idx}`);
+
+            let hHtml = `<th style="width:120px;">적용모델</th>`;
+            weekHeaders.forEach(h => hHtml += `<th>${h.label}</th>`);
+            hHtml += `<th style="background:#333; color:white;">Total</th>`;
+            head.innerHTML = hHtml;
+
+            const map = {}, totals = new Array(weekHeaders.length).fill(0);
+            data.forEach(d => {
+                const weekKey = `${d.calYear}-${d.calWeek}`;
+                const wIdx = weekHeaders.findIndex(wh => wh.key === weekKey);
+                if (wIdx !== -1) {
+                    d.items.forEach(it => {
+                        const p = it.sub || "Unknown";
+                        if (!map[p]) map[p] = new Array(weekHeaders.length).fill(0);
+                        map[p][wIdx] += it.min;
+                        totals[wIdx] += it.min;
+                    });
+                }
+            });
+
+            body.innerHTML = Object.keys(map).sort().map(p => {
+                const vals = map[p];
+                const sum = vals.reduce((a, b) => a + b, 0);
+                return `<tr><td class="pivot-part">${p}</td>` +
+                    vals.map(v => `<td class="${v > 0 ? 'cell-value' : 'cell-zero'}">${v > 0 ? v.toLocaleString() : '-'}</td>`).join('') +
+                    `<td style="font-weight:bold; background:#fff0f6; color:#d63384;">${sum.toLocaleString()}</td></tr>`;
+            }).join('');
+
+            const grandTotal = totals.reduce((a, b) => a + b, 0);
+            foot.innerHTML = `<tr><td>Total</td>` +
+                totals.map(v => `<td>${v.toLocaleString()}</td>`).join('') +
+                `<td>${grandTotal.toLocaleString()}</td></tr>`;
+        }
+
+        function renderSubTrend(moldName, data, weekHeaders, idx) {
+            const labels = weekHeaders.map(h => h.label);
+            const keys = weekHeaders.map(h => h.key);
+            const values = new Array(keys.length).fill(0);
+
+            data.forEach(d => {
+                const wk = `${d.calYear}-${d.calWeek}`;
+                const wIdx = keys.indexOf(wk);
+                if (wIdx !== -1) {
+                    values[wIdx] = d.items.reduce((sum, it) => sum + it.min, 0);
+                }
+            });
+
+            const ctx = document.getElementById(`chart-trend-${idx}`).getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: moldName,
+                        data: values,
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        fill: true,
+                        tension: 0.1,
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, title: { display: false } },
+                    scales: { y: { beginAtZero: true, title: { display: true, text: 'min', font: { size: 10 } } }, x: { ticks: { font: { size: 9 } } } }
+                }
+            });
         }
 
         function getStatusMap(allData) {
@@ -1231,64 +1452,6 @@
             document.getElementById('kpi-trend-text').innerHTML = diff > 0 ? `<span style="color:green; font-weight:bold;">▲ ${diff.toFixed(0)}</span>` : (diff < 0 ? `<span style="color:red; font-weight:bold;">▼ ${Math.abs(diff).toFixed(0)}</span>` : `-`);
         }
 
-        function renderPivotTable(data) {
-            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort();
-
-            weekHeaders = weeks.map(w => {
-                const [y, wk] = w.split('-');
-                return { label: `${wk}W`, key: w };
-            });
-
-            if (colVisibility.length !== weekHeaders.length) colVisibility = new Array(weekHeaders.length).fill(true);
-
-            const menu = document.getElementById('colMenu');
-            menu.innerHTML = "";
-            weekHeaders.forEach((h, i) => {
-                menu.innerHTML += `<div class="col-item"><input type="checkbox" id="chk-${i}" ${colVisibility[i] ? 'checked' : ''} onchange="toggleCol(${i})"> <label for="chk-${i}">${h.label}</label></div>`;
-            });
-
-            const head = document.getElementById('pivot-header');
-            const body = document.getElementById('pivot-body');
-            const foot = document.getElementById('pivot-footer');
-
-            let hHtml = `<th style="width:100px;">금형명 (Mold)</th><th style="width:120px;">적용모델</th>`;
-            weekHeaders.forEach((h, i) => hHtml += `<th class="col-wk-${i}" style="${colVisibility[i] ? '' : 'display:none'}">${h.label}</th>`);
-            hHtml += `<th style="background:#333;">Total</th>`;
-            head.innerHTML = hHtml;
-
-            const map = {}, totals = new Array(weekHeaders.length).fill(0);
-
-            data.forEach(d => {
-                const weekKey = `${d.calYear}-${d.calWeek}`;
-                const weekIdx = weekHeaders.findIndex(wh => wh.key === weekKey);
-
-                if (weekIdx !== -1) {
-                    d.items.forEach(it => {
-                        const k = `${it.machine}|${it.sub}`;
-                        if (!map[k]) map[k] = new Array(weekHeaders.length).fill(0);
-                        map[k][weekIdx] += it.min;
-                        totals[weekIdx] += it.min;
-                    });
-                }
-            });
-
-            body.innerHTML = "";
-            Object.keys(map).sort().forEach(k => {
-                const [m, p] = k.split('|');
-                const vals = map[k];
-                let r = `<tr><td class="pivot-machine">${m}</td><td class="pivot-part">${p}</td>`;
-                vals.forEach((v, i) => {
-                    r += `<td class="col-wk-${i} ${v > 0 ? 'cell-value' : 'cell-zero'}" style="${colVisibility[i] ? '' : 'display:none'}">${v > 0 ? v.toLocaleString() : '-'}</td>`;
-                });
-                r += `<td style="font-weight:bold; background:#fff0f6; color:#d63384;">${vals.reduce((a, b) => a + b, 0).toLocaleString()}</td></tr>`;
-                body.innerHTML += r;
-            });
-
-            let f = `<tr><td colspan="2">Total</td>`;
-            totals.forEach((v, i) => f += `<td class="col-wk-${i}" style="${colVisibility[i] ? '' : 'display:none'}">${v.toLocaleString()}</td>`);
-            f += `<td>${totals.reduce((a, b) => a + b, 0).toLocaleString()}</td></tr>`;
-            foot.innerHTML = f;
-        }
 
         function renderReason(data, statusMap) {
             const map = {};
@@ -1303,72 +1466,60 @@
             document.getElementById('reason-table-body').innerHTML = sorted.map((d, i) => `<tr><td>${i + 1}</td><td style="text-align:left">${d.m}</td><td style="text-align:left;color:#16a085;">${d.p}</td><td style="text-align:left">${d.r}</td><td style="text-align:left; color:#555; font-size:10px;">${d.cm}</td><td>${d.c}</td><td style="font-weight:bold">${d.t}</td><td>${d.isImproved ? '<span class="badge bg-good">개선 (Done)</span>' : '<span class="badge bg-neutral">-</span>'}</td></tr>`).join('');
         }
 
-        function renderPareto(curr, statusMap) {
+        function renderPareto(allData) {
+            const startStr = document.getElementById('acc-start-week').value;
+            const endStr = document.getElementById('acc-end-week').value;
+
+            if (!startStr || !endStr) return;
+
+            // 주차 비교를 위해 정렬된 주차 키 리스트 생성
+            const weeks = [...new Set(allData.map(d => `${d.calYear}-W${d.calWeek.toString().padStart(2, '0')}`))].sort();
+            const si = weeks.indexOf(startStr);
+            const ei = weeks.indexOf(endStr);
+            const targetWeeks = weeks.slice(Math.min(si, ei), Math.max(si, ei) + 1);
+
+            // 최근 3주 주차 식별 (안정화 뱃지용)
+            const sortedWeeksRaw = [...new Set(allData.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+            const last3WeeksRaw = sortedWeeksRaw.slice(-3);
+
             const map = {};
-            curr.forEach(d => d.items.forEach(i => {
-                const k = `${i.machine} - ${i.reason || 'Etc'}`;
-                map[k] = (map[k] || 0) + i.min;
-            }));
+            const occurMap = {}; // 키별 마지막 발생 주차 저장을 위함
 
-            let sorted = Object.keys(map).map(k => ({ k, v: map[k] })).sort((a, b) => b.v - a.v);
-            if (sorted.length === 0) { createChart('chart-pareto', { type: 'bar', data: { labels: [], datasets: [] } }); return; }
+            allData.forEach(d => {
+                const wId = `${d.calYear}-W${d.calWeek.toString().padStart(2, '0')}`;
+                const wIdRaw = `${d.calYear}-${d.calWeek}`;
+                const isInRange = targetWeeks.includes(wId);
 
-            sorted = sorted.slice(0, 12);
-            const total = sorted.reduce((a, b) => a + b.v, 0);
-            let acc = 0;
-
-            const chartLabels = sorted.map((_, i) => `#${i + 1}`);
-            const barData = sorted.map(d => d.v);
-            const lineData = sorted.map(d => { acc += d.v; return (acc / total * 100).toFixed(1); });
-
-            const refBody = document.getElementById('pareto-ref-body');
-            refBody.innerHTML = "";
-            sorted.forEach((d, i) => {
-                refBody.innerHTML += `<tr><td style="text-align:center; font-weight:bold; color:#16a085;">#${i + 1}</td><td>${d.k}</td><td style="text-align:center; font-weight:bold;">${d.v}</td></tr>`;
+                d.items.forEach(i => {
+                    const key = `${i.machine}|${i.sub}|${i.reason}`;
+                    if (isInRange) {
+                        if (!map[key]) map[key] = { m: i.machine, p: i.sub, r: i.reason, loss: 0 };
+                        map[key].loss += i.min;
+                    }
+                    // 모든 데이터에서 마지막 발생 주차 추적
+                    if (!occurMap[key] || wIdRaw > occurMap[key]) occurMap[key] = wIdRaw;
+                });
             });
 
-            const maxVal = sorted.length > 0 ? sorted[0].v : 0;
-            const yAxisMax = Math.ceil(maxVal * 1.15);
+            const sorted = Object.values(map).sort((a, b) => b.loss - a.loss).slice(0, 20);
+            const refBody = document.getElementById('pareto-ref-body');
+            refBody.innerHTML = "";
 
-            const ctx = document.getElementById('chart-pareto').getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(22, 160, 133, 0.9)');
-            gradient.addColorStop(1, 'rgba(22, 160, 133, 0.4)');
+            sorted.forEach((d, i) => {
+                const key = `${d.m}|${d.p}|${d.r}`;
+                const lastWeek = occurMap[key];
+                const isStable = !last3WeeksRaw.includes(lastWeek); // 최근 3주간 발생 기록이 없으면 안정화
 
-            createChart('chart-pareto', {
-                type: 'bar',
-                data: {
-                    labels: chartLabels,
-                    datasets: [
-                        {
-                            type: 'line', label: 'Cumulative %', data: lineData,
-                            borderColor: '#2c3e50', borderWidth: 2, pointRadius: 4, pointBackgroundColor: '#fff',
-                            yAxisID: 'y1', datalabels: { display: false }, tension: 0.3
-                        },
-                        {
-                            label: 'Loss (min)', data: barData,
-                            backgroundColor: gradient, borderRadius: 6, barPercentage: 0.6,
-                            yAxisID: 'y', datalabels: { anchor: 'end', align: 'top', color: '#333', font: { weight: 'bold' } }
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: true, position: 'left', labels: { boxWidth: 12, font: { size: 11 } } },
-                        title: { display: false }
-                    },
-                    scales: {
-                        y: {
-                            position: 'left',
-                            max: yAxisMax,
-                            title: { display: true, text: 'Loss (min)' },
-                            grid: { borderDash: [2, 2] }
-                        },
-                        y1: { position: 'right', min: 0, max: 110, title: { display: true, text: 'Cum. %' }, grid: { display: false } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                refBody.innerHTML += `
+                    <tr>
+                        <td style="font-weight:bold; color:#16a085;">#${i + 1}</td>
+                        <td style="text-align:left;">${d.m}</td>
+                        <td style="text-align:left; color:#3498db;">${d.p}</td>
+                        <td style="text-align:left;">${d.r}</td>
+                        <td style="font-weight:bold;">${d.loss.toLocaleString()}</td>
+                        <td>${isStable ? '<span class="badge bg-good">✅ 안정화</span>' : '<span class="badge bg-neutral">-</span>'}</td>
+                    </tr>
+                `;
             });
         }
 
@@ -1410,150 +1561,6 @@
             if (typeof renderTrendChart === 'function') renderTrendChart(processedData);
         };
 
-        // [추가] 금형별 주간 Trend Chart (Top 10)
-        function renderTrendChart(data) {
-            if (!weekHeaders || weekHeaders.length === 0) return;
-
-            // 1. 표시할 주차 필터링
-            const visibleIndices = [];
-            weekHeaders.forEach((h, i) => {
-                if (colVisibility[i]) visibleIndices.push(i);
-            });
-
-            const labels = visibleIndices.map(i => weekHeaders[i].label);
-            const keys = visibleIndices.map(i => weekHeaders[i].key); // "YYYY-W"
-
-            // 2. 금형별 총 Loss 합계 계산 (Ranking용)
-            const moldStats = {};
-
-            data.forEach(d => {
-                d.items.forEach(i => {
-                    const m = i.machine || "Unknown";
-                    if (!moldStats[m]) moldStats[m] = 0;
-                    moldStats[m] += i.min;
-                });
-            });
-
-            // Top 10 선정
-            const topMolds = Object.keys(moldStats).sort((a, b) => moldStats[b] - moldStats[a]).slice(0, 10);
-
-            // 3. 데이터셋 구성
-            // 색상 및 포인트 스타일 팔레트
-            const colors = [
-                '#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#f1c40f',
-                '#e67e22', '#1abc9c', '#34495e', '#7f8c8d', '#d35400'
-            ];
-            const pointStyles = ['circle', 'rect', 'triangle', 'rectRot', 'star', 'crossStr', 'dash', 'line', 'circle', 'rect'];
-
-            const datasets = topMolds.map((mold, idx) => {
-                const rawValues = new Array(keys.length).fill(0);
-
-                data.forEach(d => {
-                    const wKey = `${d.calYear}-${d.calWeek}`;
-                    const wIdx = keys.indexOf(wKey);
-                    if (wIdx === -1) return;
-
-                    d.items.forEach(i => {
-                        if ((i.machine || "Unknown") === mold) {
-                            rawValues[wIdx] += i.min;
-                        }
-                    });
-                });
-
-                // 시각적으로는 500까지만 표현 (Clamping)
-                const clampedData = rawValues.map(v => v > 500 ? 500 : v);
-
-                const baseColor = colors[idx % colors.length];
-                const basePointStyle = pointStyles[idx % pointStyles.length];
-
-                return {
-                    label: mold,
-                    data: clampedData,
-                    rawValues: rawValues, // 실제 값 저장 (라벨용)
-                    borderColor: baseColor,
-                    backgroundColor: (ctx) => {
-                        const val = ctx.dataset.rawValues[ctx.dataIndex];
-                        return (val > 120) ? '#ff0000' : baseColor;
-                    },
-                    pointStyle: (ctx) => {
-                        const val = ctx.dataset.rawValues[ctx.dataIndex];
-                        return (val > 120) ? 'star' : basePointStyle;
-                    },
-                    pointRadius: (ctx) => {
-                        const val = ctx.dataset.rawValues[ctx.dataIndex];
-                        return (val > 120) ? 8 : 4;
-                    },
-                    pointHoverRadius: (ctx) => {
-                        const val = ctx.dataset.rawValues[ctx.dataIndex];
-                        return (val > 120) ? 10 : 6;
-                    },
-                    tension: 0, // 직선
-                    fill: false,
-                    borderWidth: 2
-                };
-            });
-
-            // [추가] 120분 기준선 (Limit Line)
-            datasets.push({
-                label: 'Limit (120m)',
-                data: new Array(keys.length).fill(120),
-                borderColor: 'rgba(255, 0, 0, 0.5)',
-                borderWidth: 2,
-                borderDash: [5, 5],
-                pointRadius: 0,
-                fill: false,
-                order: 999
-            });
-
-            // 4. 차트 생성
-            createChart('chart-trend', {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: datasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false,
-                    },
-                    plugins: {
-                        title: { display: true, text: `Weekly Loss Trend - Top 10 Molds` },
-                        tooltip: {
-                            position: 'nearest',
-                            callbacks: {
-                                label: function (context) {
-                                    const raw = context.dataset.rawValues ? context.dataset.rawValues[context.dataIndex] : context.raw;
-                                    return `${context.dataset.label}: ${raw} min`;
-                                }
-                            }
-                        },
-                        legend: { position: 'right', labels: { boxWidth: 12, font: { size: 10 } } },
-                        datalabels: {
-                            display: (ctx) => {
-                                const val = ctx.dataset.rawValues ? ctx.dataset.rawValues[ctx.dataIndex] : ctx.raw;
-                                return val > 120; // 120분 넘는 값만 라벨 표시
-                            },
-                            align: 'top',
-                            color: 'red',
-                            font: { weight: 'bold' },
-                            formatter: (value, ctx) => {
-                                return ctx.dataset.rawValues[ctx.dataIndex]; // 실제 값 표시
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 500, // Y축 최대값 500 고정
-                            title: { display: true, text: 'Loss (min)' }
-                        }
-                    }
-                }
-            });
-        }
 
         function captureReport() {
             html2canvas(document.getElementById('report-target'), { scale: 2 }).then(c => {
