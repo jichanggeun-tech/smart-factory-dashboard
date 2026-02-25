@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dexie/3.2.4/dexie.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
@@ -91,7 +93,9 @@
             font-size: 14px;
             color: var(--text-muted);
             display: flex;
+            align-items: center;
             justify-content: space-between;
+            gap: 4px;
         }
 
         .project-item:hover,
@@ -448,8 +452,7 @@
                 width: 100% !important;
                 min-width: 0 !important;
                 font-size: 8px !important;
-                /* 고정 레이아웃으로 열 너비 균등 분배 */
-                table-layout: fixed !important;
+                table-layout: auto !important;
                 border-collapse: collapse !important;
                 page-break-inside: auto !important;
             }
@@ -471,7 +474,7 @@
                 word-wrap: break-word !important;
                 white-space: normal !important;
                 font-size: 8px !important;
-                overflow: hidden !important;
+                overflow: visible !important;
             }
 
             th {
@@ -514,6 +517,23 @@
         .btn-icon:hover {
             color: white;
         }
+
+        .project-item.drag-over {
+            border: 1px dashed var(--accent);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .project-item .drag-handle {
+            cursor: grab;
+            color: #555;
+            font-size: 10px;
+            margin-right: 5px;
+            flex-shrink: 0;
+        }
+
+        .project-item .drag-handle:active {
+            cursor: grabbing;
+        }
     </style>
 </head>
 
@@ -534,16 +554,60 @@
                 {{ isSyncing ? '동기화 중 (Sincronizando...)' : '대기 (Listo)' }}
             </div>
 
-            <div
-                style="font-size:12px; font-weight:bold; margin-top:20px; margin-bottom:10px; color:#666; display:flex; justify-content:space-between;">
+            <!-- Excel Import Progress -->
+            <div v-if="importProgress.active" style="margin-top:8px; padding:8px; background:rgba(245,158,11,0.1); border:1px solid var(--warning); border-radius:6px; font-size:12px;">
+                <div style="display:flex; align-items:center; gap:6px; color:var(--warning); margin-bottom:6px;">
+                    <i class="fa-solid fa-spinner fa-spin"></i>
+                    <span>{{ importProgress.message }}</span>
+                </div>
+                <div v-if="importProgress.total > 0">
+                    <div style="background:#374151; border-radius:4px; height:6px; overflow:hidden; margin-bottom:4px;">
+                        <div style="background:var(--warning); height:100%; transition:width 0.2s;"
+                            :style="{width: (importProgress.current/importProgress.total*100)+'%'}"></div>
+                    </div>
+                    <div style="color:#aaa; text-align:center;">{{ importProgress.current }} / {{ importProgress.total }}</div>
+                </div>
+            </div>
+
+            <!-- Filter & Column Controls -->
+            <div style="margin-top:15px;">
+                <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:#666;">필터 / Filtro</div>
+                <button class="btn" style="width:100%; justify-content:flex-start;" @click="toggleLowStock">
+                    <i class="fa-solid fa-filter" :style="{color: filterLowStock ? 'var(--danger)' : 'white'}"></i>
+                    {{ filterLowStock ? '부족재고 / Stock Bajo' : '전체부품 / Todo' }}
+                </button>
+            </div>
+
+            <div style="margin-top:12px;">
+                <div style="font-size:11px; font-weight:bold; margin-bottom:6px; color:#666; display:flex; justify-content:space-between; align-items:center;">
+                    컬럼 / Columnas
+                    <i class="fa-solid fa-chevron-down" style="font-size:9px; cursor:pointer;" @click="showColMenu = !showColMenu"></i>
+                </div>
+                <div v-show="showColMenu" style="background:var(--bg-card); border:1px solid var(--border); padding:8px; border-radius:6px;">
+                    <div v-for="c in columns" :key="c.key" style="margin-bottom:5px;">
+                        <label style="display:flex; align-items:center; cursor:pointer; font-size:13px;">
+                            <input type="checkbox" v-model="c.visible" style="margin-right:8px;"> {{ c.label }}
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div style="font-size:12px; font-weight:bold; margin-top:16px; margin-bottom:10px; color:#666; display:flex; justify-content:space-between;">
                 PROJECTS (프로젝트)
                 <i class="fa-solid fa-plus" style="cursor:pointer; color:var(--accent);" @click="createProject"></i>
             </div>
 
             <div class="project-list">
-                <div class="project-item" v-for="p in projects" :key="p.id"
-                    :class="{active: currentProject && currentProject.id === p.id}" @click="selectProject(p)">
-                    <span>{{ p.name }}</span>
+                <div class="project-item" v-for="p in sortedProjects" :key="p.id"
+                    :class="{active: currentProject && currentProject.id === p.id, 'drag-over': dragOverProjectId === p.id}"
+                    @click="selectProject(p)"
+                    draggable="true"
+                    @dragstart="onProjectDragStart(p)"
+                    @dragover.prevent="onProjectDragOver(p)"
+                    @drop="onProjectDrop(p)"
+                    @dragend="draggedProjectId = null; dragOverProjectId = null">
+                    <i class="fa-solid fa-grip-lines drag-handle"></i>
+                    <span style="flex:1;">{{ p.name }}</span>
                     <i class="fa-solid fa-trash" style="font-size:10px; color:#666;" @click.stop="deleteProject(p)"></i>
                 </div>
             </div>
@@ -574,47 +638,23 @@
                 </div>
 
                 <div class="actions">
-                    <button class="btn" @click="toggleLowStock">
-                        <i class="fa-solid fa-filter" :style="{color: filterLowStock ? 'var(--danger)' : 'white'}"></i>
-                        {{ filterLowStock ? '부족 재고 (Stock Bajo)' : '전체 부품 (Todo)' }}
-                    </button>
-                    <!-- Col Option -->
-                    <div style="position:relative;">
-                        <button class="btn" @click="showColMenu = !showColMenu">
-                            <i class="fa-solid fa-columns"></i> 컬럼 (Cols)
-                        </button>
-                        <div v-if="showColMenu"
-                            style="position:absolute; top:100%; right:0; background:var(--bg-card); border:1px solid var(--border); padding:10px; border-radius:6px; z-index:100; width:150px; box-shadow:0 4px 6px rgba(0,0,0,0.3);">
-                            <div v-for="c in columns" :key="c.key" style="margin-bottom:5px;">
-                                <label style="display:flex; align-items:center; cursor:pointer;">
-                                    <input type="checkbox" v-model="c.visible" style="margin-right:8px;"> {{ c.label }}
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
+                    <button class="btn" @click="syncFromCloud"><i
+                            class="fa-solid fa-cloud-arrow-down"></i> 불러오기 / Cargar</button>
+                    <button class="btn" @click="openSaveModal"><i
+                            class="fa-solid fa-cloud-arrow-up"></i> 저장 / Guardar</button>
                     <div style="width:1px; height:20px; background:var(--border); margin:0 5px;"></div>
-                    <button class="btn" @click="syncFromCloud" title="Download Projects"><i
-                            class="fa-solid fa-cloud-arrow-down"></i> 불러오기 (Cargar)</button>
-                    <button class="btn" @click="openSaveModal" title="Upload Projects"><i
-                            class="fa-solid fa-cloud-arrow-up"></i> 저장 (Guardar)</button>
-                    <div style="width:1px; height:20px; background:var(--border); margin:0 5px;"></div>
-                    <button class="btn btn-secondary" @click="downloadJsonBackup"><i class="fa-solid fa-download"></i>
-                        백업 (Respaldo)</button>
-                    <div style="position:relative;">
-                        <button class="btn btn-secondary" onclick="document.getElementById('restoreFile').click()"><i
-                                class="fa-solid fa-upload"></i> 복원 (Restaurar)</button>
-                        <input type="file" id="restoreFile" hidden @change="uploadJsonRestore" accept=".json">
-                    </div>
+                    <label class="btn" style="cursor:pointer; margin:0;">
+                        <i class="fa-solid fa-file-excel" style="color:#1d6f42;"></i> 엑셀 가져오기 / Importar
+                        <input type="file" style="display:none;" @change="importExcel" accept=".xlsx,.xls">
+                    </label>
                     <button class="btn btn-danger" @click="clearAllData"><i class="fa-solid fa-trash-can"></i>
-                        초기화 (Reiniciar)</button>
+                        초기화 / Reiniciar</button>
                     <button class="btn btn-primary" style="background:#8b5cf6; border-color:#8b5cf6;"
                         @click="openAddModal">
-                        <i class="fa-solid fa-plus"></i> 추가 (Agregar)
+                        <i class="fa-solid fa-plus"></i> 추가 / Agregar
                     </button>
                     <button class="btn btn-primary" @click="openReport"><i class="fa-solid fa-chart-simple"></i>
-                        리포트 (Reporte)</button>
-
+                        리포트 / Reporte</button>
                 </div>
             </header>
 
@@ -806,12 +846,9 @@
 
                         <!-- Form Fields -->
                         <div style="flex:1; display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                            <div><small>금형 코드 (Código Molde)</small><input v-model="editingPart.moldCode" class="input"
+                            <div><small>코드 (Código)</small><input v-model="editingPart.moldCode" class="input"
                                     list="dl-mold"></div>
-                            <div><small>예비품 코드 (Código Repuesto)</small><input v-model="editingPart.spareCode"
-                                    class="input"></div>
-
-                            <div><small>공정 (Proceso)</small>
+                            <div><small>공정 (OP)</small>
                                 <select v-model="editingPart.op" class="input">
                                     <option value="OP10">OP10</option>
                                     <option value="OP20">OP20</option>
@@ -820,6 +857,12 @@
                                     <option value="OP50">OP50</option>
                                 </select>
                             </div>
+
+                            <div><small>명칭 (Nombre)</small><input v-model="editingPart.name" class="input"></div>
+                            <div><small>규격 (Especificación)</small><input v-model="editingPart.spec" class="input"></div>
+
+                            <div><small>예비품 코드 (Cód. Repuesto)</small><input v-model="editingPart.spareCode"
+                                    class="input"></div>
                             <div><small>모델 (Modelo)</small><input v-model="editingPart.model" class="input"
                                     list="dl-model">
                             </div>
@@ -1018,8 +1061,14 @@
 
                         </div>
                         <div class="actions">
-                            <button class="btn btn-secondary" @click="captureReportModal">📷 캡처 (Captura)</button>
-                            <button class="btn btn-primary" @click="printReportModal">🖨 인쇄 (Imprimir)</button>
+                            <button class="btn" @click="downloadJsonBackup" title="백업 (Respaldo)"><i class="fa-solid fa-download"></i> 백업</button>
+                            <label class="btn" style="cursor:pointer; margin:0;" title="복원 (Restaurar)">
+                                <i class="fa-solid fa-upload"></i> 복원
+                                <input type="file" style="display:none;" @change="uploadJsonRestore" accept=".json">
+                            </label>
+                            <div style="width:1px; height:20px; background:var(--border); margin:0 3px;"></div>
+                            <button class="btn btn-secondary" @click="captureReportModal">📷 캡처</button>
+                            <button class="btn btn-primary" @click="printReportModal">🖨 인쇄</button>
                             <i class="fa-solid fa-times" style="cursor:pointer; margin-left:10px;"
                                 @click="showReportModal=false"></i>
                         </div>
@@ -1227,23 +1276,20 @@
                 const sortOrder = ref(1); // 1 asc, -1 desc
 
                 const columns = ref([
-                    { key: 'img', label: 'Img', width: 50, visible: true, sortable: false },
-                    { key: 'moldCode', label: 'Mold Code', width: 100, visible: true, sortable: true },
-                    { key: 'spareCode', label: 'Spare Code', width: 100, visible: true, sortable: true },
+                    { key: 'moldCode', label: '코드', width: 100, visible: true, sortable: true },
                     { key: 'op', label: 'OP', width: 60, visible: true, sortable: true },
-                    { key: 'model', label: 'Model', width: 100, visible: true, sortable: true },
-                    // Removed: moldName, size, price
-                    { key: 'type', label: 'Category', width: 80, visible: true, sortable: true },
-                    { key: 'mat', label: 'Mat', width: 80, visible: true, sortable: true },
-                    { key: 'loc', label: 'Loc', width: 80, visible: true, sortable: true },
-                    { key: 'stock', label: 'Stock', width: 120, visible: true, sortable: true },
-                    { key: 'status', label: 'Status', width: 80, visible: true, sortable: false },
-
-                    { key: 'action', label: 'Action', width: 80, visible: true, sortable: false },
+                    { key: 'name', label: '명칭', width: 140, visible: true, sortable: true },
+                    { key: 'spec', label: '규격', width: 110, visible: true, sortable: true },
+                    { key: 'img', label: '사진', width: 60, visible: true, sortable: false },
+                    { key: 'stock', label: '재고', width: 70, visible: true, sortable: true },
+                    { key: 'loc', label: '저장위치', width: 100, visible: true, sortable: true },
+                    { key: 'status', label: '상태', width: 80, visible: true, sortable: false },
+                    { key: 'action', label: '수정', width: 80, visible: true, sortable: false },
                 ]);
 
                 const defaultPart = {
                     projectId: null, moldCode: '', spareCode: '', op: 'OP10', model: '',
+                    name: '', spec: '',
                     moldType: 'dedicated', type: '', mat: '',
                     loc: '', stock: 0, min: 2, max: 10, vendor: '', img: '',
                     carryover: 0, // Last Year Stock
@@ -1598,12 +1644,21 @@
                     const target = document.getElementById('report-print-area');
                     const h = document.getElementById('report-header');
 
-                    // 헤더 표시 및 스크롤 위치 초기화
+                    // 헤더 표시 및 overflow 임시 해제 (전체 내용 캡처)
                     h.style.display = 'flex';
+                    const origOverflow = target.style.overflow;
+                    const origHeight = target.style.height;
+                    const origMaxHeight = target.style.maxHeight;
+                    target.style.overflow = 'visible';
+                    target.style.height = 'auto';
+                    target.style.maxHeight = 'none';
+
                     const origScrollTop = target.scrollTop;
                     const origScrollLeft = target.scrollLeft;
                     target.scrollTop = 0;
                     target.scrollLeft = 0;
+
+                    await nextTick();
 
                     // 전체 콘텐츠 크기(스크롤 포함)로 캡처
                     const c = await html2canvas(target, {
@@ -1620,6 +1675,9 @@
 
                     // 원래 상태로 복원
                     h.style.display = 'none';
+                    target.style.overflow = origOverflow;
+                    target.style.height = origHeight;
+                    target.style.maxHeight = origMaxHeight;
                     target.scrollTop = origScrollTop;
                     target.scrollLeft = origScrollLeft;
 
@@ -2031,6 +2089,284 @@
                 const toggleLowStock = () => { filterLowStock.value = !filterLowStock.value; };
                 const printLabel = () => { document.body.classList.add('print-label'); window.print(); document.body.classList.remove('print-label'); };
 
+                // --- Deduplication ---
+                const deduplicateParts = (parts) => {
+                    const seen = new Map();
+                    parts.forEach(p => {
+                        const key = `${p.projectId}-${p.moldCode}-${p.spareCode}`;
+                        seen.set(key, p);
+                    });
+                    return Array.from(seen.values());
+                };
+
+                // --- Excel Import ---
+                const importProgress = ref({ active: false, current: 0, total: 0, message: '' });
+
+                // 이미지 canvas 압축 헬퍼 (로컬 저장용 ~200KB)
+                const compressImgBuffer = (arrayBuffer, mimeType) => new Promise(resolve => {
+                    const blob = new Blob([arrayBuffer], { type: mimeType });
+                    const url = URL.createObjectURL(blob);
+                    const img = new Image();
+                    img.onload = () => {
+                        URL.revokeObjectURL(url);
+                        const MAX = 800;
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; } }
+                        else { if (h > MAX) { w = Math.round(w * MAX / h); h = MAX; } }
+                        const c = document.createElement('canvas');
+                        c.width = w; c.height = h;
+                        c.getContext('2d').drawImage(img, 0, 0, w, h);
+                        let q = 0.85, dataUrl;
+                        do {
+                            dataUrl = c.toDataURL('image/jpeg', q);
+                            if (Math.round((dataUrl.length - 22) * 3 / 4 / 1024) <= 200 || q <= 0.3) break;
+                            q = Math.round((q - 0.05) * 100) / 100;
+                        } while (true);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = () => { URL.revokeObjectURL(url); resolve(''); };
+                    img.src = url;
+                });
+
+                const importExcel = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    e.target.value = '';
+
+                    const reader = new FileReader();
+                    reader.onload = async (ev) => {
+                        try {
+                            if (typeof XLSX === 'undefined') throw new Error('XLSX 라이브러리 로드 실패. 인터넷 연결을 확인하세요.');
+                            const arrayBuffer = ev.target.result;
+                            const workbook = XLSX.read(new Uint8Array(arrayBuffer), { type: 'array' });
+                            let totalAdded = 0;
+
+                            // ─── Phase 1: 데이터 가져오기 (빠름) ───
+                            importProgress.value = { active: true, current: 0, total: workbook.SheetNames.length, message: '데이터 가져오는 중...' };
+
+                            const allParts = []; // { part(with id), xlRow, sheetIdx }
+
+                            for (let si = 0; si < workbook.SheetNames.length; si++) {
+                                const sheetName = workbook.SheetNames[si];
+                                let project = projects.value.find(p => p.name === sheetName);
+                                if (!project) {
+                                    const id = await db.projects.add({ name: sheetName, updated: new Date() });
+                                    await loadProjects();
+                                    project = projects.value.find(p => p.id === id);
+                                }
+
+                                const sheet = workbook.Sheets[sheetName];
+                                const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1 });
+                                if (rawRows.length < 4) { importProgress.value.current = si + 1; continue; }
+
+                                // 헤더 정규화 (\r\n 앞 첫 줄만 사용)
+                                const colMap = {};
+                                rawRows[0].forEach((cell, idx) => {
+                                    const norm = String(cell).split(/\r?\n/)[0].trim().toLowerCase();
+                                    if (norm) colMap[norm] = idx;
+                                });
+                                const findCol = (...keys) => {
+                                    for (const k of keys)
+                                        for (const h of Object.keys(colMap))
+                                            if (h.includes(k.toLowerCase())) return colMap[h];
+                                    return -1;
+                                };
+
+                                const iCode  = findCol('código', 'codigo');
+                                const iOp    = findCol('op');
+                                const iMat   = findCol('material');
+                                const iSpec  = findCol('규격', 'spec');
+                                const iStock = findCol('inventario inicial', 'inventario', '초기 재고');
+                                const iMin   = findCol('min');
+                                const iMax   = findCol('max');
+                                const iLoc   = findCol('세부 내용', 'detalles');
+                                if (iCode < 0) { importProgress.value.current = si + 1; continue; }
+
+                                // 월별 컬럼 (Row1 서브헤더)
+                                const monthCols = {};
+                                rawRows[1].forEach((cell, idx) => {
+                                    const m = String(cell).match(/^(\d{1,2})월$/);
+                                    if (m) monthCols[parseInt(m[1])] = idx;
+                                });
+
+                                // Row3+ 실제 데이터
+                                const parts = [];
+                                const rowMap = {}; // xlRow → partIdx
+                                const year = new Date().getFullYear();
+
+                                for (let i = 3; i < rawRows.length; i++) {
+                                    const row = rawRows[i];
+                                    const code = String(row[iCode] ?? '').trim();
+                                    if (!code) continue;
+
+                                    const transactions = [];
+                                    for (let mo = 1; mo <= 12; mo++) {
+                                        const ci = monthCols[mo];
+                                        const qty = ci !== undefined ? (parseFloat(row[ci]) || 0) : 0;
+                                        if (qty > 0) {
+                                            const ld = new Date(year, mo, 0).getDate();
+                                            transactions.push({ date: `${year}-${String(mo).padStart(2,'0')}-${ld}`, type: 'OUT', qty });
+                                        }
+                                    }
+
+                                    const stock = iStock >= 0 ? (parseFloat(row[iStock]) || 0) : 0;
+                                    rowMap[i] = parts.length;
+                                    parts.push({
+                                        projectId: project.id,
+                                        moldCode: code,
+                                        spareCode: '',
+                                        op: String(row[iOp] ?? '').trim() || 'OP10',
+                                        model: '',
+                                        name:  iMat  >= 0 ? String(row[iMat]  ?? '').trim() : '',
+                                        spec:  iSpec >= 0 ? String(row[iSpec] ?? '').trim() : '',
+                                        moldType: 'dedicated', type: '', mat: '',
+                                        loc:   iLoc  >= 0 ? String(row[iLoc]  ?? '').trim() : '',
+                                        stock, min: iMin >= 0 ? (parseFloat(row[iMin]) || 0) : 0,
+                                        max: iMax >= 0 ? (parseFloat(row[iMax]) || 10) : 10,
+                                        vendor: '', img: '', carryover: stock, transactions, lastRecord: null
+                                    });
+                                }
+
+                                if (parts.length > 0) {
+                                    const newIds = await db.parts.bulkAdd(parts, { allKeys: true });
+                                    parts.forEach((p, idx) => { p.id = newIds[idx]; });
+                                    totalAdded += parts.length;
+                                    if (currentProject.value?.id === project.id)
+                                        projectParts.value = await db.parts.where('projectId').equals(project.id).toArray();
+                                    Object.entries(rowMap).forEach(([xlRow, pIdx]) =>
+                                        allParts.push({ part: parts[pIdx], xlRow: parseInt(xlRow), si })
+                                    );
+                                }
+                                importProgress.value.current = si + 1;
+                            }
+
+                            await loadProjects();
+
+                            // ─── Phase 2: 이미지 추출 & 압축 (백그라운드) ───
+                            if (typeof JSZip !== 'undefined' && allParts.length > 0) {
+                                importProgress.value = { active: true, current: 0, total: 0, message: 'ZIP 파싱 중 / Abriendo ZIP...' };
+                                const zip = await JSZip.loadAsync(arrayBuffer);
+
+                                // 시트번호 → 드로잉번호 매핑
+                                const sheetToDrawing = {};
+                                for (let si = 0; si < workbook.SheetNames.length; si++) {
+                                    const relsFile = zip.file(`xl/worksheets/_rels/sheet${si + 1}.xml.rels`);
+                                    if (!relsFile) continue;
+                                    const xml = await relsFile.async('text');
+                                    const m = xml.match(/Type="[^"]*\/drawing"[^>]*Target="[^"]*drawing(\d+)/);
+                                    if (m) sheetToDrawing[si] = parseInt(m[1]);
+                                }
+
+                                // 드로잉번호 → { xlRow → imagePath } 매핑
+                                const drawingRowMap = {};
+                                for (const dIdx of [...new Set(Object.values(sheetToDrawing))]) {
+                                    const relsF = zip.file(`xl/drawings/_rels/drawing${dIdx}.xml.rels`);
+                                    const drawF = zip.file(`xl/drawings/drawing${dIdx}.xml`);
+                                    if (!relsF || !drawF) continue;
+                                    const [rXml, dXml] = await Promise.all([relsF.async('text'), drawF.async('text')]);
+
+                                    // rId → image 경로
+                                    const ridToPath = {};
+                                    (rXml.match(/<Relationship[^>]*\/>/g) || []).forEach(r => {
+                                        const id = (r.match(/Id="([^"]+)"/) || [])[1];
+                                        const tgt = (r.match(/Target="([^"]+)"/) || [])[1];
+                                        if (id && tgt) ridToPath[id] = 'xl/' + tgt.replace('../', '');
+                                    });
+
+                                    // anchor의 from row → image 경로
+                                    const rowToPath = {};
+                                    (dXml.match(/<xdr:(?:twoCellAnchor|oneCellAnchor)[\s\S]*?<\/xdr:(?:twoCellAnchor|oneCellAnchor)>/g) || []).forEach(a => {
+                                        const rm = a.match(/<xdr:from>[\s\S]*?<xdr:row>(\d+)<\/xdr:row>/);
+                                        const rid = (a.match(/r:embed="([^"]+)"/) || [])[1];
+                                        if (rm && rid && ridToPath[rid]) rowToPath[parseInt(rm[1])] = ridToPath[rid];
+                                    });
+                                    drawingRowMap[dIdx] = rowToPath;
+                                }
+
+                                // 이미지가 있는 파트만 필터
+                                const imgParts = allParts.filter(({ xlRow, si }) => {
+                                    const dIdx = sheetToDrawing[si];
+                                    return dIdx !== undefined && drawingRowMap[dIdx]?.[xlRow];
+                                });
+
+                                importProgress.value = { active: true, current: 0, total: imgParts.length, message: `사진 압축 중 / Comprimiendo fotos... (${imgParts.length}개)` };
+
+                                for (let i = 0; i < imgParts.length; i++) {
+                                    const { part, xlRow, si } = imgParts[i];
+                                    const dIdx = sheetToDrawing[si];
+                                    const imgPath = drawingRowMap[dIdx][xlRow];
+                                    const imgFile = zip.file(imgPath);
+                                    if (imgFile) {
+                                        try {
+                                            const buf = await imgFile.async('arraybuffer');
+                                            const ext = imgPath.split('.').pop().toLowerCase();
+                                            const mime = ext === 'png' ? 'image/png' : 'image/jpeg';
+                                            // 로컬용 압축 (≤200KB)
+                                            const dataUrl = await compressImgBuffer(buf, mime);
+                                            if (dataUrl) {
+                                                part.img = dataUrl;
+                                                await db.parts.update(part.id, { img: dataUrl });
+                                                const cur = projectParts.value.find(p => p.id === part.id);
+                                                if (cur) cur.img = dataUrl;
+                                            }
+                                        } catch (imgErr) { /* 개별 이미지 오류 무시 */ }
+                                    }
+                                    importProgress.value.current = i + 1;
+                                    if (i % 5 === 0) await new Promise(r => setTimeout(r, 0)); // UI 갱신 양보
+                                }
+                            }
+
+                            importProgress.value = { active: false, current: 0, total: 0, message: '' };
+                            alert(`엑셀 가져오기 완료!\n${workbook.SheetNames.length}개 시트, ${totalAdded}개 부품 추가됨`);
+                        } catch (err) {
+                            importProgress.value = { active: false, current: 0, total: 0, message: '' };
+                            alert('엑셀 가져오기 오류: ' + err.message);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                };
+
+                // --- Project Drag-and-Drop Reorder ---
+                const draggedProjectId = ref(null);
+                const dragOverProjectId = ref(null);
+                const projectOrderStorage = ref(JSON.parse(localStorage.getItem('projectOrder') || '[]'));
+
+                const sortedProjects = computed(() => {
+                    const order = projectOrderStorage.value;
+                    if (!order.length) return projects.value;
+                    return [...projects.value].sort((a, b) => {
+                        const ia = order.indexOf(a.id);
+                        const ib = order.indexOf(b.id);
+                        if (ia === -1 && ib === -1) return 0;
+                        if (ia === -1) return 1;
+                        if (ib === -1) return -1;
+                        return ia - ib;
+                    });
+                });
+
+                const onProjectDragStart = (p) => {
+                    draggedProjectId.value = p.id;
+                };
+
+                const onProjectDragOver = (p) => {
+                    if (draggedProjectId.value !== p.id) dragOverProjectId.value = p.id;
+                };
+
+                const onProjectDrop = (targetProject) => {
+                    if (!draggedProjectId.value || draggedProjectId.value === targetProject.id) return;
+                    const currentOrder = sortedProjects.value.map(p => p.id);
+                    const fromIdx = currentOrder.indexOf(draggedProjectId.value);
+                    const toIdx = currentOrder.indexOf(targetProject.id);
+                    if (fromIdx === -1 || toIdx === -1) return;
+                    const newOrder = [...currentOrder];
+                    newOrder.splice(fromIdx, 1);
+                    newOrder.splice(toIdx, 0, draggedProjectId.value);
+                    projectOrderStorage.value = newOrder;
+                    localStorage.setItem('projectOrder', JSON.stringify(newOrder));
+                    draggedProjectId.value = null;
+                    dragOverProjectId.value = null;
+                };
+
 
                 const applySnapshotFromModal = () => {
                     if (!confirm("Set CURRENT STOCK as Last Record?")) return;
@@ -2078,6 +2414,11 @@
                     toggleLowStock, printLabel, sortTable, applyStockSnapshot, applySnapshotFromModal,
                     showQR, printQR,
                     showQRModal, qrTargetName, qrTargetCode,
+                    // Excel import
+                    importExcel, importProgress,
+                    // Drag-and-drop project reorder
+                    sortedProjects, draggedProjectId, dragOverProjectId,
+                    onProjectDragStart, onProjectDragOver, onProjectDrop,
                 };
             }
         }).mount('#app');
