@@ -686,9 +686,9 @@
                                 :style="{textAlign: c.key==='price'?'right' : (['op','stock','status','action','img'].includes(c.key)?'center':'left')}">
 
                                 <template v-if="c.key === 'img'">
-                                    <div v-if="p.img"
-                                        :style="`width:32px; height:32px; background-image:url(${p.img}); background-size:cover; border-radius:4px; margin:0 auto; border:1px solid #555; cursor:pointer`"
-                                        @click="setModalImage(p.img)"></div>
+                                    <img v-if="p.img" :src="p.img"
+                                        style="width:32px; height:32px; object-fit:cover; border-radius:4px; display:block; margin:0 auto; border:1px solid #555; cursor:pointer;"
+                                        @click="setModalImage(p.img)">
                                     <span v-else>-</span>
                                 </template>
 
@@ -759,7 +759,7 @@
                 </table>
                 <div v-else style="padding:50px; text-align:center; color:var(--text-muted);">
                     <i class="fa-solid fa-folder-open" style="font-size:48px; margin-bottom:20px;"></i>
-                    <p>Select or Create a Project to begin.</p>
+                    <p>프로젝트를 선택하거나 생성해주세요.<br><span style="font-size:13px; color:#555;">(Seleccione o cree un proyecto para comenzar.)</span></p>
                 </div>
             </div>
         </main>
@@ -861,13 +861,6 @@
                             <div><small>명칭 (Nombre)</small><input v-model="editingPart.name" class="input"></div>
                             <div><small>규격 (Especificación)</small><input v-model="editingPart.spec" class="input"></div>
 
-                            <div><small>예비품 코드 (Cód. Repuesto)</small><input v-model="editingPart.spareCode"
-                                    class="input"></div>
-                            <div><small>모델 (Modelo)</small><input v-model="editingPart.model" class="input"
-                                    list="dl-model">
-                            </div>
-
-
 
                             <!-- Manual Transaction Entry -->
                             <div
@@ -918,7 +911,7 @@
                             </div>
                             <div v-if="editingPart.lastRecord"
                                 style="font-size:11px; color:#aaa; text-align:left; border-left:1px solid #555; padding-left:10px;">
-                                <div>Last: <strong>{{ editingPart.lastRecord.qty }}</strong></div>
+                                <div>최근 / Últ: <strong>{{ editingPart.lastRecord.qty }}</strong></div>
                                 <div>{{ editingPart.lastRecord.date }}</div>
                             </div>
                         </div>
@@ -929,7 +922,7 @@
                         <div class="text-center" style="grid-column: span 1;"><small>최대 (Max)</small><input
                                 v-model.number="editingPart.max" type="number" class="input" style="text-align:center;">
                         </div>
-                        <div class="text-center" style="grid-column: span 1;"><small>위치 (Ubicación)</small><input
+                        <div class="text-center" style="grid-column: span 1;"><small>재질 (Material)</small><input
                                 v-model="editingPart.loc" class="input" style="text-align:center;"></div>
                     </div>
                 </div>
@@ -1061,14 +1054,14 @@
 
                         </div>
                         <div class="actions">
-                            <button class="btn" @click="downloadJsonBackup" title="백업 (Respaldo)"><i class="fa-solid fa-download"></i> 백업</button>
+                            <button class="btn" @click="downloadJsonBackup" title="백업 (Respaldo)"><i class="fa-solid fa-download"></i> 백업 / Respaldo</button>
                             <label class="btn" style="cursor:pointer; margin:0;" title="복원 (Restaurar)">
-                                <i class="fa-solid fa-upload"></i> 복원
+                                <i class="fa-solid fa-upload"></i> 복원 / Restaurar
                                 <input type="file" style="display:none;" @change="uploadJsonRestore" accept=".json">
                             </label>
                             <div style="width:1px; height:20px; background:var(--border); margin:0 3px;"></div>
-                            <button class="btn btn-secondary" @click="captureReportModal">📷 캡처</button>
-                            <button class="btn btn-primary" @click="printReportModal">🖨 인쇄</button>
+                            <button class="btn btn-secondary" @click="captureReportModal">📷 캡처 / Captura</button>
+                            <button class="btn btn-primary" @click="printReportModal">🖨 인쇄 / Imprimir</button>
                             <i class="fa-solid fa-times" style="cursor:pointer; margin-left:10px;"
                                 @click="showReportModal=false"></i>
                         </div>
@@ -1276,15 +1269,15 @@
                 const sortOrder = ref(1); // 1 asc, -1 desc
 
                 const columns = ref([
-                    { key: 'moldCode', label: '코드', width: 100, visible: true, sortable: true },
-                    { key: 'op', label: 'OP', width: 60, visible: true, sortable: true },
-                    { key: 'name', label: '명칭', width: 140, visible: true, sortable: true },
-                    { key: 'spec', label: '규격', width: 110, visible: true, sortable: true },
-                    { key: 'img', label: '사진', width: 60, visible: true, sortable: false },
-                    { key: 'stock', label: '재고', width: 70, visible: true, sortable: true },
-                    { key: 'loc', label: '저장위치', width: 100, visible: true, sortable: true },
-                    { key: 'status', label: '상태', width: 80, visible: true, sortable: false },
-                    { key: 'action', label: '수정', width: 80, visible: true, sortable: false },
+                    { key: 'moldCode', label: '코드 / Código',    width: 110, visible: true, sortable: true },
+                    { key: 'op',       label: 'OP',               width: 60,  visible: true, sortable: true },
+                    { key: 'name',     label: '명칭 / Nombre',    width: 140, visible: true, sortable: true },
+                    { key: 'spec',     label: '규격 / Especif.',  width: 110, visible: true, sortable: true },
+                    { key: 'img',      label: '사진 / Foto',      width: 60,  visible: true, sortable: false },
+                    { key: 'stock',    label: '재고 / Stock',     width: 70,  visible: true, sortable: true },
+                    { key: 'loc',      label: '재질 / Material',  width: 110, visible: true, sortable: true },
+                    { key: 'status',   label: '상태 / Estado',    width: 85,  visible: true, sortable: false },
+                    { key: 'action',   label: '수정 / Editar',    width: 80,  visible: true, sortable: false },
                 ]);
 
                 const defaultPart = {
