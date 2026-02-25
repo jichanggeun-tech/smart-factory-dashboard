@@ -537,9 +537,15 @@
 
             <div class="project-list">
                 <div class="project-item" v-for="p in projects" :key="p.id"
-                    :class="{active: currentProject && currentProject.id === p.id}" @click="selectProject(p)">
-                    <span>{{ p.name }}</span>
-                    <i class="fa-solid fa-trash" style="font-size:10px; color:#666;" @click.stop="deleteProject(p)"></i>
+                    :class="{active: currentProject && currentProject.id === p.id}" draggable="true"
+                    @dragstart="onDragStartProj($event, p)" @dragover.prevent @drop="onDropProj($event, p)"
+                    :style="dragProjId === p.id ? 'opacity:0.4' : ''" @click="selectProject(p)">
+                    <i class="fa-solid fa-grip-lines"
+                        style="font-size:10px; color:#555; cursor:grab; margin-right:4px; flex-shrink:0;"></i>
+                    <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">{{ p.name
+                        }}</span>
+                    <i class="fa-solid fa-trash" style="font-size:10px; color:#666; flex-shrink:0;"
+                        @click.stop="deleteProject(p)"></i>
                 </div>
             </div>
 
@@ -622,14 +628,14 @@
                                 :style="{textAlign: (['status','action','img','q1','q2','q3','q4'].includes(c.key)?'center':'left')}">
 
                                 <template v-if="c.key === 'img'">
-                                    <div style="display:flex; gap:2px; justify-content:center;">
-                                        <div v-if="p.img1"
-                                            :style="`width:30px; height:30px; background-image:url(${p.img1}); background-size:cover; background-position:center; border-radius:4px; border:1px solid #555; cursor:pointer`"
-                                            @click="setModalImage(p.img1)"></div>
-                                        <div v-if="p.img2"
-                                            :style="`width:30px; height:30px; background-image:url(${p.img2}); background-size:cover; background-position:center; border-radius:4px; border:1px solid #555; cursor:pointer`"
-                                            @click="setModalImage(p.img2)"></div>
-                                        <span v-if="!p.img1 && !p.img2" style="color:#444;">-</span>
+                                    <div
+                                        style="display:flex; gap:6px; justify-content:center; align-items:center; flex-wrap:wrap; padding:2px 0;">
+                                        <div v-for="(src, i) in (p.imgs && p.imgs.length ? p.imgs : [p.img1, p.img2].filter(Boolean))"
+                                            :key="i"
+                                            :style="`width:44px; height:44px; background-image:url(${src}); background-size:cover; background-position:center; border-radius:5px; border:2px solid #444; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,0.4);`"
+                                            @click="setModalImage(src)"></div>
+                                        <span v-if="!(p.imgs && p.imgs.length) && !p.img1 && !p.img2"
+                                            style="color:#444;">-</span>
                                     </div>
                                 </template>
 
@@ -735,9 +741,16 @@
                             <tr v-for="(p, idx) in filteredParts" :key="p.id">
                                 <td style="border:1px solid #ccc; padding:4px; text-align:center;">{{ idx + 1 }}</td>
                                 <td style="border:1px solid #ccc; padding:4px; text-align:center;">
-                                    <div v-if="p.img1 || p.img2"
-                                        :style="`width:40px; height:40px; background-image:url(${p.img1 || p.img2}); background-size:cover; background-position:center; margin:0 auto; border:1px solid #ddd;`">
-                                    </div>
+                                    <template v-if="p.imgs && p.imgs.length">
+                                        <div
+                                            :style="`width:40px; height:40px; background-image:url(${p.imgs[0]}); background-size:cover; background-position:center; margin:0 auto; border:1px solid #ddd;`">
+                                        </div>
+                                    </template>
+                                    <template v-else-if="p.img1 || p.img2">
+                                        <div
+                                            :style="`width:40px; height:40px; background-image:url(${p.img1 || p.img2}); background-size:cover; background-position:center; margin:0 auto; border:1px solid #ddd;`">
+                                        </div>
+                                    </template>
                                     <span v-else style="color:#ccc;">-</span>
                                 </td>
                                 <td style="border:1px solid #ccc; padding:4px;">{{ p.category }}</td>
@@ -794,42 +807,38 @@
                 </div>
                 <div class="modal-body">
                     <div style="display:flex; gap:20px;">
-                        <!-- Image Upload Area (Dual) -->
-                        <div style="flex:0 0 160px; display:flex; flex-direction:column; gap:10px;">
-                            <!-- IMG 1 -->
-                            <div
-                                style="width:160px; height:160px; border:2px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; background:#1f2937;">
-                                <img v-if="editingPart.img1" :src="editingPart.img1"
-                                    style="width:100%; height:100%; object-fit:contain;">
-                                <div
-                                    style="position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.6); color:white; padding:2px 6px; border-radius:4px; font-size:10px;">
-                                    IMG 1</div>
-                                <i v-if="editingPart.img1" class="fa-solid fa-times"
-                                    @click.prevent="editingPart.img1=''"
-                                    style="position:absolute; top:5px; right:5px; cursor:pointer; background:rgba(0,0,0,0.6); color:white; padding:4px; border-radius:50%;"></i>
-
-                                <input type="file" @change="(e) => handleImageUpload(e, 1)" accept="image/*"
-                                    style="position:absolute; inset:0; opacity:0; cursor:pointer;">
-                                <div v-if="!editingPart.img1" style="color:#666; text-align:center; font-size:11px;">
-                                    Click or Paste<br>(Main)
+                        <!-- 다중 이미지 업로드 영역 (Multi-Image Upload) -->
+                        <div style="flex:0 0 180px; display:flex; flex-direction:column; gap:8px;">
+                            <!-- 드렍 존 + 클릭 선택 -->
+                            <div @dragover.prevent="$event.currentTarget.style.borderColor='var(--accent)'"
+                                @dragleave="$event.currentTarget.style.borderColor='var(--border)'"
+                                @drop.prevent="e => { $event.currentTarget.style.borderColor='var(--border)'; Array.from(e.dataTransfer.files).filter(f=>f.type.startsWith('image/')).forEach(f=>processImageFileToArray(f)); }"
+                                style="width:180px; min-height:80px; border:2px dashed var(--border); border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; background:#1f2937; cursor:pointer; transition:border-color 0.2s;">
+                                <div style="color:#666; text-align:center; font-size:11px; pointer-events:none;">
+                                    <i class="fa-solid fa-image" style="font-size:20px; margin-bottom:4px;"></i><br>
+                                    클릭 / 드래그 / Ctrl+V<br>
+                                    <span style="color:#444;">(Click / Drag / Paste)</span>
                                 </div>
+                                <input type="file" accept="image/*" multiple
+                                    style="position:absolute; inset:0; opacity:0; cursor:pointer;"
+                                    @change="handleImageUpload">
                             </div>
-                            <!-- IMG 2 -->
-                            <div
-                                style="width:160px; height:160px; border:2px dashed var(--border); border-radius:8px; display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; background:#1f2937;">
-                                <img v-if="editingPart.img2" :src="editingPart.img2"
-                                    style="width:100%; height:100%; object-fit:contain;">
-                                <div
-                                    style="position:absolute; top:5px; left:5px; background:rgba(0,0,0,0.6); color:white; padding:2px 6px; border-radius:4px; font-size:10px;">
-                                    IMG 2</div>
-                                <i v-if="editingPart.img2" class="fa-solid fa-times"
-                                    @click.prevent="editingPart.img2=''"
-                                    style="position:absolute; top:5px; right:5px; cursor:pointer; background:rgba(0,0,0,0.6); color:white; padding:4px; border-radius:50%;"></i>
-
-                                <input type="file" @change="(e) => handleImageUpload(e, 2)" accept="image/*"
-                                    style="position:absolute; inset:0; opacity:0; cursor:pointer;">
-                                <div v-if="!editingPart.img2" style="color:#666; text-align:center; font-size:11px;">
-                                    Click or Paste<br>(Sub)
+                            <!-- 이미지 썸네일 그리드 -->
+                            <div style="display:flex; flex-wrap:wrap; gap:6px; max-width:180px;">
+                                <div v-for="(src, idx) in (editingPart.imgs || []).filter(s => s)" :key="idx"
+                                    style="position:relative; width:80px; height:80px;">
+                                    <img :src="src" @click="setModalImage(src)"
+                                        style="width:80px; height:80px; object-fit:cover; border-radius:6px; border:1px solid #555; cursor:pointer;">
+                                    <div
+                                        style="position:absolute; top:2px; left:4px; background:rgba(0,0,0,0.65); color:#ccc; font-size:9px; padding:1px 4px; border-radius:3px;">
+                                        {{ idx + 1 }}
+                                    </div>
+                                    <i class="fa-solid fa-times" @click.prevent="removeImg(idx)"
+                                        style="position:absolute; top:2px; right:4px; cursor:pointer; background:rgba(0,0,0,0.65); color:white; padding:3px 5px; border-radius:50%; font-size:10px;"></i>
+                                </div>
+                                <div v-if="!(editingPart.imgs && editingPart.imgs.length)"
+                                    style="color:#555; font-size:11px; padding:6px;">
+                                    사진 없음 (Sin fotos)
                                 </div>
                             </div>
                         </div>
@@ -974,30 +983,36 @@
                 <div class="modal-header">클라우드 불러오기 (Cargar desde Nube) <i class="fa-solid fa-times"
                         style="cursor:pointer;" @click="showCloudModal=false"></i></div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">불러올 프로젝트를 선택하세요. 기존 로컬 데이터가 덮어씌워집니다.<br>(Seleccione proyectos a restaurar.)</p>
+                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">불러올 프로젝트를 선택하세요. 기존 로컬 데이터가
+                        덮어씌워집니다.<br>(Seleccione proyectos a restaurar.)</p>
                     <div style="display:flex; gap:6px; margin-bottom:12px;">
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(true)">전체 선택</button>
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(false)">전체 해제</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(true)">전체
+                            선택</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllLoad(false)">전체
+                            해제</button>
                     </div>
                     <div v-for="p in cloudProjectsList" :key="p.name"
                         style="display:flex; align-items:center; gap:8px; margin-bottom:5px;">
                         <div style="display:flex; align-items:center; gap:10px; flex:1; padding:8px 10px; border-radius:6px; background:var(--bg-input); cursor:pointer;"
                             @click="toggleLoadProject(p.name)">
-                            <input type="checkbox" :checked="loadProjectsSelected.includes(p.name)" style="width:16px; height:16px; pointer-events:none;">
+                            <input type="checkbox" :checked="loadProjectsSelected.includes(p.name)"
+                                style="width:16px; height:16px; pointer-events:none;">
                             <i class="fa-solid fa-folder" style="color:var(--blue);"></i>
                             <span style="flex:1;">{{ p.name }}</span>
                             <span style="font-size:11px; color:#888;">({{ p.count }})</span>
                         </div>
-                        <button class="btn danger" style="padding:0 10px; flex-shrink:0;" @click.stop="deleteCloudProject(p.name)"
-                            title="삭제 (Eliminar)">
+                        <button class="btn danger" style="padding:0 10px; flex-shrink:0;"
+                            @click.stop="deleteCloudProject(p.name)" title="삭제 (Eliminar)">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{ loadProjectsSelected.length }}개 선택됨</span>
+                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{
+                        loadProjectsSelected.length }}개 선택됨</span>
                     <button class="btn" @click="showCloudModal=false">취소 (Cancelar)</button>
-                    <button class="btn primary" @click="loadSelectedProjects" :disabled="!loadProjectsSelected.length || isSyncing">
+                    <button class="btn primary" @click="loadSelectedProjects"
+                        :disabled="!loadProjectsSelected.length || isSyncing">
                         <i class="fa-solid fa-cloud-arrow-down"></i> 불러오기 (Cargar)
                     </button>
                 </div>
@@ -1010,22 +1025,28 @@
                 <div class="modal-header">클라우드 저장 선택 (Guardar en Nube) <i class="fa-solid fa-times"
                         style="cursor:pointer;" @click="showSaveModal=false"></i></div>
                 <div class="modal-body">
-                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">저장할 프로젝트를 선택하세요. (Seleccione proyectos a guardar.)</p>
+                    <p style="color:var(--text-muted); font-size:12px; margin-bottom:12px;">저장할 프로젝트를 선택하세요. (Seleccione
+                        proyectos a guardar.)</p>
                     <div style="display:flex; gap:6px; margin-bottom:12px;">
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(true)">전체 선택</button>
-                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(false)">전체 해제</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(true)">전체
+                            선택</button>
+                        <button class="btn" style="font-size:12px; padding:4px 10px;" @click="selectAllSave(false)">전체
+                            해제</button>
                     </div>
                     <div v-for="p in projects" :key="p.id"
                         style="display:flex; align-items:center; gap:10px; margin-bottom:5px; padding:8px 10px; border-radius:6px; background:var(--bg-input); cursor:pointer;"
                         @click="toggleSaveProject(p.id)">
-                        <input type="checkbox" :checked="saveProjectsSelected.includes(p.id)" style="width:16px; height:16px; pointer-events:none;">
+                        <input type="checkbox" :checked="saveProjectsSelected.includes(p.id)"
+                            style="width:16px; height:16px; pointer-events:none;">
                         <span style="flex:1;">{{ p.name }}</span>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{ saveProjectsSelected.length }}개 선택됨</span>
+                    <span style="font-size:12px; color:var(--text-muted); margin-right:auto;">{{
+                        saveProjectsSelected.length }}개 선택됨</span>
                     <button class="btn" @click="showSaveModal=false">취소 (Cancelar)</button>
-                    <button class="btn primary" @click="syncSelectedToCloud" :disabled="!saveProjectsSelected.length || isSyncing">
+                    <button class="btn primary" @click="syncSelectedToCloud"
+                        :disabled="!saveProjectsSelected.length || isSyncing">
                         <i class="fa-solid fa-cloud-arrow-up"></i> 저장 (Guardar)
                     </button>
                 </div>
@@ -1047,8 +1068,16 @@
         db.version(2).stores({
             projects: '++id, name, updated',
             assets: '++id, projectId, category, assetCode, nameplateCode, status'
-        }).upgrade(tx => {
-            // Version 2 migration if needed, but schema changes are mostly additions
+        });
+        db.version(3).stores({
+            projects: '++id, name, updated, sortOrder',
+            assets: '++id, projectId, category, assetCode, nameplateCode, status'
+        }).upgrade(async tx => {
+            // 기존 프로젝트에 sortOrder 부여 (id 순서 기반)
+            const allProjs = await tx.table('projects').toArray();
+            for (let i = 0; i < allProjs.length; i++) {
+                await tx.table('projects').update(allProjs[i].id, { sortOrder: i });
+            }
         });
 
         createApp({
@@ -1077,7 +1106,7 @@
 
                 const columns = ref([
                     { key: 'no', label: 'No.', width: 40, visible: true, sortable: false },
-                    { key: 'img', label: '이미지 (Img)', width: 70, visible: true, sortable: false },
+                    { key: 'img', label: '이미지 (Img)', width: 100, visible: true, sortable: false },
                     { key: 'category', label: '구분 (Cat.)', width: 100, visible: true, sortable: true },
                     { key: 'assetCode', label: '자산 코드 (Código)', width: 100, visible: true, sortable: true },
                     { key: 'nameplateCode', label: '명판 (Placa)', width: 100, visible: true, sortable: true },
@@ -1088,7 +1117,7 @@
                     { key: 'q3', label: 'Q3', width: 40, visible: true, sortable: false },
                     { key: 'q4', label: 'Q4', width: 40, visible: true, sortable: false },
                     { key: 'history', label: '이력 (Historial)', width: 150, visible: true, sortable: true },
-                    { key: 'action', label: '편집', width: 50, visible: true, sortable: false },
+                    { key: 'action', label: '편집 (Editar)', width: 60, visible: true, sortable: false },
                 ]);
 
                 const visibleColumns = computed(() => columns.value.filter(c => c.visible));
@@ -1102,27 +1131,24 @@
                     status: '사용중',
                     img1: '',
                     img2: '',
+                    imgs: [], // 다중 이미지 배열 (Multiple images array)
                     history: '',
                     quarterly: {} // { "2024": { q1: 'use', q2: 'not' ... } }
                 };
                 const editingPart = reactive({ ...defaultPart });
                 const editingQuarterly = reactive({ q1: '', q2: '', q3: '', q4: '' });
 
-                // --- Global Paste Listener ---
+                // --- Global Paste Listener (다중 이미지 지원) ---
                 const handlePaste = (e) => {
                     if (!showPartModal.value) return;
                     const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                    for (let item of items) {
-                        if (item.kind === 'file' && item.type.includes('image/')) {
-                            e.preventDefault();
-                            const blob = item.getAsFile();
-                            // If img1 empty, target 1. Else if img2 empty, target 2. Else replace 1.
-                            let target = 1;
-                            if (editingPart.img1 && !editingPart.img2) target = 2;
-                            processImageFile(blob, target);
-                            return;
-                        }
-                    }
+                    const imageItems = Array.from(items).filter(i => i.kind === 'file' && i.type.includes('image/'));
+                    if (imageItems.length === 0) return;
+                    e.preventDefault();
+                    imageItems.forEach(item => {
+                        const blob = item.getAsFile();
+                        processImageFileToArray(blob);
+                    });
                 };
 
                 onMounted(async () => {
@@ -1166,10 +1192,17 @@
                 };
 
                 // --- Project Management ---
-                const loadProjects = async () => { projects.value = await db.projects.toArray(); };
+                const loadProjects = async () => {
+                    const all = await db.projects.toArray();
+                    // sortOrder 기준 정렬, 없으면 id 순서
+                    all.sort((a, b) => (a.sortOrder ?? a.id) - (b.sortOrder ?? b.id));
+                    projects.value = all;
+                };
                 const createProject = async () => {
                     const n = prompt("프로젝트 이름 (Nombre del Proyecto):"); if (!n) return;
-                    await db.projects.add({ name: n, updated: new Date() });
+                    // 현재 프로젝트 중 가장 큰 sortOrder + 1
+                    const maxOrder = projects.value.reduce((m, p) => Math.max(m, p.sortOrder ?? 0), -1);
+                    await db.projects.add({ name: n, updated: new Date(), sortOrder: maxOrder + 1 });
                     loadProjects();
                 };
                 const selectProject = async (p) => {
@@ -1185,6 +1218,31 @@
                     loadProjects();
                 };
 
+                // --- 프로젝트 드래그앤드롭 순서 변경 ---
+                const dragProjId = ref(null); // 드래그 중인 프로젝트 id
+                const onDragStartProj = (e, p) => {
+                    dragProjId.value = p.id;
+                    e.dataTransfer.effectAllowed = 'move';
+                };
+                const onDropProj = async (e, targetP) => {
+                    e.preventDefault();
+                    if (!dragProjId.value || dragProjId.value === targetP.id) return;
+                    // projects 배열에서 인덱스 찾기
+                    const fromIdx = projects.value.findIndex(p => p.id === dragProjId.value);
+                    const toIdx = projects.value.findIndex(p => p.id === targetP.id);
+                    if (fromIdx < 0 || toIdx < 0) return;
+                    // 배열 순서 변경
+                    const reordered = [...projects.value];
+                    const [moved] = reordered.splice(fromIdx, 1);
+                    reordered.splice(toIdx, 0, moved);
+                    // DB에 sortOrder 저장
+                    for (let i = 0; i < reordered.length; i++) {
+                        await db.projects.update(reordered[i].id, { sortOrder: i });
+                    }
+                    projects.value = reordered;
+                    dragProjId.value = null;
+                };
+
                 // --- Part Management ---
                 const getCurrentQuarterKey = () => {
                     const month = new Date().getMonth(); // 0-11
@@ -1196,7 +1254,7 @@
 
                 const openAddModal = () => {
                     if (!currentProject.value) return alert("프로젝트를 먼저 선택하세요! (¡Seleccione un proyecto primero!)");
-                    Object.assign(editingPart, { ...defaultPart, projectId: currentProject.value.id, quarterly: {} });
+                    Object.assign(editingPart, { ...defaultPart, projectId: currentProject.value.id, quarterly: {}, imgs: [] });
 
                     // Reset Quarterly edit Proxy
                     editingQuarterly.q1 = ''; editingQuarterly.q2 = ''; editingQuarterly.q3 = ''; editingQuarterly.q4 = '';
@@ -1215,6 +1273,16 @@
                     // Migration: If old img exists but new img1 doesn't, move it
                     if (p.img && !editingPart.img1) editingPart.img1 = p.img;
                     if (!editingPart.quarterly) editingPart.quarterly = {};
+
+                    // imgs 배열 초기화 (기존 img1/img2 마이그레이션, 빈 문자열 제거)
+                    if (!Array.isArray(editingPart.imgs) || editingPart.imgs.length === 0) {
+                        editingPart.imgs = [];
+                        if (editingPart.img1) editingPart.imgs.push(editingPart.img1);
+                        if (editingPart.img2) editingPart.imgs.push(editingPart.img2);
+                    } else {
+                        // 빈 문자열 필터링 (저장된 데이터에 '' 가 있을 경우 제거)
+                        editingPart.imgs = editingPart.imgs.filter(s => s && s.length > 0);
+                    }
 
                     // Load Quarterly Status for current Year
                     const y = selectedYear.value.toString();
@@ -1275,12 +1343,14 @@
                 };
 
                 // --- Image Logic ---
-                const handleImageUpload = (e, targetNum) => {
-                    const f = e.target.files[0]; if (!f) return;
-                    processImageFile(f, targetNum);
+                const handleImageUpload = (e) => {
+                    const files = Array.from(e.target.files); if (!files.length) return;
+                    files.forEach(f => processImageFileToArray(f));
+                    e.target.value = ''; // 같은 파일 재선택 허용
                 };
 
-                const processImageFile = (file, targetNum) => {
+                // 이미지를 imgs 배열에 추가 (다중 지원)
+                const processImageFileToArray = (file) => {
                     isImageProcessing.value = true;
                     const r = new FileReader();
                     r.onload = (ev) => {
@@ -1302,14 +1372,24 @@
                             c.getContext('2d').drawImage(img, 0, 0, width, height);
 
                             const dataUrl = c.toDataURL('image/jpeg', 0.7);
-                            if (targetNum === 1) editingPart.img1 = dataUrl;
-                            else editingPart.img2 = dataUrl;
+                            if (!Array.isArray(editingPart.imgs)) editingPart.imgs = [];
+                            editingPart.imgs.push(dataUrl);
+                            // 하위 호환: 첫 번째는 img1, 두 번째는 img2에도 동기화
+                            if (editingPart.imgs.length === 1) editingPart.img1 = dataUrl;
+                            if (editingPart.imgs.length === 2) editingPart.img2 = dataUrl;
 
                             isImageProcessing.value = false;
                         };
                         img.src = ev.target.result;
                     };
                     r.readAsDataURL(file);
+                };
+
+                const removeImg = (idx) => {
+                    editingPart.imgs.splice(idx, 1);
+                    // img1/img2 재동기화
+                    editingPart.img1 = editingPart.imgs[0] || '';
+                    editingPart.img2 = editingPart.imgs[1] || '';
                 };
 
                 const setModalImage = (src) => { zoomedImage.value = src; }
@@ -1327,7 +1407,7 @@
                                 { size: 250, quality: 0.3 },
                                 { size: 180, quality: 0.3 },
                                 { size: 120, quality: 0.2 },
-                                { size: 80,  quality: 0.2 },
+                                { size: 80, quality: 0.2 },
                             ];
                             for (const { size, quality } of steps) {
                                 const c = document.createElement('canvas');
@@ -1420,13 +1500,20 @@
                         partsToSend = [{ project: proj.name, batchId, assetCode: 'EMPTY_PROJECT_MARKER', isMarker: true }];
                     } else {
                         partsToSend = await Promise.all(parts.map(async p => {
-                            const { img1, img2, ...rest } = p;
+                            const { img1, img2, imgs: rawImgs, ...rest } = p;
                             const cImg1 = img1 ? await compressImageForCloud(img1) : '';
                             const cImg2 = img2 ? await compressImageForCloud(img2) : '';
+                            // imgs 배열 압축 (cloud 저장 시에는 최대 용량 고려)
+                            let cImgs = undefined;
+                            if (Array.isArray(rawImgs) && rawImgs.length > 0) {
+                                cImgs = await Promise.all(rawImgs.map(src => src ? compressImageForCloud(src) : Promise.resolve('')));
+                                cImgs = cImgs.filter(Boolean);
+                            }
                             return {
                                 ...rest,
                                 ...(cImg1 ? { img1: cImg1 } : {}),
                                 ...(cImg2 ? { img2: cImg2 } : {}),
+                                ...(cImgs ? { imgs: cImgs } : {}),
                                 project: proj.name,
                                 batchId
                             };
@@ -1730,8 +1817,9 @@
                     showReportModal,
                     showSaveModal, saveProjectsSelected,
                     createProject, selectProject, deleteProject,
+                    onDragStartProj, onDropProj, dragProjId,
                     openAddModal, editPart, savePart, deletePart,
-                    handleImageUpload, setModalImage, sortTable, getQuarterSymbol, getQuarterSymbolClass, getQuarterColor,
+                    handleImageUpload, removeImg, processImageFileToArray, setModalImage, sortTable, getQuarterSymbol, getQuarterSymbolClass, getQuarterColor,
                     syncToCloud, openSaveModal, toggleSaveProject, selectAllSave, syncSelectedToCloud,
                     syncFromCloud, loadSelectedCloudProject, loadSelectedProjects, toggleLoadProject, selectAllLoad, deleteCloudProject,
                     downloadJsonBackup, uploadJsonRestore, clearAllData, openReport,
