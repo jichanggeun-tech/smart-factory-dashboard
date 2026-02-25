@@ -1268,6 +1268,9 @@
                 };
 
                 const editPart = (p) => {
+                    // 먼저 전체 초기화 (이전 항목의 imgs, img1, img2 잔류 방지)
+                    Object.assign(editingPart, { ...defaultPart, quarterly: {}, imgs: [] });
+                    // 새 항목 데이터 덮어쓰기
                     Object.assign(editingPart, JSON.parse(JSON.stringify(p)));
 
                     // Migration: If old img exists but new img1 doesn't, move it
