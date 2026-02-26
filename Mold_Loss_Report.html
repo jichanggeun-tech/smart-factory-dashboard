@@ -852,23 +852,7 @@
                         style="padding:4px 12px; font-size:11px;">합산 적용</button>
                 </div>
 
-                <div style="border:1px solid #e0e0e0; border-radius:6px; padding:10px; background:#f9f9f9;">
-                    <h4 style="margin:0 0 10px 0; font-size:12px; color:#333; text-align:center;">📋 상세 항목 참조표 (Major
-                        Loss Breakdown)</h4>
-                    <table class="pareto-ref-table">
-                        <thead>
-                            <tr>
-                                <th style="width:40px;">No</th>
-                                <th style="width:120px;">금형 (Mold)</th>
-                                <th style="width:120px;">적용 모델 (Model)</th>
-                                <th>현상 / 원인 (Reason)</th>
-                                <th style="width:80px;">누적 Loss</th>
-                                <th style="width:100px;">상태</th>
-                            </tr>
-                        </thead>
-                        <tbody id="pareto-ref-body"></tbody>
-                    </table>
-                </div>
+                <div id="pareto-ref-container"></div>
             </div>
 
             <div class="section-box" id="sec-improv" style="display:none;">
@@ -1485,18 +1469,17 @@
 
             if (!startStr || !endStr) return;
 
-            // 주차 비교를 위해 정렬된 주차 키 리스트 생성
             const weeks = [...new Set(allData.map(d => `${d.calYear}-W${d.calWeek.toString().padStart(2, '0')}`))].sort();
             const si = weeks.indexOf(startStr);
             const ei = weeks.indexOf(endStr);
             const targetWeeks = weeks.slice(Math.min(si, ei), Math.max(si, ei) + 1);
 
-            // 최근 3주 주차 식별 (안정화 뱃지용)
             const sortedWeeksRaw = [...new Set(allData.map(d => `${d.calYear}-${d.calWeek}`))].sort();
             const last3WeeksRaw = sortedWeeksRaw.slice(-3);
 
-            const map = {};
-            const occurMap = {}; // 키별 마지막 발생 주차 저장을 위함
+            // 금형별 집계: moldMap[machine][key] = { sub, reason, loss, lastWeek }
+            const moldMap = {};
+            const occurMap = {};
 
             allData.forEach(d => {
                 const wId = `${d.calYear}-W${d.calWeek.toString().padStart(2, '0')}`;
@@ -1504,35 +1487,62 @@
                 const isInRange = targetWeeks.includes(wId);
 
                 d.items.forEach(i => {
-                    const key = `${i.machine}|${i.sub}|${i.reason}`;
+                    const m = i.machine || 'Unknown';
+                    const key = `${i.sub || 'Unknown'}|${i.reason || '-'}`;
+                    if (!moldMap[m]) moldMap[m] = {};
                     if (isInRange) {
-                        if (!map[key]) map[key] = { m: i.machine, p: i.sub, r: i.reason, loss: 0 };
-                        map[key].loss += i.min;
+                        if (!moldMap[m][key]) moldMap[m][key] = { p: i.sub, r: i.reason, loss: 0 };
+                        moldMap[m][key].loss += i.min;
                     }
-                    // 모든 데이터에서 마지막 발생 주차 추적
-                    if (!occurMap[key] || wIdRaw > occurMap[key]) occurMap[key] = wIdRaw;
+                    const fullKey = `${m}|${key}`;
+                    if (!occurMap[fullKey] || wIdRaw > occurMap[fullKey]) occurMap[fullKey] = wIdRaw;
                 });
             });
 
-            const sorted = Object.values(map).sort((a, b) => b.loss - a.loss).slice(0, 20);
-            const refBody = document.getElementById('pareto-ref-body');
-            refBody.innerHTML = "";
+            const container = document.getElementById('pareto-ref-container');
+            container.innerHTML = '';
 
-            sorted.forEach((d, i) => {
-                const key = `${d.m}|${d.p}|${d.r}`;
-                const lastWeek = occurMap[key];
-                const isStable = !last3WeeksRaw.includes(lastWeek); // 최근 3주간 발생 기록이 없으면 안정화
+            Object.keys(moldMap).sort().forEach(mold => {
+                const items = Object.entries(moldMap[mold])
+                    .map(([k, v]) => ({ key: k, ...v }))
+                    .filter(d => d.loss > 0)
+                    .sort((a, b) => b.loss - a.loss);
 
-                refBody.innerHTML += `
-                    <tr>
-                        <td style="font-weight:bold; color:#16a085;">#${i + 1}</td>
-                        <td style="text-align:left;">${d.m}</td>
-                        <td style="text-align:left; color:#3498db;">${d.p}</td>
-                        <td style="text-align:left;">${d.r}</td>
-                        <td style="font-weight:bold;">${d.loss.toLocaleString()}</td>
-                        <td>${isStable ? '<span class="badge bg-good">✅ 안정화</span>' : '<span class="badge bg-neutral">-</span>'}</td>
-                    </tr>
+                if (items.length === 0) return;
+
+                const block = document.createElement('div');
+                block.style.marginBottom = '16px';
+                block.innerHTML = `
+                    <div style="font-size:12px; font-weight:bold; color:#374151; background:#e5e7eb; padding:5px 10px; border-left:4px solid #374151; margin-bottom:4px;">
+                        ${mold}
+                    </div>
+                    <table class="pareto-ref-table">
+                        <thead>
+                            <tr>
+                                <th style="width:30px;">No</th>
+                                <th style="width:130px;">적용 모델 (Model)</th>
+                                <th>현상 / 원인 (Reason)</th>
+                                <th style="width:80px;">누적 Loss</th>
+                                <th style="width:90px;">상태</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map((d, i) => {
+                    const fullKey = `${mold}|${d.key}`;
+                    const lastWeek = occurMap[fullKey];
+                    const isStable = !last3WeeksRaw.includes(lastWeek);
+                    return `<tr>
+                                    <td style="font-weight:bold; color:#16a085;">${i + 1}</td>
+                                    <td style="text-align:left; color:#3498db;">${d.p || '-'}</td>
+                                    <td style="text-align:left;">${d.r || '-'}</td>
+                                    <td style="font-weight:bold;">${d.loss.toLocaleString()}</td>
+                                    <td>${isStable ? '<span class="badge bg-good">✅ 안정화</span>' : '<span class="badge bg-neutral">-</span>'}</td>
+                                </tr>`;
+                }).join('')}
+                        </tbody>
+                    </table>
                 `;
+                container.appendChild(block);
             });
         }
 
