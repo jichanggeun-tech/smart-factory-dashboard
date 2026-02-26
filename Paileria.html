@@ -810,7 +810,8 @@
                 <thead>
                     <tr>
                         <th>수리 내용 (Tipo de Reparación)</th>
-                        <th width="80">수량 (Cant.)</th>
+                        <th>비율 (Proporción)</th>
+                        <th width="70">수량 (Cant.)</th>
                     </tr>
                 </thead>
                 <tbody id="repair-log-body">
@@ -994,6 +995,15 @@
             if (repairs.length === 0) {
                 logBody.innerHTML = '<tr><td colspan="2" style="color:#9ca3af;">데이터 없음 / Sin datos</td></tr>';
             } else {
+                const LABEL = {
+                    'Cinchos': '결속선', 'Cortina': '커튼',
+                    'Dampla': '단플라', 'Esponja': '스폰지',
+                    'Estructura': '골조', 'Felfa': '부직포',
+                    'Pistón': '피스톤', 'Protección': '보호가드',
+                    'Tubo/PTR': '파이프', 'Jaladera': '손잡이',
+                    'Corrosión': '부식', 'Llanta': '캐스터',
+                    'Separador': '분리대', 'Velcro': '접착',
+                };
                 const countMap = {};
                 repairs.forEach(r => {
                     if (!r.detalles) return;
@@ -1003,14 +1013,27 @@
                     });
                 });
                 const sorted = Object.entries(countMap).sort((a, b) => b[1] - a[1]);
+                const maxCnt = sorted.length > 0 ? sorted[0][1] : 1;
+                const totalCnt = sorted.reduce((s, [, c]) => s + c, 0);
                 logBody.innerHTML = sorted.length === 0
-                    ? '<tr><td colspan="2" style="color:#9ca3af;">수리 내용 없음</td></tr>'
-                    : sorted.map(([tipo, cnt]) =>
-                        `<tr>
-                            <td style="text-align:left;font-weight:600;">${tipo}</td>
-                            <td style="font-weight:900;font-size:15px;color:#10b981;">${cnt}</td>
-                        </tr>`
-                    ).join('');
+                    ? '<tr><td colspan="3" style="color:#9ca3af;">수리 내용 없음</td></tr>'
+                    : sorted.map(([tipo, cnt]) => {
+                        const kr = LABEL[tipo] ? ` <span style="color:#9ca3af;font-size:11px;">(${LABEL[tipo]})</span>` : '';
+                        const pct = Math.round(cnt / totalCnt * 100);
+                        const barW = Math.round(cnt / maxCnt * 100);
+                        return `<tr>
+                            <td style="text-align:left;font-weight:600;white-space:nowrap;">${tipo}${kr}</td>
+                            <td style="padding:0 8px;min-width:120px;">
+                                <div style="display:flex;align-items:center;gap:6px;">
+                                    <div style="flex:1;background:#374151;border-radius:4px;height:8px;overflow:hidden;">
+                                        <div style="width:${barW}%;height:100%;background:#10b981;border-radius:4px;transition:width .4s;"></div>
+                                    </div>
+                                    <span style="font-size:11px;color:#9ca3af;width:32px;text-align:right;">${pct}%</span>
+                                </div>
+                            </td>
+                            <td style="font-weight:900;font-size:15px;color:#10b981;white-space:nowrap;">${cnt}건</td>
+                        </tr>`;
+                    }).join('');
             }
         }
 
