@@ -803,23 +803,19 @@
                 </tbody>
             </table>
 
-            <!-- 전체 수리 로그 -->
-            <div style="font-size:13px;font-weight:700;color:#4a5568;margin:16px 0 6px;">📋 수리 이력 전체 (Historial
-                Completo)</div>
+            <!-- 수리 내용별 집계 -->
+            <div style="font-size:13px;font-weight:700;color:#4a5568;margin:16px 0 6px;">📋 수리 내용별 집계 (Resumen por Tipo
+                de Reparación)</div>
             <table id="tbl-repair-log">
                 <thead>
                     <tr>
-                        <th width="90">날짜 (Fecha)</th>
-                        <th width="110">모델 (Modelo)</th>
-                        <th width="70">번호 (No.)</th>
-                        <th>수리 내용 (Detalles)</th>
-                        <th width="80">담당자 (Resp.)</th>
-                        <th width="70">관리 (Acción)</th>
+                        <th>수리 내용 (Tipo de Reparación)</th>
+                        <th width="80">수량 (Cant.)</th>
                     </tr>
                 </thead>
                 <tbody id="repair-log-body">
                     <tr>
-                        <td colspan="6" style="color:#9ca3af;">조회 버튼을 클릭하세요 / Haga clic en Consultar</td>
+                        <td colspan="2" style="color:#9ca3af;">조회 버튼을 클릭하세요 / Haga clic en Consultar</td>
                     </tr>
                 </tbody>
             </table>
@@ -993,29 +989,28 @@
             const dupBody = document.getElementById('dup-repair-body');
             dupBody.innerHTML = dups.length === 0 ? '<tr><td colspan="4" style="color:#9ca3af;">중복 수리 없음 / Sin carritos repetidos</td></tr>' :
                 dups.map(d => `<tr><td style="font-weight:700;">${d.modelo}</td><td>${d.noid}</td><td style="font-weight:800;color:#ef4444;">${d.count}회</td><td>${d.lastDate || '-'}</td></tr>`).join('');
-            // log table (rowNum 기반 편집·삭제 버튼 포함)
+            // 수리 내용별 집계 (detalles 쉼표 구분 → 항목별 카운트)
             const logBody = document.getElementById('repair-log-body');
             if (repairs.length === 0) {
-                logBody.innerHTML = '<tr><td colspan="6" style="color:#9ca3af;">데이터 없음 / Sin datos</td></tr>';
+                logBody.innerHTML = '<tr><td colspan="2" style="color:#9ca3af;">데이터 없음 / Sin datos</td></tr>';
             } else {
-                logBody.innerHTML = repairs.map(r => {
-                    const safeData = encodeURIComponent(JSON.stringify(r));
-                    return `<tr>
-                        <td>${r.fecha}</td>
-                        <td style="font-weight:700;">${r.modelo}</td>
-                        <td>${r.noid}</td>
-                        <td style="text-align:left;">${r.detalles}</td>
-                        <td>${r.responsable || '-'}</td>
-                        <td>
-                            <div style="display:flex;gap:4px;justify-content:center;">
-                                <button onclick="openEditModal(${r.rowNum}, decodeURIComponent('${safeData}'))"
-                                    style="background:#1e3a5f;color:#93c5fd;border:1px solid #3b82f6;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:11px;font-weight:700;">✏️</button>
-                                <button onclick="deleteRepairRow(${r.rowNum}, decodeURIComponent('${encodeURIComponent(r.modelo + ' / ' + r.noid)}'))"
-                                    style="background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:11px;font-weight:700;">🗑️</button>
-                            </div>
-                        </td>
-                    </tr>`;
-                }).join('');
+                const countMap = {};
+                repairs.forEach(r => {
+                    if (!r.detalles) return;
+                    r.detalles.split(',').forEach(item => {
+                        const key = item.trim();
+                        if (key) countMap[key] = (countMap[key] || 0) + 1;
+                    });
+                });
+                const sorted = Object.entries(countMap).sort((a, b) => b[1] - a[1]);
+                logBody.innerHTML = sorted.length === 0
+                    ? '<tr><td colspan="2" style="color:#9ca3af;">수리 내용 없음</td></tr>'
+                    : sorted.map(([tipo, cnt]) =>
+                        `<tr>
+                            <td style="text-align:left;font-weight:600;">${tipo}</td>
+                            <td style="font-weight:900;font-size:15px;color:#10b981;">${cnt}</td>
+                        </tr>`
+                    ).join('');
             }
         }
 
