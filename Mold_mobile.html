@@ -422,10 +422,11 @@
                                 style="font-size:12px; color:#d1d5db; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                                 {{ item.name || item.spareCode || '(명칭 없음 / Sin nombre)' }}
                             </div>
-                            <div style="font-size:11px; color:#6b7280;">
-                                {{ item.project || '' }}
-                                <span v-if="item.loc" style="margin-left:6px; color:#9ca3af;">📍 {{ item.loc }}</span>
+                            <div v-if="item.spec"
+                                style="font-size:16px; font-weight:bold; color:#fbbf24; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                {{ item.spec }}
                             </div>
+                            <div style="font-size:11px; color:#6b7280; margin-top:2px;">{{ item.project || '' }}</div>
                         </div>
                         <div style="text-align:right; margin-left:12px; flex-shrink:0;">
                             <div style="font-size:22px; font-weight:bold; color:#93c5fd;">{{ item.stock }}</div>
@@ -509,7 +510,23 @@
                     </div>
                 </div>
 
-                <button class="btn btn-accent" style="margin-top:12px;" @click="submitNew">
+                <!-- 사진 촬영 섹션 -->
+                <label class="field-label" style="margin-top:4px;">사진 촬영 (Foto)</label>
+                <div style="margin-bottom:8px;">
+                    <button type="button" class="btn btn-amber" style="margin-bottom:8px;" @click="capturePhoto">
+                        <i class="fa-solid fa-camera"></i> 사진 촬영 (Tomar Foto)
+                    </button>
+                    <input ref="photoFileInput" type="file" accept="image/*" capture="environment" style="display:none;"
+                        @change="onPhotoSelected">
+                    <div v-if="newPartImg" style="position:relative; text-align:center;">
+                        <img :src="newPartImg"
+                            style="max-width:100%; max-height:200px; border-radius:8px; border:1px solid #4b5563;">
+                        <button type="button" @click="removePhoto"
+                            style="position:absolute; top:4px; right:4px; background:rgba(239,68,68,0.85); border:none; color:white; border-radius:50%; width:26px; height:26px; cursor:pointer; font-size:14px; line-height:1;">✕</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-accent" style="margin-top:4px;" @click="submitNew">
                     <i class="fa-solid fa-cloud-arrow-up"></i> 클라우드에 등록 저장 (Guardar en Nube)
                 </button>
                 <div v-if="saveStatus" :class="saveStatus.ok ? 'sync-ok' : 'sync-err'">
@@ -638,11 +655,47 @@
                     name: '', spec: '', spareCode: '', model: '',
                     stock: 0, loc: '', min: 0, max: 10,
                 });
-                const resetNewPart = () => Object.assign(newPart, {
-                    project: '', moldCode: '', op: 'OP10',
-                    name: '', spec: '', spareCode: '', model: '',
-                    stock: 0, loc: '', min: 0, max: 10,
+                const newPartImg = ref(''); // 촬영된 이미지 base64
+                const photoFileInput = ref(null);
+
+                const resetNewPart = () => {
+                    Object.assign(newPart, {
+                        project: '', moldCode: '', op: 'OP10',
+                        name: '', spec: '', spareCode: '', model: '',
+                        stock: 0, loc: '', min: 0, max: 10,
+                    });
+                    newPartImg.value = '';
+                };
+
+                // ── 이미지 압축 (canvas 이용, 최대 800px, JPEG 0.7) ──
+                const compressImage = (file) => new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const MAX = 800;
+                            let w = img.width, h = img.height;
+                            if (w > MAX || h > MAX) {
+                                if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+                                else { w = Math.round(w * MAX / h); h = MAX; }
+                            }
+                            const canvas = document.createElement('canvas');
+                            canvas.width = w; canvas.height = h;
+                            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                            resolve(canvas.toDataURL('image/jpeg', 0.7));
+                        };
+                        img.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
                 });
+
+                const capturePhoto = () => { if (photoFileInput.value) photoFileInput.value.click(); };
+                const removePhoto = () => { newPartImg.value = ''; if (photoFileInput.value) photoFileInput.value.value = ''; };
+                const onPhotoSelected = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    newPartImg.value = await compressImage(file);
+                };
 
                 // ── Load ALL cloud parts on startup ──
                 const loadAll = async () => {
@@ -835,7 +888,7 @@
                         loc: newPart.loc.trim(),
                         min: parseInt(newPart.min) || 0,
                         max: parseInt(newPart.max) || 10,
-                        img: '', transactions: [],
+                        img: newPartImg.value || '', transactions: [],
                         carryover: parseInt(newPart.stock) || 0,
                     };
                     try {
@@ -856,6 +909,7 @@
                     searchCode, searchResults, didSearch, doSearch,
                     editingItem, openEdit, closeEdit, adjustStock, saveEdit,
                     showNewForm, newPart, openNewForm, submitNew,
+                    newPartImg, photoFileInput, capturePhoto, removePhoto, onPhotoSelected,
                 };
             }
         }).mount('#app');
