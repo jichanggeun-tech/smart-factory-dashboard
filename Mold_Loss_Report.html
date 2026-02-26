@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>금형 LOSS 보고서</title>
+    <title></title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -1359,36 +1359,49 @@
         function renderSubTrend(moldName, data, weekHeaders, idx) {
             const labels = weekHeaders.map(h => h.label);
             const keys = weekHeaders.map(h => h.key);
-            const values = new Array(keys.length).fill(0);
 
-            data.forEach(d => {
-                const wk = `${d.calYear}-${d.calWeek}`;
-                const wIdx = keys.indexOf(wk);
-                if (wIdx !== -1) {
-                    values[wIdx] = d.items.reduce((sum, it) => sum + it.min, 0);
-                }
+            // 세부 항목(sub/적용모델) 목록 추출
+            const subSet = [...new Set(data.flatMap(d => d.items.map(it => it.sub || 'Unknown')))].sort();
+            const palette = ['#3498db', '#e74c3c', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#e91e63', '#00bcd4'];
+
+            const datasets = subSet.map((sub, si) => {
+                const values = new Array(keys.length).fill(0);
+                data.forEach(d => {
+                    const wk = `${d.calYear}-${d.calWeek}`;
+                    const wIdx = keys.indexOf(wk);
+                    if (wIdx !== -1) {
+                        d.items.filter(it => (it.sub || 'Unknown') === sub)
+                            .forEach(it => values[wIdx] += it.min);
+                    }
+                });
+                const color = palette[si % palette.length];
+                return {
+                    label: sub,
+                    data: values,
+                    borderColor: color,
+                    backgroundColor: color + '22',
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 4
+                };
             });
 
             const ctx = document.getElementById(`chart-trend-${idx}`).getContext('2d');
             new Chart(ctx, {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: moldName,
-                        data: values,
-                        borderColor: '#3498db',
-                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
-                        fill: true,
-                        tension: 0.1,
-                        pointRadius: 4
-                    }]
-                },
+                data: { labels, datasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, title: { display: false } },
-                    scales: { y: { beginAtZero: true, title: { display: true, text: 'min', font: { size: 10 } } }, x: { ticks: { font: { size: 9 } } } }
+                    plugins: {
+                        legend: { display: subSet.length > 1, position: 'bottom', labels: { font: { size: 9 }, boxWidth: 12 } },
+                        title: { display: false },
+                        datalabels: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: 'min', font: { size: 10 } } },
+                        x: { ticks: { font: { size: 9 } } }
+                    }
                 }
             });
         }
