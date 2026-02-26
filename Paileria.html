@@ -3,9 +3,8 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Paileria Production</title>
+    <title>Paileria - Gestión de Proyectos y Reparaciones (프로젝트·수리 관리)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg-body: #111827;
@@ -19,15 +18,13 @@
             --warning: #f59e0b;
             --blue: #3b82f6;
             --border: #4b5563;
-            --success: #15803d;
-            /* Darker Green for visibility */
             --text-dark: #111827;
         }
 
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg-body);
+            background: var(--bg-body);
             display: flex;
             height: 100vh;
             font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
@@ -36,15 +33,14 @@
         }
 
         .input-panel {
-            width: 600px;
-            min-width: 450px;
+            width: 560px;
+            min-width: 420px;
             background: var(--bg-nav);
-            color: var(--text-main);
-            padding: 20px;
+            padding: 16px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 12px;
             border-right: 1px solid var(--border);
             z-index: 10;
             height: 100vh;
@@ -53,13 +49,13 @@
 
         .input-panel h2 {
             border-bottom: 2px solid var(--border);
-            padding-bottom: 12px;
-            font-size: 1.4rem;
+            padding-bottom: 10px;
+            font-size: 1.3rem;
             margin: 0;
             color: var(--blue);
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
 
         input,
@@ -69,10 +65,11 @@
             color: var(--text-main);
             border: 1px solid var(--border);
             border-radius: 6px;
-            padding: 8px;
+            padding: 6px 8px;
             width: 100%;
             box-sizing: border-box;
             font-family: inherit;
+            font-size: 0.85rem;
         }
 
         input:focus,
@@ -82,68 +79,57 @@
             border-color: transparent;
         }
 
+        label {
+            display: block;
+            margin-bottom: 3px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
 
-
-        /* Sidebar Controls (Home + Toggle wrapper) */
-        /* [수정됨] 표준 홈 버튼 & 토글 버튼 스타일 */
         .sidebar-controls {
             display: flex;
             align-items: center;
             position: fixed;
             top: 15px;
-            left: 15px !important;
+            left: 15px;
             z-index: 1001;
-            transition: none;
         }
 
         .home-btn {
-            background: #334155 !important;
-            color: #e2e8f0 !important;
-            border: 1px solid #475569 !important;
-            border-radius: 8px 0 0 8px !important;
-            /* 둥근 정도 8px */
-            height: 28px !important;
-            /* 높이 28px */
-            padding: 0 10px !important;
-            box-sizing: border-box !important;
-            text-decoration: none !important;
-            font-size: 12px !important;
-            font-weight: 700 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 4px !important;
-            margin: 0 !important;
+            background: #334155;
+            color: #e2e8f0;
+            border: 1px solid #475569;
+            border-radius: 8px 0 0 8px;
+            height: 28px;
+            padding: 0 10px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .home-btn:hover {
-            background: #4285F4 !important;
-            color: #fff !important;
+            background: #4285F4;
+            color: #fff;
         }
 
         .btn-toggle-sidebar {
-            width: 24px !important;
-            height: 28px !important;
-            /* 높이 28px */
-            background: #1e293b !important;
-            border: 1px solid #334155 !important;
-            border-left: none !important;
-            /* 왼쪽 선 제거 (연결효과) */
-            border-radius: 0 8px 8px 0 !important;
-            /* 오른쪽만 둥글게 */
-            box-sizing: border-box !important;
-            color: #94a3b8 !important;
-            cursor: pointer !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            font-size: 12px !important;
-            padding: 0 !important;
-        }
-
-        .btn-toggle-sidebar:hover {
-            color: white !important;
-            background: #334155 !important;
+            width: 24px;
+            height: 28px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-left: none;
+            border-radius: 0 8px 8px 0;
+            color: #94a3b8;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            padding: 0;
         }
 
         .btn-toggle-sidebar:hover {
@@ -151,29 +137,16 @@
             background: #334155;
         }
 
-        /* Full Screen Mode */
-        body.full-screen .input-panel {
+        body.full-screen .input-panel,
+        .resizer {
             display: none;
-        }
-
-        body.full-screen .resizer {
-            display: none;
-        }
-
-        body.full-screen .sidebar-controls {
-            position: fixed;
-            left: 15px !important;
-            top: 15px;
-            z-index: 100;
         }
 
         .preview-panel {
             flex: 1;
-            background: var(--bg-report);
-            color: #1f2937;
-            /* Explicitly set text color for potentially light backgrounds */
+            background: #f0f4f8;
             overflow-y: auto;
-            padding: 40px;
+            padding: 30px;
             display: block;
             position: relative;
         }
@@ -183,63 +156,59 @@
             max-width: 1100px;
             margin: 0 auto;
             background: white;
-            padding: 60px;
+            padding: 50px;
             box-sizing: border-box;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, .08);
             border-radius: 8px;
-            position: relative;
             color: var(--text-dark);
             min-height: 100%;
         }
 
+        /* Summary Cards */
         .summary-container {
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             margin-bottom: 40px;
-        }
-
-        .summary-row {
-            display: grid;
-            gap: 10px;
-        }
-
-        .summary-row.row-top {
-            grid-template-columns: repeat(5, 1fr);
-        }
-
-        .summary-row.row-bottom {
-            grid-template-columns: repeat(2, 1fr);
+            flex-wrap: wrap;
         }
 
         .summary-card {
-            padding: 20px 10px;
+            flex: 1;
+            min-width: 160px;
+            padding: 18px 12px;
             border-radius: 10px;
             background: white;
             border: 1px solid #edf2f7;
             text-align: center;
             border-bottom: 4px solid #cbd5e0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, .02);
         }
 
         .summary-card h4 {
-            margin: 0 0 10px 0;
-            font-size: 11px;
-            color: var(--text-muted);
+            margin: 0 0 8px;
+            font-size: 10px;
+            color: #718096;
             text-transform: uppercase;
             font-weight: 700;
         }
 
         .summary-card .value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 800;
             color: #1a202c;
         }
 
+        .summary-card .sub {
+            font-size: 10px;
+            color: #a0aec0;
+            margin-top: 3px;
+        }
+
+        /* Section Title */
         .section-title {
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 800;
-            margin: 40px 0 15px 0;
+            margin: 35px 0 12px;
             display: flex;
             align-items: center;
             color: #1a202c;
@@ -247,32 +216,28 @@
 
         .section-title::before {
             content: "";
-            width: 6px;
-            height: 24px;
+            width: 5px;
+            height: 22px;
             background: var(--accent);
-            margin-right: 12px;
+            margin-right: 10px;
             border-radius: 3px;
         }
 
+        /* Tables */
         table {
             width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            font-size: 11.5px;
-            margin-bottom: 20px;
-            table-layout: fixed;
-            border: 1px solid #6b7280;
-            /* Outer border */
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-bottom: 18px;
         }
 
         th,
         td {
             border: 1px solid #9ca3af;
-            /* Darker border for visibility */
-            padding: 12px 6px;
+            padding: 10px 6px;
             text-align: center;
             vertical-align: middle;
-            background-color: #fff;
+            background: #fff;
             word-break: break-all;
         }
 
@@ -283,15 +248,11 @@
         }
 
         tr:nth-child(even) td {
-            background-color: #fafbfd;
-        }
-
-        td[rowspan] {
-            background-color: #fff !important;
+            background: #fafbfd;
         }
 
         .badge {
-            padding: 4px 10px;
+            padding: 3px 9px;
             border-radius: 50px;
             font-size: 10px;
             font-weight: 800;
@@ -301,74 +262,48 @@
 
         .bg-done {
             background: #15803d;
-            /* Verified Visible Green */
         }
 
         .bg-prog {
             background: #0f766e;
-            /* Darker Teal */
         }
 
-        .bg-new {
-            background: #64748b;
-        }
-
-        .bg-mod {
-            background: #8b5cf6;
-        }
-
-        .bar-container {
-            width: 100%;
-            height: 12px;
-            background: #edf2f7;
-            border-radius: 6px;
-            overflow: hidden;
-            position: relative;
-            border: 1px solid #e2e8f0;
-        }
-
-        .bar-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), #0ea5e9);
-            transition: width 0.8s;
-        }
-
-        .bar-text {
-            font-size: 10px;
-            font-weight: 800;
-            margin-top: 3px;
-            display: block;
-            color: var(--text-muted);
-        }
-
+        /* Form sections */
         .form-section {
             background: #343a40;
-            padding: 15px;
+            padding: 14px;
             border-radius: 8px;
             border: 1px solid #495057;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
+        .form-section h3 {
+            font-size: 0.87rem;
+            border-bottom: 1px solid #555;
+            padding-bottom: 6px;
+            margin: 0 0 10px;
+            color: #e9ecef;
+        }
+
+        /* Project cards in input */
         .project-card {
             background: #2b3035;
             border: 1px solid #495057;
             border-radius: 6px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             position: relative;
-            overflow: hidden;
         }
 
         .card-header {
             background: #3c4249;
-            height: 36px;
+            height: 34px;
             display: flex;
             align-items: stretch;
             border-bottom: 1px solid #495057;
         }
 
-        /* Move Controls */
         .move-controls {
-            width: 26px;
+            width: 24px;
             background: #343a40;
             display: flex;
             flex-direction: column;
@@ -381,10 +316,12 @@
             background: transparent;
             color: #adb5bd;
             cursor: pointer;
-            font-size: 9px;
-            line-height: 1;
+            font-size: 8px;
             padding: 0;
-            transition: background 0.2s, color 0.2s;
+        }
+
+        .btn-move:first-child {
+            border-bottom: 1px solid #495057;
         }
 
         .btn-move:hover {
@@ -392,16 +329,12 @@
             color: var(--accent);
         }
 
-        .btn-move:first-child {
-            border-bottom: 1px solid #495057;
-        }
-
         .header-content {
             flex: 1;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 10px;
+            padding: 0 8px;
             cursor: pointer;
         }
 
@@ -409,44 +342,36 @@
             background: #454d55;
         }
 
-        .card-title {
+        .card-title-text {
             color: #e9ecef;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: bold;
         }
 
         .card-info {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: #adb5bd;
-            margin-right: 5px;
-        }
-
-        .fold-icon {
-            font-size: 0.7rem;
-            color: #adb5bd;
-            transition: transform 0.2s;
         }
 
         .card-actions {
             display: flex;
             align-items: center;
-            gap: 4px;
-            padding: 0 8px;
+            gap: 3px;
+            padding: 0 6px;
             background: #343a40;
             border-left: 1px solid #495057;
         }
 
         .btn-sm {
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
-            font-weight: bold;
+            font-size: 11px;
             color: white;
         }
 
@@ -454,53 +379,8 @@
             background: var(--danger);
         }
 
-        .btn-dup {
-            background: #6f42c1;
-        }
-
         .card-body {
-            padding: 15px;
-            display: block;
-        }
-
-        .grid-days-labels {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
-            margin-bottom: 2px;
-        }
-
-        .grid-days-labels span {
-            font-size: 0.65rem;
-            color: #adb5bd;
-            text-align: center;
-            font-weight: bold;
-        }
-
-        .grid-days {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 6px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 4px;
-            font-size: 0.7rem;
-            color: #adb5bd;
-            font-weight: 600;
-        }
-
-        input,
-        select {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #6c757d;
-            border-radius: 4px;
-            background: #fff;
-            color: #212529;
-            font-size: 0.85rem;
-            box-sizing: border-box;
+            padding: 12px;
         }
 
         .btn {
@@ -509,18 +389,28 @@
             color: #f9fafb;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: 800;
+            font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: 0.3s;
-            height: 40px;
+            transition: .2s;
+            height: 38px;
             width: 100%;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
         .btn:hover {
-            filter: brightness(1.1);
+            filter: brightness(1.15);
+        }
+
+        .btn-green {
+            background: #065f46;
+            border-color: #10b981;
+        }
+
+        .btn-blue {
+            background: #1e3a5f;
+            border-color: #3b82f6;
         }
 
         .toast {
@@ -528,16 +418,97 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(33, 37, 41, 0.95);
+            background: rgba(33, 37, 41, .95);
             color: var(--accent);
-            padding: 12px 25px;
+            padding: 10px 22px;
             border-radius: 30px;
-            font-size: 0.9rem;
+            font-size: .88rem;
             z-index: 9999;
             display: none;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, .5);
             border: 1px solid var(--accent);
             font-weight: bold;
+        }
+
+        /* Repair section in output */
+        .repair-date-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding: 12px;
+            background: #f0f4f8;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            flex-wrap: wrap;
+        }
+
+        .repair-date-bar label {
+            margin: 0;
+            font-size: 0.78rem;
+            color: #4a5568;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .repair-date-bar input[type=date] {
+            background: white;
+            color: #1a202c;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 0.83rem;
+            width: auto;
+        }
+
+        .repair-stat-cards {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+
+        .repair-stat-card {
+            flex: 1;
+            min-width: 140px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .checkbox-group-out {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px;
+            max-height: 140px;
+            overflow-y: auto;
+        }
+
+        .checkbox-small {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            padding: 3px 0;
+        }
+
+        .checkbox-small input {
+            width: auto;
+            padding: 0;
+        }
+
+        /* Completion section */
+        .completion-card {
+            background: #2b3035;
+            border: 1px solid #10b981;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            padding: 10px;
         }
 
         @media print {
@@ -552,22 +523,18 @@
             }
 
             .input-panel,
-            .resizer,
             .btn,
             .form-section,
             .toast,
-            .btn-toggle-sidebar {
+            .sidebar-controls {
                 display: none !important;
             }
 
             .preview-panel {
                 display: block;
-                position: relative;
                 width: 100% !important;
                 height: auto !important;
-                margin: 0 !important;
                 padding: 0 !important;
-                overflow: visible !important;
                 background: white;
             }
 
@@ -577,255 +544,381 @@
                 margin: 0 !important;
                 padding: 20px !important;
                 box-shadow: none !important;
-                border: none !important;
-                border-radius: 0 !important;
-            }
-
-            table {
-                page-break-inside: auto;
-            }
-
-            tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
-
-            .bar-fill,
-            th {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
             }
         }
     </style>
 </head>
 
 <body>
+    <div id="saveToast" class="toast">💾 저장 완료! (Guardado)</div>
+    <div id="cloudToast" class="toast" style="border-color:#4285F4;color:#4285F4;">☁️ 처리 완료!</div>
 
-    <div id="saveToast" class="toast">💾 저장 완료! (Saved)</div>
-    <div id="cloudToast" class="toast" style="border-color:#4285F4; color:#4285F4;">☁️ 처리 완료!</div>
-
-    <datalist id="model-list">
-        <option value="6500H">
-        <option value="6500C">
-    </datalist>
-    <datalist id="loc-list">
-        <option value="LH">
-        <option value="RH">
-        <option value="FRE">
-    </datalist>
-
+    <!-- Input Panel -->
     <div class="input-panel" id="leftPanel">
-        <h2>
-        </h2>
+        <h2>🏭 Pailería</h2>
 
-        <div style="display:flex; gap:5px; margin-bottom:10px;">
-            <button class="btn" onclick="window.print()" style="flex:1;">PDF 변환 (PDF)</button>
-            <button class="btn" onclick="exportImage()" style="flex:1;">스크린샷 (Captura)</button>
+        <!-- 인쇄/스크린샷 -->
+        <div style="display:flex;gap:6px;">
+            <button class="btn" onclick="window.print()" style="flex:1;">🖨️ PDF 인쇄 (Imprimir)</button>
+            <button class="btn" onclick="exportImage()" style="flex:1;">📸 스크린샷 (Captura)</button>
         </div>
 
+        <!-- 파일/클라우드 -->
         <div class="form-section">
-            <h3 style="font-size:0.9rem; border-bottom:1px solid #555; padding-bottom:5px; margin-top:0;">📂 구글 시트 및 파일
-                (Google Sheet & File)
-            </h3>
-
-            <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <button class="btn" onclick="saveToCloud()">☁️ 주차별 저장</button>
-                <button class="btn" onclick="openCloudModal()">☁️ 불러오기</button>
+            <h3>📂 구글 시트 및 파일 (Google Sheet &amp; File)</h3>
+            <div style="display:flex;gap:6px;margin-bottom:8px;">
+                <button class="btn btn-blue" onclick="saveToCloud()" style="flex:1;">☁️ 저장 (Guardar)</button>
+                <button class="btn btn-blue" onclick="openCloudModal()" style="flex:1;">☁️ 불러오기 (Cargar)</button>
             </div>
-            <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <button class="btn" onclick="loadPrevWeekData()">📥 전주 실적 → Prev 자동입력</button>
+            <div style="display:flex;gap:8px;">
+                <div style="flex:1;"><label>보고 날짜 (Fecha del Reporte)</label><input type="date" id="in-date"
+                        onchange="renderReport()"></div>
             </div>
+            <div style="display:flex;gap:6px;margin-top:10px;">
+                <button class="btn" style="flex:1;" onclick="manualSaveFile()">💾 파일 백업 (Backup)</button>
+                <label class="btn" style="flex:1;cursor:pointer;">📂 파일 열기 (Abrir)<input type="file" id="file-input"
+                        accept=".json" onchange="handleFileLoad(this)" style="display:none;"></label>
+            </div>
+        </div>
 
-            <div style="display:flex; gap:10px;">
-                <div style="flex:1;"><label>로고 변경 (Logo)</label><input type="file" id="logo-input" accept="image/*"
-                        onchange="handleLogo(this)"></div>
-                <div style="flex:1;"><label>보고 날짜 (Fecha)</label><input type="date" id="in-date"
-                        onchange="renderReport();">
+        <!-- 수리 실적 입력 -->
+        <div class="form-section">
+            <h3>🔧 수리 실적 입력 (Registro de Reparación de Carritos)</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">
+                <div><label>수리 날짜 (Fecha)</label><input type="date" id="r-fecha"></div>
+                <div><label>대차 모델 (Modelo)</label>
+                    <select id="r-modelo" onchange="toggleRModeloOtros(this.value)">
+                        <option value="">선택 (Seleccione)</option>
+                        <option>6500C FRE</option>
+                        <option>6500C REF</option>
+                        <option>6500H FRE</option>
+                        <option>6500H REF</option>
+                        <option>CASE ICE</option>
+                        <option>COVER MULTI</option>
+                        <option value="Otros">기타 (Otros)</option>
+                    </select>
+                </div>
+                <div id="rModeloOtrosWrap" style="display:none;grid-column:span 2;"><label>모델 직접 입력
+                        (Especificar)</label><input type="text" id="r-modelo-otros"></div>
+                <div><label>번호 No. Carrito</label><input type="text" id="r-noid" placeholder="Ej: 123"></div>
+                <div><label>담당자 (Responsable)</label><input type="text" id="r-resp" placeholder="이름"></div>
+            </div>
+            <label style="margin-bottom:6px;">수리 내용 (Detalles de Reparación)</label>
+            <div class="checkbox-group-out" id="repair-checks">
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Cinchos"> Cinchos <span
+                        style="color:#9ca3af;">(결속선)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Cortina"> Cortina <span
+                        style="color:#9ca3af;">(커튼)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Dampla"> Dampla <span
+                        style="color:#9ca3af;">(단플라)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Esponja"> Esponja <span
+                        style="color:#9ca3af;">(스폰지)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Estructura"> Estructura <span
+                        style="color:#9ca3af;">(골조)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Felfa"> Felfa <span
+                        style="color:#9ca3af;">(부직포)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Pistón"> Pistón <span
+                        style="color:#9ca3af;">(피스톤)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Protección"> Protección <span
+                        style="color:#9ca3af;">(보호가드)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Tubo/PTR"> Tubo/PTR <span
+                        style="color:#9ca3af;">(파이프)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Jaladera"> Jaladera <span
+                        style="color:#9ca3af;">(손잡이)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Corrosión"> Corrosión <span
+                        style="color:#9ca3af;">(부식)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Llanta"> Llanta <span
+                        style="color:#9ca3af;">(캐스터)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Separador"> Separador <span
+                        style="color:#9ca3af;">(분리대)</span></label>
+                <label class="checkbox-small"><input type="checkbox" name="rd" value="Velcro"> Velcro <span
+                        style="color:#9ca3af;">(접착)</span></label>
+            </div>
+            <div style="margin-top:8px;"><label>기타 (Otros)</label><textarea id="r-otros" rows="2"
+                    placeholder="기타 사항..."></textarea></div>
+            <button class="btn btn-green" style="margin-top:8px;" onclick="submitRepair()">🔧 수리 등록 (Registrar
+                Reparación)</button>
+        </div>
+
+        <!-- 저장 능력 SET 입력 -->
+        <div class="form-section">
+            <h3>📦 저장 능력 설정 (Configuración de Capacidad SET)</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+                <div>
+                    <label>6500H 저장 SET</label>
+                    <input type="number" id="set-6500h" value="2100" min="0" oninput="renderReport();">
+                </div>
+                <div>
+                    <label>6500C 저장 SET</label>
+                    <input type="number" id="set-6500c" value="2300" min="0" oninput="renderReport();">
                 </div>
             </div>
-            <div style="display:flex; gap:8px; margin-top:12px;">
-                <button class="btn" style="flex:1;" onclick="manualSaveFile()">💾 파일 백업</button>
-                <label class="btn" style="flex:1; cursor:pointer;">
-                    📂 파일 열기 <input type="file" id="file-input" accept=".json" onchange="handleFileLoad(this)"
-                        style="display:none;">
-                </label>
-            </div>
         </div>
 
+        <!-- 프로젝트 진행 실적 입력 -->
         <div class="form-section">
-            <h3 style="font-size:0.9rem; border-bottom:1px solid #555; padding-bottom:5px; margin-top:0;">
-                📊 생산 실적 입력 (Registro de Producción) <span
-                    style="font-size:0.7rem; color:#aaa; font-weight:normal;">(화살표로 이동)</span>
-            </h3>
-            <div id="project-inputs" style="margin-top:10px;"></div>
-            <button class="btn" style="margin-top:10px;" onclick="addProjectRow()">+ 실적 항목 추가</button>
+            <h3>📊 프로젝트 진행 실적 입력 (Registro de Avance de Proyectos)</h3>
+            <div id="project-inputs" style="margin-top:8px;"></div>
+            <button class="btn" style="margin-top:8px;" onclick="addProjectRow()">+ 실적 항목 추가 (Añadir)</button>
         </div>
 
-        <div class="form-section" style="border: 1px solid var(--warning);">
-            <h3
-                style="font-size:0.9rem; border-bottom:1px solid var(--warning); padding-bottom:5px; margin-top:0; color:var(--warning);">
-                ⚙️ 가용 능력 기초 데이터 (Datos Básicos de Capacidad)</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px;">
-                <input type="number" id="base-l" value="280" placeholder="Base LH" onkeyup="renderReport();">
-                <input type="number" id="base-r" value="140" placeholder="Base RH" onkeyup="renderReport();">
-                <input type="number" id="base-f" value="244" placeholder="Base FRE" onkeyup="renderReport();">
-                <input type="number" id="global-weekly-meta" value="0" placeholder="금주 목표" onkeyup="renderReport();"
-                    style="border:1px solid var(--warning);">
-            </div>
+        <!-- 프로젝트 완료 현황 -->
+        <div class="form-section">
+            <h3>✅ 프로젝트 완료 현황 (Estado de Proyectos Completados)</h3>
+            <div id="completion-inputs" style="margin-top:6px;"></div>
+            <button class="btn btn-green" style="margin-top:8px;" onclick="addCompletionRow()">+ 완료 항목 추가 (Añadir
+                Completado)</button>
         </div>
 
-    </div>
+
     </div>
 
+    <!-- Sidebar controls -->
     <div class="sidebar-controls">
         <a class="home-btn" href="index.html">🏠 Home</a>
         <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" onclick="toggleSidebar()">◀</button>
     </div>
 
-
-
-
-
+    <!-- Preview Panel -->
     <div class="preview-panel">
-        <h2 style="margin: 0 0 15px 0; color: #111827; font-size: 24px; font-weight: bold;">
-            Paileria Production
-        </h2>
         <div class="report-container" id="report-content">
+            <!-- Header -->
             <div
-                style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:4px solid var(--text-dark); padding-bottom:15px; margin-bottom:40px;">
-                <div style="display:flex; align-items:center; gap:25px;">
-                    <img id="report-logo" src="" alt="" style="display:none; max-height:60px;">
+                style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:4px solid #111827;padding-bottom:14px;margin-bottom:30px;">
+                <div style="display:flex;align-items:center;gap:20px;">
+
                     <div>
-                        <h1 style="margin:0; font-size:28px; font-weight:900;">PAILERIA 주간 생산 현황 보고서</h1>
-                        <div style="font-size:14px; color:var(--text-muted); font-weight:700; margin-top:5px;">Weekly
-                            Production Performance Report</div>
+                        <h1 style="margin:0;font-size:24px;font-weight:900;">PAILERIA 프로젝트·수리 관리 보고서</h1>
+                        <div style="font-size:12px;color:#718096;font-weight:700;margin-top:4px;">Reporte de Gestión de
+                            Proyectos y Reparación de Carritos</div>
                     </div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-size:20px; font-weight:900; color:var(--accent);" id="out-week-display">Week --
-                    </div>
-                    <div style="font-size:14px; color:var(--text-muted); font-weight:700;" id="out-date"></div>
+                    <div style="font-size:18px;font-weight:900;color:#10b981;" id="out-week-display">Week --</div>
+                    <div style="font-size:13px;color:#718096;font-weight:700;" id="out-date"></div>
                 </div>
             </div>
 
-            <div class="summary-container">
-                <div class="summary-row row-top">
-                    <div class="summary-card">
-                        <h4>전체 목표</h4>
-                        <div class="value" id="sum-meta">0</div>
-                    </div>
-                    <div class="summary-card" style="border-bottom-color:#0ea5e9;">
-                        <h4>현재 완료</h4>
-                        <div class="value" id="sum-accum" style="color:#0ea5e9;">0</div>
-                    </div>
-                    <div class="summary-card" style="border-bottom-color:#f97316;">
-                        <h4>남은 수량</h4>
-                        <div class="value" id="sum-remain" style="color:#f97316;">0</div>
-                    </div>
-                    <div class="summary-card" style="border-bottom-color:#6f42c1;">
-                        <h4>금주 목표</h4>
-                        <div class="value" id="sum-weekly-target" style="color:#6f42c1;">0</div>
-                    </div>
-                    <div class="summary-card" style="border-bottom-color:var(--warning);">
-                        <h4>금주 실적</h4>
-                        <div class="value" id="sum-weekly-prod" style="color:#d97706;">0</div>
-                    </div>
-                </div>
-                <div class="summary-row row-bottom">
-                    <div class="summary-card" style="border-bottom-color:var(--success);">
-                        <h4>주간 달성률</h4>
-                        <div class="value" id="sum-weekly-rate" style="color:var(--success);">0%</div>
-                    </div>
-                    <div class="summary-card" style="border-bottom-color:var(--danger);">
-                        <h4>종합 진도율</h4>
-                        <div class="value" id="sum-rate" style="color:var(--danger);">0%</div>
-                    </div>
-                </div>
-            </div>
 
-            <div class="section-title">1. 프로젝트별 생산 실적 및 진행 현황</div>
+
+            <!-- Section 1: 프로젝트 진행 실적 -->
+            <div class="section-title">1. 프로젝트별 진행 실적 (Avance de Proyectos)</div>
             <table id="tbl-projects">
                 <thead>
                     <tr>
-                        <th width="65">상태</th>
-                        <th width="60">유형</th>
-                        <th width="110">모델</th>
-                        <th width="80">구분</th>
-                        <th width="70">위치</th>
-                        <th width="50">적재</th>
-                        <th width="75">금주실적</th>
-                        <th width="85">전체목표</th>
-                        <th width="85">합계</th>
-                        <th width="140">진도율</th>
+                        <th width="90">날짜 (Fecha)</th>
+                        <th width="130">모델 (Modelo)</th>
+                        <th width="80">수량 (Cant.)</th>
+                        <th>내용 (Descripción)</th>
                     </tr>
                 </thead>
                 <tbody id="out-prod-body"></tbody>
             </table>
 
-            <div class="section-title">2-1. 납품 대차 보유 현황 및 적재 분석</div>
-            <table id="tbl-status">
+            <!-- Section 1-2: 프로젝트 완료 현황 -->
+            <div class="section-title">1-2. 프로젝트 완료 현황 (Proyectos Completados)</div>
+            <table id="tbl-completions">
                 <thead>
                     <tr>
-                        <th width="160">모델 분류</th>
-                        <th width="120">구분</th>
-                        <th width="100">위치</th>
-                        <th style="font-weight:900;">대차 수량</th>
-                        <th>적재/대</th>
-                        <th style="font-weight:900;">현재 적재(EA)</th>
-                        <th>계획(목표)</th>
+                        <th width="150">모델 (Modelo)</th>
+                        <th width="100">완성 수량 (Cant.)</th>
+                        <th width="110">완료 일자 (Fecha de Cierre)</th>
                     </tr>
                 </thead>
-                <tbody id="cart-status-body"></tbody>
+                <tbody id="out-completion-body"></tbody>
             </table>
 
-            <div class="section-title">2-2. 최종 저장 능력 분석 (SET 환산)</div>
-            <table id="tbl-capa">
+            <!-- Section 2: 최종 저장 능력 (고정값) -->
+            <div class="section-title">2. 최종 저장 능력 분석 / Análisis de Capacidad de Almacenamiento (SET 환산)</div>
+            <table>
                 <thead>
                     <tr>
-                        <th>차종 모델</th>
-                        <th>FRE 적재 (EA)</th>
-                        <th>LH 적재 (EA)</th>
-                        <th>RH 적재 (EA)</th>
-                        <th style="background:#f0f7ff; color:var(--accent); font-weight:900;">가용 저장 SET</th>
+                        <th>차종 모델 (Modelo)</th>
+                        <th>가용 저장 SET / Capacidad Disponible</th>
                     </tr>
                 </thead>
-                <tbody id="capa-status-body"></tbody>
+                <tbody>
+                    <tr>
+                        <td style="font-weight:800;background:#f8fafc;">6500H</td>
+                        <td id="out-set-6500h" style="font-weight:900;font-size:16px;color:#10b981;background:#f0fff4;">
+                            2,100 SET</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight:800;background:#f8fafc;">6500C</td>
+                        <td id="out-set-6500c" style="font-weight:900;font-size:16px;color:#10b981;background:#f0fff4;">
+                            2,300 SET</td>
+                    </tr>
+                </tbody>
             </table>
 
-            <div id="report-note"
-                style="margin:20px 0; padding:20px; border-radius:8px; background:#f8fafc; border:1px dashed #cbd5e0; font-size:13px; color:#4a5568; line-height:1.8;">
-                <b>※ 비고 (Note)</b> <br>
-                - 대차 관리 대장은 별도 파일로 관리됩니다.<br>
-                - 본 보고서의 '저장 능력'은 기초 데이터와 개조 수량을 바탕으로 산출됩니다.
+            <!-- Section 3: 대차 수리 진행 내역 -->
+            <div class="section-title">3. 대차 수리 진행 내역 (Historial de Reparación de Carritos)</div>
+
+            <!-- Date Range Picker -->
+            <div class="repair-date-bar">
+                <label>📅 조회 기간 / Período:</label>
+                <input type="date" id="repair-from">
+                <span style="color:#4a5568;font-weight:700;">~</span>
+                <input type="date" id="repair-to">
+                <button onclick="loadRepairData()"
+                    style="background:#1e3a5f;color:#93c5fd;border:1px solid #3b82f6;border-radius:6px;padding:6px 14px;cursor:pointer;font-weight:700;white-space:nowrap;">🔍
+                    조회 (Consultar)</button>
+                <button onclick="loadRepairData('all')"
+                    style="background:#374151;color:#d1d5db;border:1px solid #6b7280;border-radius:6px;padding:6px 14px;cursor:pointer;font-weight:700;white-space:nowrap;">전체
+                    보기 (Ver Todo)</button>
+            </div>
+
+            <!-- Repair Stat Cards -->
+            <div class="repair-stat-cards">
+                <div class="repair-stat-card" style="border-bottom:3px solid #ef4444;">
+                    <h4 style="font-size:10px;color:#718096;text-transform:uppercase;font-weight:700;margin:0 0 6px;">수리
+                        누계 / Total Reparaciones</h4>
+                    <div style="font-size:32px;font-weight:800;color:#ef4444;" id="repair-count-display">-</div>
+                    <div style="font-size:10px;color:#a0aec0;">건</div>
+                </div>
+                <div class="repair-stat-card" style="border-bottom:3px solid #f59e0b;">
+                    <h4 style="font-size:10px;color:#718096;text-transform:uppercase;font-weight:700;margin:0 0 6px;">중복
+                        수리 대차 / Carritos con Reparaciones Repetidas</h4>
+                    <div style="font-size:32px;font-weight:800;color:#f59e0b;" id="repair-dup-display">-</div>
+                    <div style="font-size:10px;color:#a0aec0;">대</div>
+                </div>
+            </div>
+
+            <!-- 중복 수리 테이블 -->
+            <div style="font-size:13px;font-weight:700;color:#4a5568;margin-bottom:6px;">⚠️ 중복 수리 발생 대차 (Carritos con
+                Reparación Repetida)</div>
+            <table id="tbl-dup-repair">
+                <thead>
+                    <tr>
+                        <th>모델 (Modelo)</th>
+                        <th>번호 (No.)</th>
+                        <th>수리 횟수 (Veces)</th>
+                        <th>최근 수리일 (Última Fecha)</th>
+                    </tr>
+                </thead>
+                <tbody id="dup-repair-body">
+                    <tr>
+                        <td colspan="4" style="color:#9ca3af;">조회 버튼을 클릭하세요 / Haga clic en Consultar</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 전체 수리 로그 -->
+            <div style="font-size:13px;font-weight:700;color:#4a5568;margin:16px 0 6px;">📋 수리 이력 전체 (Historial
+                Completo)</div>
+            <table id="tbl-repair-log">
+                <thead>
+                    <tr>
+                        <th width="90">날짜 (Fecha)</th>
+                        <th width="110">모델 (Modelo)</th>
+                        <th width="70">번호 (No.)</th>
+                        <th>수리 내용 (Detalles)</th>
+                        <th width="80">담당자 (Resp.)</th>
+                        <th width="70">관리 (Acción)</th>
+                    </tr>
+                </thead>
+                <tbody id="repair-log-body">
+                    <tr>
+                        <td colspan="6" style="color:#9ca3af;">조회 버튼을 클릭하세요 / Haga clic en Consultar</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- Note -->
+            <div
+                style="margin:20px 0;padding:16px;border-radius:8px;background:#f8fafc;border:1px dashed #cbd5e0;font-size:12px;color:#4a5568;line-height:1.8;">
+                <b>※ 비고 (Nota)</b><br>
+                - 대차 수리 데이터는 구글 시트 REPAIR_LOG 시트에 저장됩니다.<br>
+                - Los datos de reparación se guardan en la hoja REPAIR_LOG de Google Sheets.
             </div>
         </div>
     </div>
 
     <!-- Cloud Modal -->
     <div id="cloud-modal"
-        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; justify-content:center; align-items:center;">
+        style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.7);z-index:9999;justify-content:center;align-items:center;">
         <div
-            style="background:#1e1e1e; border-radius:12px; padding:25px; width:420px; max-height:80vh; overflow-y:auto; border:1px solid #444;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <h3 style="margin:0; color:#4285F4;">☁️ 클라우드 주차 목록</h3>
+            style="background:#1e1e1e;border-radius:12px;padding:24px;width:400px;max-height:80vh;overflow-y:auto;border:1px solid #444;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <h3 style="margin:0;color:#4285F4;">☁️ 클라우드 주차 목록 (Lista de Semanas)</h3>
                 <button onclick="document.getElementById('cloud-modal').style.display='none'"
-                    style="background:none; border:none; color:#aaa; font-size:1.5rem; cursor:pointer;">✕</button>
+                    style="background:none;border:none;color:#aaa;font-size:1.4rem;cursor:pointer;">✕</button>
             </div>
-            <ul id="cloud-list-ul" style="list-style:none; padding:0; margin:0;"></ul>
+            <ul id="cloud-list-ul" style="list-style:none;padding:0;margin:0;"></ul>
         </div>
     </div>
 
+    <!-- Repair Edit Modal -->
+    <div id="repair-edit-modal"
+        style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.75);z-index:10000;justify-content:center;align-items:center;">
+        <div
+            style="background:#1e2530;border-radius:12px;padding:24px;width:480px;border:1px solid #10b981;box-shadow:0 20px 60px rgba(0,0,0,.5);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;">
+                <h3 style="margin:0;color:#10b981;">✏️ 수리 내역 수정 (Editar Reparación)</h3>
+                <button onclick="closeRepairModal()"
+                    style="background:none;border:none;color:#aaa;font-size:1.4rem;cursor:pointer;">✕</button>
+            </div>
+            <input type="hidden" id="edit-rowNum">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+                <div><label style="color:#9ca3af;font-size:.75rem;font-weight:600;">날짜 (Fecha)</label><input type="date"
+                        id="edit-fecha"
+                        style="background:#2d3748;color:#f9fafb;border:1px solid #4b5563;border-radius:6px;padding:7px;width:100%;box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="color:#9ca3af;font-size:.75rem;font-weight:600;">모델 (Modelo)</label>
+                    <select id="edit-modelo" onchange="toggleEditModeloOtros(this.value)"
+                        style="background:#2d3748;color:#f9fafb;border:1px solid #4b5563;border-radius:6px;padding:7px;width:100%;box-sizing:border-box;">
+                        <option value="">선택</option>
+                        <option>6500C FRE</option>
+                        <option>6500C REF</option>
+                        <option>6500H FRE</option>
+                        <option>6500H REF</option>
+                        <option>CASE ICE</option>
+                        <option>COVER MULTI</option>
+                        <option value="Otros">기타 (Otros)</option>
+                    </select>
+                </div>
+                <div id="editModeloOtrosWrap" style="display:none;grid-column:span 2;"><label
+                        style="color:#9ca3af;font-size:.75rem;font-weight:600;">모델 직접 입력</label><input type="text"
+                        id="edit-modelo-otros"
+                        style="background:#2d3748;color:#f9fafb;border:1px solid #4b5563;border-radius:6px;padding:7px;width:100%;box-sizing:border-box;">
+                </div>
+                <div><label style="color:#9ca3af;font-size:.75rem;font-weight:600;">번호 (No. Carrito)</label><input
+                        type="text" id="edit-noid"
+                        style="background:#2d3748;color:#f9fafb;border:1px solid #4b5563;border-radius:6px;padding:7px;width:100%;box-sizing:border-box;">
+                </div>
+                <div><label style="color:#9ca3af;font-size:.75rem;font-weight:600;">담당자 (Responsable)</label><input
+                        type="text" id="edit-resp"
+                        style="background:#2d3748;color:#f9fafb;border:1px solid #4b5563;border-radius:6px;padding:7px;width:100%;box-sizing:border-box;">
+                </div>
+            </div>
+            <div style="margin-bottom:12px;"><label
+                    style="color:#9ca3af;font-size:.75rem;font-weight:600;display:block;margin-bottom:4px;">수리 내용
+                    (Detalles)</label>
+                <textarea id="edit-detalles" rows="3"
+                    style="background:#2d3748;color:#f9fafb;border:1px solid #4b5563;border-radius:6px;padding:8px;width:100%;box-sizing:border-box;resize:vertical;"></textarea>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button onclick="saveRepairEdit()"
+                    style="flex:1;background:#065f46;color:#fff;border:1px solid #10b981;border-radius:6px;padding:10px;cursor:pointer;font-weight:700;font-size:.9rem;">💾
+                    저장 (Guardar)</button>
+                <button onclick="closeRepairModal()"
+                    style="flex:1;background:#374151;color:#d1d5db;border:1px solid #6b7280;border-radius:6px;padding:10px;cursor:pointer;font-weight:700;">취소
+                    (Cancelar)</button>
+            </div>
+        </div>
+    </div>
     <style>
         .cloud-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 15px;
-            margin-bottom: 6px;
+            padding: 10px 14px;
+            margin-bottom: 5px;
             background: #2b2b2b;
             border-radius: 8px;
             cursor: pointer;
-            transition: 0.2s;
+            transition: .2s;
             border: 1px solid transparent;
         }
 
@@ -833,659 +926,382 @@
             background: #3a3a3a;
             border-color: #4285F4;
         }
-
-        .cloud-item.loaded {
-            border-color: #34A853;
-            opacity: 0.7;
-        }
     </style>
 
+    <!-- JS will be appended below -->
     <script>
-        // ==========================================
-        // [중요] 여기에 배포한 구글 웹 앱 URL을 붙여넣으세요
-        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwIH4aOpc0L_WVTsLbHNkJ76RjEbjZZ9Upswl1APzDr72_aTY-7j_L7v0lok7EWh_v-/exec";
-        // ==========================================
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRIbd1kla0br3DFBCHtLvQsjpbdNhEQ6MN5rZCIANFsAda2GLmpGW2_aS10itK-kZv/exec";
+        const STORAGE_KEY = 'paileria_v9_main';
+        // ── 유틸 ──────────────────────────────────────────
+        function cleanNum(v, d = 0) { return v === null || v === undefined || v === "" ? d : parseFloat(v) || d; }
+        function getTodayStr() { const d = new Date(); return `${d.getFullYear()}-${('0' + (d.getMonth() + 1)).slice(-2)}-${('0' + d.getDate()).slice(-2)}`; }
+        function getSimpleWeek(s) { if (!s) return 0; const d = new Date(s); d.setHours(0, 0, 0, 0); const f = new Date(d.getFullYear(), 0, 1); return Math.ceil(((d - f) / 86400000 + f.getDay() + 1) / 7); }
+        function getCurrentWeekId() { const d = document.getElementById('in-date').value; if (!d) return null; return `${d.split('-')[0]}-W${String(getSimpleWeek(d)).padStart(2, '0')}`; }
+        function showToast(msg, el = 'cloudToast') { const t = document.getElementById(el); t.innerText = msg; t.style.display = 'block'; setTimeout(() => { t.style.display = 'none'; }, 2500); }
+        function toggleSidebar() { document.body.classList.toggle('full-screen'); document.getElementById('btn-toggle-sidebar').innerText = document.body.classList.contains('full-screen') ? '▶' : '◀'; }
 
-        const STORAGE_KEY = 'paileria_v8_3_cloud';
-        let currentLogoBase64 = "";
+        // ── 수리 입력 ────────────────────────────────────────
+        function toggleRModeloOtros(v) { document.getElementById('rModeloOtrosWrap').style.display = v === 'Otros' ? 'block' : 'none'; }
 
-        // === Cloud Functions (주차별 저장) ===
-        function getCurrentWeekId() {
-            const d = document.getElementById('in-date').value;
-            if (!d) return null;
-            const w = getSimpleWeek(d);
-            const y = d.split('-')[0];
-            return `${y}-W${String(w).padStart(2, '0')}`;
+        function submitRepair() {
+            const fecha = document.getElementById('r-fecha').value;
+            const modelo = document.getElementById('r-modelo').value === 'Otros' ? document.getElementById('r-modelo-otros').value : document.getElementById('r-modelo').value;
+            const noid = document.getElementById('r-noid').value.trim();
+            const resp = document.getElementById('r-resp').value.trim();
+            const checks = [...document.querySelectorAll('input[name="rd"]:checked')].map(c => c.value);
+            const otros = document.getElementById('r-otros').value.trim();
+            if (!fecha || !modelo || !noid) { alert('날짜, 모델, 번호는 필수입니다. / Fecha, Modelo y No. son obligatorios.'); return; }
+            if (checks.length === 0 && !otros) { alert('수리 내용을 선택하거나 기타를 입력하세요. / Seleccione detalles o escriba en Otros.'); return; }
+            const detalles = [...checks, ...(otros ? [otros] : [])].join(', ');
+            const payload = { cmd: 'saveRepair', fecha, modelo, noid, detalles, responsable: resp };
+            if (APPS_SCRIPT_URL.includes('AKfycb')) {
+                fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) })
+                    .then(() => showToast('🔧 수리 등록 완료! (Reparación registrada)'))
+                    .catch(e => alert('오류: ' + e.message));
+            } else { alert('APPS_SCRIPT_URL을 설정해주세요.'); }
+            // 폼 초기화
+            document.getElementById('r-fecha').value = getTodayStr();
+            document.getElementById('r-modelo').value = '';
+            document.getElementById('r-noid').value = '';
+            document.getElementById('r-resp').value = '';
+            document.getElementById('r-otros').value = '';
+            document.querySelectorAll('input[name="rd"]').forEach(c => c.checked = false);
+            toggleRModeloOtros('');
         }
 
-        async function saveToCloud() {
-            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어서 APPS_SCRIPT_URL 변수에 구글 주소를 넣어주세요!"); return; }
-
-            const weekId = getCurrentWeekId();
-            if (!weekId) { alert("보고 날짜를 먼저 입력해주세요."); return; }
-            if (!confirm(`[${weekId}] 주차 데이터를 구글 시트에 저장하시겠습니까?`)) return;
-
-            const btn = event.target; const orgTxt = btn.innerText;
-            btn.innerText = "저장 중..."; btn.disabled = true;
-
+        async function loadRepairData(mode) {
+            const from = mode === 'all' ? '' : document.getElementById('repair-from').value;
+            const to = mode === 'all' ? '' : document.getElementById('repair-to').value;
+            if (mode !== 'all' && (!from || !to)) { alert('기간을 선택해주세요. / Seleccione el período.'); return; }
+            const url = `${APPS_SCRIPT_URL}?cmd=repairRange&dateFrom=${from}&dateTo=${to}&t=${Date.now()}`;
+            document.getElementById('dup-repair-body').innerHTML = '<tr><td colspan="4" style="color:#9ca3af;">로딩 중... / Cargando...</td></tr>';
+            document.getElementById('repair-log-body').innerHTML = '<tr><td colspan="5" style="color:#9ca3af;">로딩 중... / Cargando...</td></tr>';
             try {
-                const projectsData = Array.from(document.querySelectorAll('.project-card')).map(row => ({
-                    model: row.querySelector('.p-model').value, class: row.querySelector('.p-class').value, loc: row.querySelector('.p-loc').value,
-                    type: row.querySelector('.p-type').value, loadCap: row.querySelector('.p-loadCap').value,
-                    isDone: row.querySelector('.p-done').checked, target: row.querySelector('.p-target').value, prev: row.querySelector('.p-prev').value,
-                    mon: row.querySelector('.p-mon').value, tue: row.querySelector('.p-tue').value, wed: row.querySelector('.p-wed').value,
-                    thu: row.querySelector('.p-thu').value, fri: row.querySelector('.p-fri').value, sat: row.querySelector('.p-sat').value
-                }));
-
-                const payload = {
-                    weekId: weekId,
-                    d: document.getElementById('in-date').value,
-                    logo: currentLogoBase64,
-                    base: { l: document.getElementById('base-l').value, r: document.getElementById('base-r').value, f: document.getElementById('base-f').value, wm: document.getElementById('global-weekly-meta').value },
-                    projects: projectsData
-                };
-
-                await fetch(APPS_SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "text/plain" },
-                    body: JSON.stringify(payload)
-                });
-
-                showToast(`☁️ [${weekId}] 저장 완료!`);
-            } catch (error) {
-                alert("오류: " + error.message);
-            } finally {
-                btn.innerText = orgTxt; btn.disabled = false;
+                const res = await fetch(url); const data = await res.json();
+                renderRepairSection(data);
+            } catch (e) {
+                document.getElementById('dup-repair-body').innerHTML = `<tr><td colspan="4" style="color:red;">오류: ${e.message}</td></tr>`;
             }
         }
 
-        async function openCloudModal() {
-            if (APPS_SCRIPT_URL.includes("여기에")) { alert("코드를 열어서 APPS_SCRIPT_URL 변수에 구글 주소를 넣어주세요!"); return; }
-
-            const modal = document.getElementById('cloud-modal');
-            const listUl = document.getElementById('cloud-list-ul');
-            listUl.innerHTML = '<li style="text-align:center; padding:10px; color:#aaa;">로딩 중...</li>';
-            modal.style.display = 'flex';
-
-            try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?cmd=list&t=${Date.now()}`);
-                const text = await response.text();
-                let result;
-                try { result = JSON.parse(text); } catch (pe) {
-                    listUl.innerHTML = `<li style="color:red; text-align:center;">서버 응답 파싱 실패</li>`;
-                    return;
-                }
-
-                listUl.innerHTML = '';
-                if (result.list && result.list.length > 0) {
-                    result.list.forEach(item => {
-                        const li = document.createElement('li');
-                        li.className = 'cloud-item';
-                        li.innerHTML = `
-                            <div>
-                                <div style="font-weight:bold; font-size:1.1rem; color:#4285F4;">${item.weekId}</div>
-                                <div style="font-size:0.8rem; color:#aaa;">날짜: ${item.date} | 항목: ${item.projectCount}건</div>
+        function renderRepairSection(data) {
+            const repairs = data.repairs || [];
+            const dups = data.summary && data.summary.duplicates || [];
+            document.getElementById('repair-count-display').innerText = repairs.length;
+            document.getElementById('repair-dup-display').innerText = dups.length;
+            // dup table
+            const dupBody = document.getElementById('dup-repair-body');
+            dupBody.innerHTML = dups.length === 0 ? '<tr><td colspan="4" style="color:#9ca3af;">중복 수리 없음 / Sin carritos repetidos</td></tr>' :
+                dups.map(d => `<tr><td style="font-weight:700;">${d.modelo}</td><td>${d.noid}</td><td style="font-weight:800;color:#ef4444;">${d.count}회</td><td>${d.lastDate || '-'}</td></tr>`).join('');
+            // log table (rowNum 기반 편집·삭제 버튼 포함)
+            const logBody = document.getElementById('repair-log-body');
+            if (repairs.length === 0) {
+                logBody.innerHTML = '<tr><td colspan="6" style="color:#9ca3af;">데이터 없음 / Sin datos</td></tr>';
+            } else {
+                logBody.innerHTML = repairs.map(r => {
+                    const safeData = encodeURIComponent(JSON.stringify(r));
+                    return `<tr>
+                        <td>${r.fecha}</td>
+                        <td style="font-weight:700;">${r.modelo}</td>
+                        <td>${r.noid}</td>
+                        <td style="text-align:left;">${r.detalles}</td>
+                        <td>${r.responsable || '-'}</td>
+                        <td>
+                            <div style="display:flex;gap:4px;justify-content:center;">
+                                <button onclick="openEditModal(${r.rowNum}, decodeURIComponent('${safeData}'))"
+                                    style="background:#1e3a5f;color:#93c5fd;border:1px solid #3b82f6;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:11px;font-weight:700;">✏️</button>
+                                <button onclick="deleteRepairRow(${r.rowNum}, decodeURIComponent('${encodeURIComponent(r.modelo + ' / ' + r.noid)}'))"
+                                    style="background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;border-radius:4px;padding:3px 7px;cursor:pointer;font-size:11px;font-weight:700;">🗑️</button>
                             </div>
-                            <div style="font-size:0.75rem; color:#888;">${item.updated}</div>
-                        `;
-                        li.onclick = () => loadCloudWeek(item.weekId);
-                        listUl.appendChild(li);
-                    });
-                } else {
-                    listUl.innerHTML = '<li style="text-align:center; padding:10px; color:#aaa;">저장된 데이터가 없습니다.</li>';
-                }
-            } catch (e) {
-                listUl.innerHTML = `<li style="color:red; text-align:center;">로드 실패: ${e.message}</li>`;
+                        </td>
+                    </tr>`;
+                }).join('');
             }
         }
 
-        async function loadCloudWeek(weekId) {
+        // ── 수리 삭제 ────────────────────────────────────────
+        async function deleteRepairRow(rowNum, label) {
+            if (!confirm(`[${label}] 수리 기록을 삭제하시겠습니까?\n(이 작업은 되돌릴 수 없습니다.)\n¿Eliminar este registro de reparación?`)) return;
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?cmd=load&weekId=${weekId}&t=${Date.now()}`);
-                const text = await response.text();
-                let result;
-                try { result = JSON.parse(text); } catch (pe) { alert('서버 응답 파싱 실패'); return; }
-                if (result.error) { alert('서버 에러: ' + result.error); return; }
-
-                const data = result.data || result;
-
-                document.getElementById('in-date').value = data.d || '';
-                currentLogoBase64 = data.logo || '';
-                if (currentLogoBase64) { document.getElementById('report-logo').src = currentLogoBase64; document.getElementById('report-logo').style.display = 'block'; }
-
-                if (data.base) {
-                    document.getElementById('base-l').value = data.base.l;
-                    document.getElementById('base-r').value = data.base.r;
-                    document.getElementById('base-f').value = data.base.f;
-                    document.getElementById('global-weekly-meta').value = data.base.wm;
-                }
-
-                document.getElementById('project-inputs').innerHTML = '';
-                if (data.projects) data.projects.forEach(p => addProjectRow(normalizeProjectData(p)));
-
-                setTimeout(() => renderReport(), 300);
-                document.getElementById('cloud-modal').style.display = 'none';
-                showToast(`☁️ [${weekId}] 불러오기 완료!`);
-            } catch (e) {
-                alert('데이터 로드 실패: ' + e.toString());
-            }
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ cmd: 'deleteRepair', rowNum })
+                });
+                showToast('🗑️ 삭제 완료 (Eliminado)');
+                setTimeout(() => loadRepairData(), 800); // 0.8초 후 목록 갱신
+            } catch (e) { alert('오류: ' + e.message); }
         }
 
-        // === 전주 실적 → Prev 자동 입력 ===
-        async function loadPrevWeekData() {
-            const weekId = getCurrentWeekId();
-            if (!weekId) { alert('보고 날짜를 먼저 입력해주세요.'); return; }
+        // ── 수리 편집 모달 ────────────────────────────────────
+        function openEditModal(rowNum, jsonStr) {
+            const r = JSON.parse(jsonStr);
+            document.getElementById('edit-rowNum').value = rowNum;
+            document.getElementById('edit-fecha').value = r.fecha || '';
+            document.getElementById('edit-noid').value = r.noid || '';
+            document.getElementById('edit-resp').value = r.responsable || '';
+            document.getElementById('edit-detalles').value = r.detalles || '';
+            // 모델 세팅
+            const sel = document.getElementById('edit-modelo');
+            const knownModels = ['6500C FRE', '6500C REF', '6500H FRE', '6500H REF', 'CASE ICE', 'COVER MULTI'];
+            if (knownModels.includes(r.modelo)) {
+                sel.value = r.modelo;
+                document.getElementById('editModeloOtrosWrap').style.display = 'none';
+            } else {
+                sel.value = 'Otros';
+                document.getElementById('editModeloOtrosWrap').style.display = 'block';
+                document.getElementById('edit-modelo-otros').value = r.modelo || '';
+            }
+            document.getElementById('repair-edit-modal').style.display = 'flex';
+        }
 
-            // 전주 weekId 계산
-            const parts = weekId.split('-W');
-            let year = parseInt(parts[0]);
-            let week = parseInt(parts[1]) - 1;
-            if (week <= 0) { year--; week = 52; }
-            const prevWeekId = `${year}-W${String(week).padStart(2, '0')}`;
+        function closeRepairModal() {
+            document.getElementById('repair-edit-modal').style.display = 'none';
+        }
 
-            if (!confirm(`[${prevWeekId}] 전주 실적을 Prev 항목에 자동 입력하시겠습니까?`)) return;
+        function toggleEditModeloOtros(v) {
+            document.getElementById('editModeloOtrosWrap').style.display = v === 'Otros' ? 'block' : 'none';
+        }
 
+        async function saveRepairEdit() {
+            const rowNum = document.getElementById('edit-rowNum').value;
+            const fecha = document.getElementById('edit-fecha').value;
+            const modeloSel = document.getElementById('edit-modelo').value;
+            const modelo = modeloSel === 'Otros' ? document.getElementById('edit-modelo-otros').value : modeloSel;
+            const noid = document.getElementById('edit-noid').value.trim();
+            const resp = document.getElementById('edit-resp').value.trim();
+            const detalles = document.getElementById('edit-detalles').value.trim();
+            if (!fecha || !modelo || !noid) { alert('날짜, 모델, 번호는 필수입니다.'); return; }
             try {
-                const response = await fetch(`${APPS_SCRIPT_URL}?cmd=load&weekId=${prevWeekId}&t=${Date.now()}`);
-                const text = await response.text();
-                let result;
-                try { result = JSON.parse(text); } catch (pe) { alert('전주 데이터 파싱 실패'); return; }
-                if (result.error) { alert(`전주(${prevWeekId}) 데이터 없음: ${result.error}`); return; }
-
-                const prevData = result.data || result;
-                if (!prevData.projects || prevData.projects.length === 0) {
-                    alert('전주 프로젝트 데이터가 없습니다.'); return;
-                }
-
-                // 전주 프로젝트별 누적 합계 계산 (model+loc을 키로 매칭)
-                const prevTotals = {};
-                prevData.projects.forEach(p => {
-                    const key = `${(p.model || '').toUpperCase()}_${(p.loc || '').toUpperCase()}`;
-                    const prev = parseFloat(p.prev) || 0;
-                    const week = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'].reduce((a, d) => a + (parseFloat(p[d]) || 0), 0);
-                    prevTotals[key] = (prevTotals[key] || 0) + prev + week;
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST', mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ cmd: 'updateRepair', rowNum: Number(rowNum), fecha, modelo, noid, detalles, responsable: resp })
                 });
-
-                // 현재 프로젝트 카드에 Prev 자동 입력
-                let matched = 0;
-                document.querySelectorAll('.project-card').forEach(card => {
-                    const modelEl = card.querySelector('.p-model');
-                    const locEl = card.querySelector('.p-loc');
-                    // disabled 상태여도 값을 읽을 수 있도록 처리
-                    const model = (modelEl.value || '').toUpperCase();
-                    const loc = (locEl.value || '').toUpperCase();
-                    const key = `${model}_${loc}`;
-                    if (prevTotals[key] !== undefined) {
-                        const prevEl = card.querySelector('.p-prev');
-                        const wasDisabled = prevEl.disabled;
-                        prevEl.disabled = false;  // 임시 해제
-                        prevEl.value = prevTotals[key];
-                        if (wasDisabled) prevEl.disabled = true;  // 복원
-                        matched++;
-                    }
-                });
-
-                // 보고 날짜의 요일 이후 요일들을 0으로 초기화
-                // 이번 주 모든 일별 실적 초기화 (전주 데이터를 Prev로 넘기고 새 주 시작)
-                const inDate = document.getElementById('in-date').value;
-                if (inDate) {
-                    // 날짜 파싱 시 타임존 오류 방지 (로컬 날짜 기준)
-                    const [y, mo, dy] = inDate.split('-').map(Number);
-                    const localDate = new Date(y, mo - 1, dy);
-                    const dayOfWeek = localDate.getDay(); // 0=일, 1=월, ..., 6=토
-                    const dayFields = ['p-mon', 'p-tue', 'p-wed', 'p-thu', 'p-fri', 'p-sat'];
-                    // 월~토 인덱스: 0=월(dayNum=1), 1=화(2), 2=수(3), 3=목(4), 4=금(5), 5=토(6)
-                    document.querySelectorAll('.project-card').forEach(card => {
-                        for (let i = 0; i < dayFields.length; i++) {
-                            const fieldDayNum = i + 1; // 월=1, 화=2, ..., 토=6
-                            // 보고 날짜의 요일 포함 이후 요일만 초기화
-                            if (fieldDayNum >= dayOfWeek) {
-                                const el = card.querySelector('.' + dayFields[i]);
-                                if (el) el.value = 0;
-                            }
-                        }
-                    });
-                }
-
-                renderReport();
-                showToast(`📥 전주(${prevWeekId}) 실적 → ${matched}개 항목 Prev에 반영!`);
-            } catch (e) {
-                alert('전주 데이터 로드 실패: ' + e.toString());
-            }
+                closeRepairModal();
+                showToast('✅ 수정 완료 (Actualizado)');
+                setTimeout(() => loadRepairData(), 800);
+            } catch (e) { alert('오류: ' + e.message); }
         }
 
-        function showToast(msg) {
-            const t = document.getElementById('cloudToast');
-            t.innerText = msg; t.style.display = 'block';
-            setTimeout(() => { t.style.display = 'none'; }, 2500);
+        // ── 프로젝트 실적 카드 ───────────────────────────────
+        function addProjectRow(d = null) {
+            d = d || { fecha: getTodayStr(), model: '', qty: 0, content: '' };
+            const div = document.createElement('div'); div.className = 'project-card';
+            div.innerHTML = `
+  <div class="card-header">
+    <div class="move-controls">
+      <button class="btn-move" onclick="moveRow(this,-1)">▲</button>
+      <button class="btn-move" onclick="moveRow(this,1)">▼</button>
+    </div>
+    <div class="header-content" onclick="toggleCard(this)">
+      <span class="card-title-text">${d.model || 'New'}</span>
+      <span class="card-info">${d.fecha || ''}</span>
+    </div>
+    <div class="card-actions">
+      <button class="btn-sm btn-del" onclick="this.closest('.project-card').remove();renderReport();" title="삭제">×</button>
+    </div>
+  </div>
+  <div class="card-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div><label>날짜 Fecha</label><input type="date" class="p-fecha" value="${d.fecha || getTodayStr()}" onchange="updatePHeader(this.closest('.project-card'));renderReport();"></div>
+    <div><label>모델 Modelo</label><input type="text" class="p-model" value="${d.model}" list="model-list" onkeyup="updatePHeader(this.closest('.project-card'));renderReport();" onchange="updatePHeader(this.closest('.project-card'));renderReport();"></div>
+    <div><label>수량 Cantidad (EA)</label><input type="number" class="p-qty" value="${d.qty}" oninput="renderReport();"></div>
+    <div style="grid-column:span 1;"><label>내용 Descripción</label><input type="text" class="p-content" value="${d.content}" oninput="renderReport();"></div>
+  </div>`;
+            document.getElementById('project-inputs').appendChild(div);
+            updatePHeader(div);
         }
 
-        // === Existing Logic ===
-        const leftSide = document.getElementById('leftPanel');
-
-        function toggleSidebar() {
-            document.body.classList.toggle('full-screen');
-            const btn = document.getElementById('btn-toggle-sidebar');
-
-            if (document.body.classList.contains('full-screen')) {
-                btn.innerText = "▶";
-                btn.title = "Show Sidebar";
-            } else {
-                btn.innerText = "◀";
-                btn.title = "Hide Sidebar";
-            }
-        }
-
-        function cleanNum(val, defaultVal = 0) { if (val === null || val === undefined || val === "") return defaultVal; return parseFloat(val) || defaultVal; }
-
-        function compressImage(file, callback) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 450;
-                    let width = img.width; let height = img.height;
-                    if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-                    canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height);
-                    callback(canvas.toDataURL('image/jpeg', 0.8));
-                };
-                img.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function handleLogo(input) { if (input.files && input.files[0]) { compressImage(input.files[0], (base64) => { currentLogoBase64 = base64; document.getElementById('report-logo').src = base64; document.getElementById('report-logo').style.display = "block"; renderReport(); }); } }
-
-        function toggleCard(headerContent) {
-            const body = headerContent.closest('.card-header').nextElementSibling;
-            const icon = headerContent.querySelector('.fold-icon');
-            if (body.style.display === 'none') {
-                body.style.display = 'block'; icon.style.transform = 'rotate(0deg)';
-            } else {
-                body.style.display = 'none'; icon.style.transform = 'rotate(-90deg)';
-            }
-        }
-
-        function updateCardHeader(cardDiv) {
-            const model = cardDiv.querySelector('.p-model').value || 'New';
-            const target = cleanNum(cardDiv.querySelector('.p-target').value);
-            const prev = cleanNum(cardDiv.querySelector('.p-prev').value);
-            const weekSum = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'].reduce((a, b) => a + cleanNum(cardDiv.querySelector(`.p-${b}`).value), 0);
-            const total = prev + weekSum;
-            const rate = target > 0 ? Math.round(total / target * 100) : 0;
-
-            cardDiv.querySelector('.card-title').innerText = model;
-            cardDiv.querySelector('.card-info').innerText = `(진도율: ${rate}%)`;
+        function updatePHeader(card) {
+            const m = card.querySelector('.p-model').value || 'New';
+            const f = card.querySelector('.p-fecha').value || '';
+            card.querySelector('.card-title-text').innerText = m;
+            card.querySelector('.card-info').innerText = f;
         }
 
         function moveRow(btn, dir) {
             const card = btn.closest('.project-card');
-            const container = document.getElementById('project-inputs');
-            if (dir === -1) { if (card.previousElementSibling) { container.insertBefore(card, card.previousElementSibling); renderReport(); } }
-            else { if (card.nextElementSibling) { container.insertBefore(card.nextElementSibling, card); renderReport(); } }
-        }
-
-        function duplicateProjectRow(btn) {
-            const src = btn.closest('.project-card');
-            const data = {
-                model: src.querySelector('.p-model').value, class: src.querySelector('.p-class').value,
-                loc: src.querySelector('.p-loc').value, type: src.querySelector('.p-type').value,
-                loadCap: src.querySelector('.p-loadCap').value, isDone: src.querySelector('.p-done').checked,
-                target: src.querySelector('.p-target').value, prev: src.querySelector('.p-prev').value,
-                mon: src.querySelector('.p-mon').value, tue: src.querySelector('.p-tue').value,
-                wed: src.querySelector('.p-wed').value, thu: src.querySelector('.p-thu').value,
-                fri: src.querySelector('.p-fri').value, sat: src.querySelector('.p-sat').value
-            };
-            addProjectRow(normalizeProjectData(data));
+            const c = card.parentNode;
+            if (dir === -1) { if (card.previousElementSibling) c.insertBefore(card, card.previousElementSibling); }
+            else { if (card.nextElementSibling) c.insertBefore(card.nextElementSibling, card); }
             renderReport();
         }
 
-        function normalizeProjectData(p) {
-            return {
-                model: (p.model || "").toString().toUpperCase(), class: p.class || "전용", loc: (p.loc || "").toString().toUpperCase(),
-                type: p.type || "신규", loadCap: cleanNum(p.loadCap, 20), isDone: p.isDone === true,
-                target: cleanNum(p.target), prev: cleanNum(p.prev),
-                mon: cleanNum(p.mon), tue: cleanNum(p.tue), wed: cleanNum(p.wed),
-                thu: cleanNum(p.thu), fri: cleanNum(p.fri), sat: cleanNum(p.sat)
-            };
+        function toggleCard(hdr) {
+            const body = hdr.closest('.card-header').nextElementSibling;
+            body.style.display = body.style.display === 'none' ? 'grid' : 'none';
         }
 
-        function addProjectRow(d = null) {
-            d = d || { model: '', class: '전용', loc: '', type: '신규', loadCap: 20, isDone: false, target: 0, prev: 0, mon: 0, tue: 0, wed: 0, thu: 0, fri: 0, sat: 0 };
-            const div = document.createElement('div');
-            div.className = 'project-card';
-
+        // ── 완료 현황 카드 ──────────────────────────────────
+        function addCompletionRow(d = null) {
+            d = d || { model: '', qty: 0, completedDate: getTodayStr() };
+            const div = document.createElement('div'); div.className = 'completion-card';
             div.innerHTML = `
-            <div class="card-header">
-                <div class="move-controls">
-                    <button class="btn-move" onclick="moveRow(this, -1)">▲</button>
-                    <button class="btn-move" onclick="moveRow(this, 1)">▼</button>
-                </div>
-                <div class="header-content" onclick="toggleCard(this)">
-                    <span class="card-title">${d.model || 'New Project'}</span>
-                    <div style="display:flex; align-items:center;">
-                        <span class="card-info"></span>
-                        <span class="fold-icon">▼</span>
-                    </div>
-                </div>
-                <div class="card-actions">
-                    <label title="완료 처리" style="display:flex; align-items:center; gap:5px; cursor:pointer; font-size:11px; color:#fff; margin:0; padding:0 8px; white-space:nowrap; background:rgba(0,0,0,0.2); border-radius:4px; height:28px;">
-                        <input type="checkbox" class="p-done" ${d.isDone ? 'checked' : ''} style="width:18px; height:18px; cursor:pointer; accent-color:#10b981;"> <span style="font-weight:bold;">완료</span>
-                    </label>
-                    <button class="btn-sm btn-dup" onclick="event.stopPropagation(); duplicateProjectRow(this);" title="복제" style="width:28px; height:28px;">📑</button>
-                    <button class="btn-sm btn-del" onclick="event.stopPropagation(); if(confirm('이 항목을 삭제하시겠습니까?')) { this.closest('.project-card').remove(); renderReport(); }" title="삭제" style="width:28px; height:28px;">×</button>
-                </div>
-            </div>
-            <div class="card-body">
-                <div style="display:grid; grid-template-columns: 1fr 0.8fr 0.8fr 0.8fr 0.6fr 0.8fr; gap:8px; margin-bottom:15px;">
-                    <div><label>Model</label><input type="text" class="p-model" list="model-list" value="${d.model}"></div>
-                    <div><label>Class</label><select class="p-class"><option value="전용" ${d.class === '전용' ? 'selected' : ''}>전용</option><option value="공용" ${d.class === '공용' ? 'selected' : ''}>공용</option></select></div>
-                    <div><label>Loc.</label><input type="text" class="p-loc" list="loc-list" value="${d.loc}"></div>
-                    <div><label>Type</label><select class="p-type"><option value="신규" ${d.type === '신규' ? 'selected' : ''}>신규</option><option value="개조" ${d.type === '개조' ? 'selected' : ''}>개조</option></select></div>
-                    <div><label>Cap</label><input type="number" class="p-loadCap" value="${d.loadCap}"></div>
-                    <div><label>Target</label><input type="number" class="p-target" value="${d.target}"></div>
-                </div>
-                <div class="grid-days-labels"><span>Prev</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
-                <div class="grid-days">
-                    <input type="number" class="p-prev" value="${d.prev}"><input type="number" class="p-mon" value="${d.mon}"><input type="number" class="p-tue" value="${d.tue}"><input type="number" class="p-wed" value="${d.wed}"><input type="number" class="p-thu" value="${d.thu}"><input type="number" class="p-fri" value="${d.fri}"><input type="number" class="p-sat" value="${d.sat}">
-                </div>
-            </div>
-        `;
-
-            div.querySelectorAll('input, select').forEach(el => {
-                el.addEventListener('keyup', () => { updateCardHeader(div); renderReport(); });
-                el.addEventListener('change', () => { updateCardHeader(div); renderReport(); });
-            });
-
-            // 완료 체크박스 → 카드 숨기기/보이기
-            const doneCheckbox = div.querySelector('.p-done');
-            doneCheckbox.addEventListener('change', () => { applyDoneState(div); renderReport(); });
-
-            document.getElementById('project-inputs').appendChild(div);
-            // 초기 상태 적용 (렌더링 시점에 한 번 더 명확히 호출)
-            setTimeout(() => {
-                updateCardHeader(div);
-                applyDoneState(div);
-            }, 10);
+  <div style="display:grid;grid-template-columns:1fr 0.6fr 1fr auto;gap:8px;align-items:end;">
+    <div><label>모델 Modelo</label><input type="text" class="c-model" value="${d.model}" list="model-list" oninput="renderReport();"></div>
+    <div><label>완성 수량 Cant.</label><input type="number" class="c-qty" value="${d.qty}" oninput="renderReport();"></div>
+    <div><label>완료 일자 Fecha</label><input type="date" class="c-date" value="${d.completedDate || getTodayStr()}" onchange="renderReport();"></div>
+    <button class="btn-sm btn-del" onclick="this.closest('.completion-card').remove();renderReport();" style="margin-bottom:0;width:28px;height:28px;">×</button>
+  </div>`;
+            document.getElementById('completion-inputs').appendChild(div);
         }
 
-        // 완료된 항목 입력 숨기기 + 데이터 보호 로직 개선
-        function applyDoneState(cardDiv) {
-            const isDone = cardDiv.querySelector('.p-done').checked;
-            const body = cardDiv.querySelector('.card-body');
-            const header = cardDiv.querySelector('.card-header');
-            const titleEl = cardDiv.querySelector('.card-title');
-
-            if (isDone) {
-                body.style.display = 'none';
-                cardDiv.style.opacity = '0.7';
-                cardDiv.style.border = '1px solid #10b981';
-                header.style.background = '#064e3b'; // 완료 상태 배경색 (어두운 초록)
-
-                // 폰트 강조: 완료됨을 제목 앞에 명시
-                if (!titleEl.innerText.startsWith('[완료]')) {
-                    titleEl.innerText = '[완료] ' + titleEl.innerText.replace('[완료] ', '');
-                }
-                titleEl.style.color = '#10b981';
-
-                // 완료 시 입력 비활성화 (보호)
-                body.querySelectorAll('input, select').forEach(el => {
-                    el.disabled = true;
-                    el.style.backgroundColor = '#1f2937'; // 비활성화 느낌 강조
-                    el.style.color = '#4b5563';
-                });
-            } else {
-                body.style.display = 'block';
-                cardDiv.style.opacity = '1';
-                cardDiv.style.border = '1px solid #495057';
-                header.style.background = '#3c4249'; // 원래 헤더 색상
-
-                // [완료] 문구 제거 및 색상 복구
-                titleEl.innerText = titleEl.innerText.replace('[완료] ', '');
-                titleEl.style.color = '#e9ecef';
-
-                // 모든 필드 즉시 활성화
-                body.querySelectorAll('input, select').forEach(el => {
-                    el.disabled = false;
-                    el.style.backgroundColor = '#fff';
-                    el.style.color = '#212529';
-                });
-            }
-        }
-
-        // [수정됨] V40.5 표준 주차 계산 로직 적용
-        function getSimpleWeek(dateStr) {
-            if (!dateStr) return 0;
-
-            const date = new Date(dateStr);
-            date.setHours(0, 0, 0, 0);
-
-            const year = date.getFullYear();
-            const firstDayOfYear = new Date(year, 0, 1);
-
-            // 1월 1일부터 흐른 일수 계산 (밀리초 단위 변환)
-            const pastDays = Math.floor((date - firstDayOfYear) / 86400000);
-
-            // 1월 1일의 요일 (0=일요일 ~ 6=토요일)
-            const startDay = firstDayOfYear.getDay();
-
-            // 요일 보정값을 적용하여 올림 처리 (V40.5와 동일)
-            return Math.ceil((pastDays + startDay + 1) / 7);
-        }
-
+        // ── renderReport ────────────────────────────────────
         function renderReport() {
             const inDate = document.getElementById('in-date').value;
             if (inDate) {
                 document.getElementById('out-date').innerText = inDate;
-                // [수정됨] 단순 계산 함수 적용
                 document.getElementById('out-week-display').innerText = `Week ${getSimpleWeek(inDate)}`;
             }
-
-            const pRows = document.querySelectorAll('.project-card');
-            const pBody = document.getElementById('out-prod-body'); pBody.innerHTML = "";
-            let sumMeta = 0, sumAccum = 0, sumWeeklyProd = 0;
-            let modifiedQty = { LH: 0, RH: 0, FRE: 0 };
-            let modelGroupData = {};
-
-            pRows.forEach(row => {
-                const model = row.querySelector('.p-model').value.toUpperCase().trim();
-                const pClass = row.querySelector('.p-class').value;
-                const loc = row.querySelector('.p-loc').value.toUpperCase().trim();
-                const type = row.querySelector('.p-type').value;
-                const loadCap = cleanNum(row.querySelector('.p-loadCap').value);
-                const target = cleanNum(row.querySelector('.p-target').value);
-                const isDone = row.querySelector('.p-done').checked;
-                const prev = cleanNum(row.querySelector('.p-prev').value);
-                const weekSum = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'].reduce((a, b) => a + cleanNum(row.querySelector(`.p-${b}`).value), 0);
-                const total = prev + weekSum;
-                const rate = target > 0 ? Math.min(Math.round(total / target * 100), 100) : 0;
-
-                // Solid color for 100%
-                let barStyle = `width:${rate}%;`;
-                if (rate >= 100) {
-                    barStyle += `background: #16a34a;`; // Solid Green
-                } else if (isDone) {
-                    barStyle += `background: #22c55e;`;
-                }
-
+            // 프로젝트 실적
+            const pBody = document.getElementById('out-prod-body'); pBody.innerHTML = '';
+            let totalProj = 0, weeklyQty = 0;
+            const thisWeek = inDate ? getSimpleWeek(inDate) : 0;
+            document.querySelectorAll('.project-card').forEach(row => {
+                const fecha = row.querySelector('.p-fecha').value;
+                const model = row.querySelector('.p-model').value;
+                const qty = cleanNum(row.querySelector('.p-qty').value);
+                const content = row.querySelector('.p-content').value;
                 if (model) {
-                    pBody.innerHTML += `<tr style="${isDone ? 'background:#f9fafb' : ''}">
-                    <td><span class="badge ${isDone ? 'bg-done' : 'bg-prog'}">${isDone ? '완료' : '진행'}</span></td>
-                    <td><span class="badge ${type === '신규' ? 'bg-new' : 'bg-mod'}">${type}</span></td>
-                    <td style="font-weight:800; color:var(--accent);">${model}</td><td>${pClass}</td><td>${loc}</td>
-                    <td>${loadCap}</td><td>${weekSum}</td><td>${target}</td><td style="font-weight:800; background:#f1f5f9;">${total}</td>
-                    <td><div class="bar-container"><div class="bar-fill" style="${barStyle}"></div></div><span class="bar-text">${rate}%</span></td>
-                </tr>`;
-                    sumMeta += target; sumWeeklyProd += weekSum; sumAccum += total;
-                    if (type === '개조' && modifiedQty.hasOwnProperty(loc)) modifiedQty[loc] += total;
-                    if (!modelGroupData[model]) modelGroupData[model] = {};
-                    if (!modelGroupData[model][pClass]) modelGroupData[model][pClass] = {};
-                    if (!modelGroupData[model][pClass][loc]) modelGroupData[model][pClass][loc] = { qty: 0, cap: loadCap, target: 0 };
-                    modelGroupData[model][pClass][loc].qty += total;
-                    modelGroupData[model][pClass][loc].target += target;
+                    totalProj++;
+                    if (inDate && fecha && getSimpleWeek(fecha) === thisWeek) weeklyQty += qty;
+                    pBody.innerHTML += `<tr><td>${fecha}</td><td style="font-weight:800;color:#10b981;">${model}</td><td style="font-weight:800;">${qty.toLocaleString()}</td><td style="text-align:left;">${content}</td></tr>`;
                 }
             });
-
-            const base = { LH: cleanNum(document.getElementById('base-l').value), RH: cleanNum(document.getElementById('base-r').value), FRE: cleanNum(document.getElementById('base-f').value) };
-            const cartStatusBody = document.getElementById('cart-status-body'); cartStatusBody.innerHTML = "";
-
-            ["FRE", "LH", "RH"].forEach((l, idx) => {
-                const remQty = base[l] - (modifiedQty[l] || 0);
-                const cap = (l === "FRE") ? 20 : (l === "LH") ? 15 : 30;
-                cartStatusBody.innerHTML += `<tr>${idx === 0 ? `<td rowspan="3" style="font-weight:800; background:#f8fafc;">6500C (가용)</td><td rowspan="3">전용</td>` : ''}<td style="background:#f8fafc;">${l}</td><td style="font-weight:900;">${remQty}</td><td>${cap}</td><td style="font-weight:900; color:var(--accent);">${(remQty * cap).toLocaleString()}</td><td>-</td></tr>`;
+            if (pBody.innerHTML === '') pBody.innerHTML = '<tr><td colspan="4" style="color:#9ca3af;">데이터 없음 / Sin datos</td></tr>';
+            // 완료 현황
+            const cBody = document.getElementById('out-completion-body'); cBody.innerHTML = '';
+            let compCount = 0;
+            document.querySelectorAll('.completion-card').forEach(row => {
+                const m = row.querySelector('.c-model').value;
+                const q = cleanNum(row.querySelector('.c-qty').value);
+                const dt = row.querySelector('.c-date').value;
+                if (m) { compCount++; cBody.innerHTML += `<tr><td style="font-weight:800;">${m}</td><td style="font-weight:800;color:#10b981;">${q.toLocaleString()}</td><td>${dt}</td></tr>`; }
             });
-
-            [{ m: "6500H", c: "전용" }, { m: "6500H", c: "공용" }].forEach(cat => {
-                ["FRE", "LH", "RH"].forEach((l, idx) => {
-                    let d = { qty: 0, cap: (l === "FRE") ? 20 : (l === "LH") ? 15 : 30, target: 0 };
-                    if (modelGroupData[cat.m] && modelGroupData[cat.m][cat.c] && modelGroupData[cat.m][cat.c][l]) d = modelGroupData[cat.m][cat.c][l];
-                    cartStatusBody.innerHTML += `<tr>${idx === 0 ? `<td rowspan="3" style="font-weight:800; background:#f8fafc;">${cat.m}</td><td rowspan="3">${cat.c}</td>` : ''}<td>${l}</td><td style="font-weight:900;">${d.qty}</td><td>${d.cap}</td><td style="font-weight:900; color:var(--accent);">${(d.qty * d.cap).toLocaleString()}</td><td>${d.target || '-'}</td></tr>`;
-                });
-            });
-
-            const capaBody = document.getElementById('capa-status-body'); capaBody.innerHTML = "";
-            ["6500H", "6500C"].forEach(m => {
-                let mD = { FRE: 0, LH: 0, RH: 0 };
-                if (m === "6500C") {
-                    mD.FRE = (base.FRE - modifiedQty.FRE) * 20; mD.LH = (base.LH - modifiedQty.LH) * 15; mD.RH = (base.RH - modifiedQty.RH) * 30;
-                } else if (modelGroupData[m]) {
-                    for (let c in modelGroupData[m]) { for (let l in modelGroupData[m][c]) { if (mD.hasOwnProperty(l)) mD[l] += (modelGroupData[m][c][l].qty * modelGroupData[m][c][l].cap); } }
-                }
-                const setQ = Math.min(mD.FRE, mD.LH, mD.RH);
-                capaBody.innerHTML += `<tr><td style="font-weight:800; background:#f8fafc;">${m}</td><td>${mD.FRE.toLocaleString()}</td><td>${mD.LH.toLocaleString()}</td><td>${mD.RH.toLocaleString()}</td><td style="background:#f0f7ff; font-weight:900; color:var(--accent); font-size:16px;">${setQ.toLocaleString()} SET</td></tr>`;
-            });
-
-            const gwm = cleanNum(document.getElementById('global-weekly-meta').value);
-            document.getElementById('sum-meta').innerText = sumMeta.toLocaleString();
-            document.getElementById('sum-accum').innerText = sumAccum.toLocaleString();
-            document.getElementById('sum-remain').innerText = Math.max(0, sumMeta - sumAccum).toLocaleString();
-            document.getElementById('sum-weekly-target').innerText = gwm.toLocaleString();
-            document.getElementById('sum-weekly-prod').innerText = sumWeeklyProd.toLocaleString();
-            const wr = gwm > 0 ? Math.round((sumWeeklyProd / gwm) * 100) : 0;
-            document.getElementById('sum-weekly-rate').innerText = wr + "%";
-            document.getElementById('sum-rate').innerText = (sumMeta > 0 ? Math.round(sumAccum / sumMeta * 100) : 0) + "%";
-
-            // Dynamic Background for Summary Cards
-            const cardWeekly = document.getElementById('sum-weekly-rate').closest('.summary-card');
-            const cardTotal = document.getElementById('sum-rate').closest('.summary-card');
-
-            const wrBg = Math.min(wr, 100);
-            const trBg = Math.min((sumMeta > 0 ? Math.round(sumAccum / sumMeta * 100) : 0), 100);
-
-            cardWeekly.style.background = `linear-gradient(to right, rgba(16, 185, 129, 0.2) ${wrBg}%, #2d3748 ${wrBg}%)`;
-            cardTotal.style.background = `linear-gradient(to right, rgba(239, 68, 68, 0.2) ${trBg}%, #2d3748 ${trBg}%)`;
-
+            if (cBody.innerHTML === '') cBody.innerHTML = '<tr><td colspan="3" style="color:#9ca3af;">데이터 없음 / Sin datos</td></tr>';
+            // 카드 업데이트
+            document.getElementById('sum-total-proj').innerText = totalProj;
+            document.getElementById('sum-completions').innerText = compCount;
+            document.getElementById('sum-weekly-qty').innerText = weeklyQty.toLocaleString();
+            // SET 저장 능력 업데이트
+            const set6500h = cleanNum(document.getElementById('set-6500h').value, 2100);
+            const set6500c = cleanNum(document.getElementById('set-6500c').value, 2300);
+            document.getElementById('out-set-6500h').innerText = set6500h.toLocaleString() + ' SET';
+            document.getElementById('out-set-6500c').innerText = set6500c.toLocaleString() + ' SET';
             autoSave();
         }
 
-        function autoSave() {
-            const projectsData = Array.from(document.querySelectorAll('.project-card')).map(row => ({
-                model: row.querySelector('.p-model').value, class: row.querySelector('.p-class').value, loc: row.querySelector('.p-loc').value,
-                type: row.querySelector('.p-type').value, loadCap: row.querySelector('.p-loadCap').value,
-                isDone: row.querySelector('.p-done').checked, target: row.querySelector('.p-target').value, prev: row.querySelector('.p-prev').value,
-                mon: row.querySelector('.p-mon').value, tue: row.querySelector('.p-tue').value, wed: row.querySelector('.p-wed').value,
-                thu: row.querySelector('.p-thu').value, fri: row.querySelector('.p-fri').value, sat: row.querySelector('.p-sat').value
-            }));
-
-            const data = {
-                v: "8.3", d: document.getElementById('in-date').value, logo: currentLogoBase64,
-                base: { l: document.getElementById('base-l').value, r: document.getElementById('base-r').value, f: document.getElementById('base-f').value, wm: document.getElementById('global-weekly-meta').value },
-                projects: projectsData
-            };
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        // ── 저장/불러오기 ───────────────────────────────────
+        function collectData() {
+            const projects = [...document.querySelectorAll('.project-card')].map(r => ({ fecha: r.querySelector('.p-fecha').value, model: r.querySelector('.p-model').value, qty: r.querySelector('.p-qty').value, content: r.querySelector('.p-content').value }));
+            const completions = [...document.querySelectorAll('.completion-card')].map(r => ({ model: r.querySelector('.c-model').value, qty: r.querySelector('.c-qty').value, completedDate: r.querySelector('.c-date').value }));
+            return { v: '9.0', d: document.getElementById('in-date').value, set6500h: document.getElementById('set-6500h').value, set6500c: document.getElementById('set-6500c').value, projects, completions };
         }
+
+        function autoSave() { localStorage.setItem(STORAGE_KEY, JSON.stringify(collectData())); }
 
         function manualSaveFile() {
+            const data = collectData();
+            const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = `Paileria_${data.d || 'backup'}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            showToast('💾 백업 완료! (Backup listo)', 'saveToast');
+        }
+
+        function handleFileLoad(inp) {
+            const file = inp.files[0]; if (!file) return;
+            const r = new FileReader();
+            r.onload = e => { try { loadDataObj(JSON.parse(e.target.result)); } catch { alert('파일 형식 오류'); } };
+            r.readAsText(file); inp.value = '';
+        }
+
+        function loadDataObj(d) {
+            document.getElementById('in-date').value = d.d || getTodayStr();
+            if (d.set6500h) document.getElementById('set-6500h').value = d.set6500h;
+            if (d.set6500c) document.getElementById('set-6500c').value = d.set6500c;
+            document.getElementById('project-inputs').innerHTML = '';
+            (d.projects || []).forEach(p => addProjectRow(p));
+            document.getElementById('completion-inputs').innerHTML = '';
+            (d.completions || []).forEach(c => addCompletionRow(c));
+            setTimeout(() => renderReport(), 200);
+        }
+
+        // ── 클라우드 ───────────────────────────────────────
+        async function saveToCloud() {
+            if (!getCurrentWeekId()) { alert('보고 날짜를 입력해주세요.'); return; }
+            const weekId = getCurrentWeekId();
+            if (!confirm(`[${weekId}] 데이터를 저장하시겠습니까?`)) return;
+            const payload = { ...collectData(), weekId };
             try {
-                const projectsData = Array.from(document.querySelectorAll('.project-card')).map(row => ({
-                    model: row.querySelector('.p-model').value, class: row.querySelector('.p-class').value, loc: row.querySelector('.p-loc').value,
-                    type: row.querySelector('.p-type').value, loadCap: row.querySelector('.p-loadCap').value,
-                    isDone: row.querySelector('.p-done').checked, target: row.querySelector('.p-target').value, prev: row.querySelector('.p-prev').value,
-                    mon: row.querySelector('.p-mon').value, tue: row.querySelector('.p-tue').value, wed: row.querySelector('.p-wed').value,
-                    thu: row.querySelector('.p-thu').value, fri: row.querySelector('.p-fri').value, sat: row.querySelector('.p-sat').value
-                }));
-
-                if (projectsData.length === 0 && !confirm("입력된 실적이 없습니다. 빈 파일을 저장하시겠습니까?")) return;
-
-                const data = {
-                    v: "8.3", d: document.getElementById('in-date').value, logo: currentLogoBase64,
-                    base: { l: document.getElementById('base-l').value, r: document.getElementById('base-r').value, f: document.getElementById('base-f').value, wm: document.getElementById('global-weekly-meta').value },
-                    projects: projectsData
-                };
-
-                const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
-                const url = URL.createObjectURL(blob);
-                const wk = data.d ? getSimpleWeek(data.d) : 'X';
-                const a = document.createElement('a'); a.href = url; a.download = `Paileria_Prod_${wk}W.json`;
-                document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-
-                const toast = document.getElementById('saveToast');
-                toast.style.display = 'block'; setTimeout(() => { toast.style.display = 'none'; }, 2000);
-
-            } catch (e) { alert("저장 중 오류 발생: " + e.message); }
+                await fetch(APPS_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
+                showToast(`☁️ [${weekId}] 저장 완료!`);
+            } catch (e) { alert('오류: ' + e.message); }
         }
 
-        function handleFileLoad(input) {
-            const file = input.files[0]; if (!file) return; const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const d = JSON.parse(e.target.result);
-                    document.getElementById('in-date').value = d.d || ""; currentLogoBase64 = d.logo || "";
-                    if (currentLogoBase64) document.getElementById('report-logo').src = currentLogoBase64;
-                    if (d.base) { document.getElementById('base-l').value = d.base.l; document.getElementById('base-r').value = d.base.r; document.getElementById('base-f').value = d.base.f; document.getElementById('global-weekly-meta').value = d.base.wm; }
-                    document.getElementById('project-inputs').innerHTML = "";
-                    if (d.projects) d.projects.forEach(p => addProjectRow(normalizeProjectData(p)));
-                    setTimeout(() => renderReport(), 200);
-                } catch (err) { alert("파일 형식 오류"); }
-            };
-            reader.readAsText(file); input.value = "";
+        async function openCloudModal() {
+            const ul = document.getElementById('cloud-list-ul');
+            ul.innerHTML = '<li style="text-align:center;padding:10px;color:#aaa;">로딩 중...</li>';
+            document.getElementById('cloud-modal').style.display = 'flex';
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL}?cmd=list&t=${Date.now()}`);
+                const data = await res.json();
+                ul.innerHTML = '';
+                (data.list || []).forEach(item => {
+                    const li = document.createElement('li'); li.className = 'cloud-item';
+                    li.innerHTML = `<div><div style="font-weight:bold;color:#4285F4;">${item.weekId}</div><div style="font-size:.8rem;color:#aaa;">날짜: ${item.date} | 항목: ${item.projectCount}건</div></div><div style="font-size:.75rem;color:#888;">${item.updated}</div>`;
+                    li.onclick = () => loadCloudWeek(item.weekId); ul.appendChild(li);
+                });
+                if (!data.list || data.list.length === 0) ul.innerHTML = '<li style="text-align:center;color:#aaa;padding:10px;">저장된 데이터 없음</li>';
+            } catch (e) { ul.innerHTML = `<li style="color:red;text-align:center;">로드 실패: ${e.message}</li>`; }
         }
 
-        async function exportImage() { const r = document.getElementById('report-content'); const c = await html2canvas(r, { scale: 2, useCORS: true, backgroundColor: "#ffffff" }); const l = document.createElement('a'); l.download = `Report_V8.3.png`; l.href = c.toDataURL('image/png'); l.click(); }
+        async function loadCloudWeek(weekId) {
+            try {
+                const res = await fetch(`${APPS_SCRIPT_URL}?cmd=load&weekId=${weekId}&t=${Date.now()}`);
+                const result = await res.json();
+                if (result.error) { alert('서버 오류: ' + result.error); return; }
+                loadDataObj(result.data || result);
+                document.getElementById('cloud-modal').style.display = 'none';
+                showToast(`☁️ [${weekId}] 불러오기 완료!`);
+            } catch (e) { alert('로드 실패: ' + e.toString()); }
+        }
 
+        async function exportImage() {
+            const r = document.getElementById('report-content');
+            const c = await html2canvas(r, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const a = document.createElement('a'); a.download = 'Paileria_Report.png'; a.href = c.toDataURL('image/png'); a.click();
+        }
 
-
-        function getTodayStr() {
-            const d = new Date();
-            const year = d.getFullYear();
-            const month = ('0' + (d.getMonth() + 1)).slice(-2);
-            const day = ('0' + d.getDate()).slice(-2);
-            return `${year}-${month}-${day}`;
+        // ── init ───────────────────────────────────────────
+        async function exportImage() {
+            const r = document.getElementById('report-content');
+            const c = await html2canvas(r, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+            const a = document.createElement('a'); a.download = 'Paileria_Report.png'; a.href = c.toDataURL('image/png'); a.click();
         }
 
         window.onload = () => {
+            // 기간 초기값: 이번달 1일 ~ 오늘
             const today = getTodayStr();
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                try {
-                    const d = JSON.parse(saved);
-                    loadBaseSettings(d);
-                    document.getElementById('in-date').value = today; // Force Today
-                    if (d.projects) d.projects.forEach(p => addProjectRow(normalizeProjectData(p)));
-                    setTimeout(() => renderReport(), 300);
-                } catch (e) {
-                    document.getElementById('in-date').value = today;
-                    addProjectRow(); renderReport();
-                }
-            } else {
-                document.getElementById('in-date').value = today;
-                addProjectRow(); renderReport();
-            }
-        };
+            const firstOfMonth = today.substring(0, 8) + '01';
+            document.getElementById('repair-from').value = firstOfMonth;
+            document.getElementById('repair-to').value = today;
+            document.getElementById('r-fecha').value = today;
 
-        function loadBaseSettings(d) {
-            // [Modified] Date is forced in window.onload, but if loaded manually via file/cloud, use saved date or today fallback
-            document.getElementById('in-date').value = d.d || getTodayStr();
-            currentLogoBase64 = d.logo || "";
-            if (currentLogoBase64) document.getElementById('report-logo').src = currentLogoBase64;
-            let baseL = 280, baseR = 140, baseF = 244, wm = 0;
-            if (d.base) { baseL = d.base.l; baseR = d.base.r; baseF = d.base.f; wm = d.base.wm; }
-            document.getElementById('base-l').value = baseL; document.getElementById('base-r').value = baseR; document.getElementById('base-f').value = baseF; document.getElementById('global-weekly-meta').value = wm;
-        }
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) { try { loadDataObj(JSON.parse(saved)); } catch { document.getElementById('in-date').value = today; addProjectRow(); } }
+            else { document.getElementById('in-date').value = today; addProjectRow(); }
+            setTimeout(() => renderReport(), 300);
+        };
     </script>
+    <datalist id="model-list">
+        <option value="6500H FRE">
+        <option value="6500H REF">
+        <option value="6500C FRE">
+        <option value="6500C REF">
+        <option value="CASE ICE">
+        <option value="COVER MULTI">
+    </datalist>
 </body>
 
 </html>
