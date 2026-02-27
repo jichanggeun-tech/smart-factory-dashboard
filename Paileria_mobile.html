@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pailería 수리 등록 (Mobile)</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-body: #111827;
+            --bg-card: #1f2937;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --blue: #3b82f6;
+            --border: #374151;
+            --bg-input: #374151;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            background: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--bg-card);
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 17px;
+            flex: 1;
+        }
+
+        .container { padding: 16px; }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 14px;
+        }
+
+        .card-title {
+            font-size: 15px;
+            font-weight: bold;
+            margin: 0 0 14px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .field-label {
+            display: block;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 11px 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+            font-family: inherit;
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: 2px solid var(--accent);
+            border-color: var(--accent);
+        }
+
+        .row2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid var(--border);
+            color: white;
+            padding: 14px 16px;
+            border-radius: 10px;
+            font-size: 15px;
+            cursor: pointer;
+            width: 100%;
+            font-weight: bold;
+            background: var(--bg-card);
+            transition: filter 0.15s;
+        }
+
+        .btn:active { filter: brightness(0.85); }
+
+        .btn-accent {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+            font-size: 16px;
+            padding: 16px;
+        }
+
+        /* Checkbox grid */
+        .check-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: border-color 0.15s, background 0.15s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .check-item.selected {
+            border-color: var(--accent);
+            background: rgba(16, 185, 129, 0.12);
+        }
+
+        .check-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            margin: 0;
+            padding: 0;
+            accent-color: var(--accent);
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .check-label {
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .check-label .kr {
+            display: block;
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 400;
+            margin-top: 1px;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .toast.show { opacity: 1; }
+        .toast.success {
+            background: rgba(16, 185, 129, 0.95);
+            color: #000;
+            border: 1px solid var(--accent);
+        }
+        .toast.error {
+            background: rgba(239, 68, 68, 0.95);
+            color: #fff;
+            border: 1px solid var(--danger);
+        }
+
+        /* Loading overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .overlay p {
+            margin: 16px 0 0;
+            font-size: 15px;
+            color: var(--accent);
+        }
+
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #374151;
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .hidden { display: none !important; }
+
+        /* Section divider */
+        .section-divider {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* Back link */
+        .back-link {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .back-link:hover { color: var(--text-main); }
+    </style>
+</head>
+
+<body>
+
+    <!-- Loading overlay -->
+    <div id="loadingOverlay" class="overlay hidden">
+        <div class="spinner"></div>
+        <p>전송 중... (Enviando...)</p>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Header -->
+    <header>
+        <i class="fa-solid fa-wrench" style="color:var(--accent); font-size:18px;"></i>
+        <h1>Pailería 수리 등록</h1>
+        <a class="back-link" href="Paileria.html">
+            <i class="fa-solid fa-desktop"></i> PC
+        </a>
+    </header>
+
+    <div class="container">
+
+        <!-- Form Card -->
+        <div class="card" style="border-color: var(--accent);">
+            <div class="card-title" style="color:var(--accent);">
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                수리 실적 입력 (Registro de Reparación)
+            </div>
+
+            <!-- 날짜 + 모델 -->
+            <div class="row2">
+                <div>
+                    <label class="field-label">수리 날짜 (Fecha) *</label>
+                    <input type="date" id="r-fecha">
+                </div>
+                <div>
+                    <label class="field-label">대차 모델 (Modelo) *</label>
+                    <select id="r-modelo" onchange="toggleModeloOtros(this.value)">
+                        <option value="">선택 (Seleccione)</option>
+                        <option>6500C FRE</option>
+                        <option>6500C REF</option>
+                        <option>6500H FRE</option>
+                        <option>6500H REF</option>
+                        <option>CASE ICE</option>
+                        <option>COVER MULTI</option>
+                        <option value="Otros">기타 (Otros)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 기타 모델 직접 입력 -->
+            <div id="modeloOtrosWrap" class="hidden">
+                <label class="field-label">모델 직접 입력 (Especificar) *</label>
+                <input type="text" id="r-modelo-otros" placeholder="모델명 입력">
+            </div>
+
+            <!-- 번호 + 담당자 -->
+            <div class="row2">
+                <div>
+                    <label class="field-label">번호 No. Carrito *</label>
+                    <input type="text" id="r-noid" placeholder="예: 123" inputmode="numeric">
+                </div>
+                <div>
+                    <label class="field-label">담당자 (Responsable)</label>
+                    <input type="text" id="r-resp" placeholder="이름">
+                </div>
+            </div>
+
+            <!-- 수리 내용 체크박스 -->
+            <div class="section-divider">수리 내용 (Detalles)</div>
+            <div class="check-grid" id="checkGrid">
+                <!-- 체크박스 JS로 생성 -->
+            </div>
+
+            <!-- 기타 -->
+            <label class="field-label">기타 (Otros)</label>
+            <textarea id="r-otros" placeholder="기타 수리 내용 입력..."></textarea>
+
+            <!-- 제출 버튼 -->
+            <button class="btn btn-accent" onclick="submitRepair()">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                수리 등록 (Registrar Reparación)
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwRIbd1kla0br3DFBCHtLvQsjpbdNhEQ6MN5rZCIANFsAda2GLmpGW2_aS10itK-kZv/exec";
+
+        const REPAIR_ITEMS = [
+            { value: 'Cinchos',        kr: '결속선' },
+            { value: 'Cortina',        kr: '커튼' },
+            { value: 'Dampla',         kr: '단플라' },
+            { value: 'Esponja',        kr: '스폰지' },
+            { value: 'Estructura',     kr: '골조' },
+            { value: 'Felfa',          kr: '부직포' },
+            { value: 'Pistón',         kr: '피스톤' },
+            { value: 'Protección',     kr: '보호가드' },
+            { value: 'Tubo/PTR',       kr: '파이프' },
+            { value: 'Jaladera',       kr: '손잡이' },
+            { value: 'Llanta',         kr: '캐스터' },
+            { value: 'Separador',      kr: '분리대' },
+            { value: 'Velcro',         kr: '접착' },
+            { value: 'Placa',          kr: '' },
+            { value: 'Porta etiqueta', kr: '' },
+        ];
+
+        // 체크박스 렌더링
+        function buildCheckGrid() {
+            const grid = document.getElementById('checkGrid');
+            grid.innerHTML = REPAIR_ITEMS.map(item => `
+                <label class="check-item" id="lbl-${item.value}" onclick="toggleCheck(this)">
+                    <input type="checkbox" name="rd" value="${item.value}" onclick="event.stopPropagation()">
+                    <span class="check-label">
+                        ${item.value}
+                        <span class="kr">${item.kr}</span>
+                    </span>
+                </label>
+            `).join('');
+
+            // 체크박스 직접 클릭 시 스타일 동기화
+            document.querySelectorAll('input[name="rd"]').forEach(cb => {
+                cb.addEventListener('change', () => syncCheckStyle(cb));
+            });
+        }
+
+        function toggleCheck(label) {
+            const cb = label.querySelector('input[type="checkbox"]');
+            cb.checked = !cb.checked;
+            syncCheckStyle(cb);
+        }
+
+        function syncCheckStyle(cb) {
+            const label = cb.closest('.check-item');
+            label.classList.toggle('selected', cb.checked);
+        }
+
+        function toggleModeloOtros(v) {
+            document.getElementById('modeloOtrosWrap').classList.toggle('hidden', v !== 'Otros');
+        }
+
+        function getTodayStr() {
+            const d = new Date();
+            return `${d.getFullYear()}-${('0'+(d.getMonth()+1)).slice(-2)}-${('0'+d.getDate()).slice(-2)}`;
+        }
+
+        function showToast(msg, type = 'success') {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type} show`;
+            setTimeout(() => { t.classList.remove('show'); }, 3000);
+        }
+
+        function resetForm() {
+            document.getElementById('r-fecha').value = getTodayStr();
+            document.getElementById('r-modelo').value = '';
+            document.getElementById('r-modelo-otros').value = '';
+            document.getElementById('r-noid').value = '';
+            document.getElementById('r-resp').value = '';
+            document.getElementById('r-otros').value = '';
+            document.querySelectorAll('input[name="rd"]').forEach(cb => {
+                cb.checked = false;
+                cb.closest('.check-item').classList.remove('selected');
+            });
+            document.getElementById('modeloOtrosWrap').classList.add('hidden');
+        }
+
+        async function submitRepair() {
+            const fecha  = document.getElementById('r-fecha').value;
+            const modeloSel = document.getElementById('r-modelo').value;
+            const modelo = modeloSel === 'Otros'
+                ? document.getElementById('r-modelo-otros').value.trim()
+                : modeloSel;
+            const noid   = document.getElementById('r-noid').value.trim();
+            const resp   = document.getElementById('r-resp').value.trim();
+            const checks = [...document.querySelectorAll('input[name="rd"]:checked')].map(c => c.value);
+            const otros  = document.getElementById('r-otros').value.trim();
+
+            if (!fecha || !modelo || !noid) {
+                showToast('⚠️ 날짜, 모델, 번호는 필수입니다.', 'error');
+                return;
+            }
+            if (checks.length === 0 && !otros) {
+                showToast('⚠️ 수리 내용을 선택하거나 기타를 입력하세요.', 'error');
+                return;
+            }
+
+            const detalles = [...checks, ...(otros ? [otros] : [])].join(', ');
+            const payload  = { cmd: 'saveRepair', fecha, modelo, noid, detalles, responsable: resp };
+
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+
+            try {
+                await fetch(APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify(payload)
+                });
+                showToast('✅ 수리 등록 완료! (Reparación registrada)');
+                resetForm();
+            } catch (e) {
+                showToast('❌ 오류: ' + e.message, 'error');
+            } finally {
+                document.getElementById('loadingOverlay').classList.add('hidden');
+            }
+        }
+
+        // Init
+        buildCheckGrid();
+        document.getElementById('r-fecha').value = getTodayStr();
+    </script>
+
+</body>
+</html>
