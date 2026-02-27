@@ -1484,22 +1484,25 @@
                 };
 
                 const openReport = async () => {
-                    // 모든 프로젝트의 파트 로드
-                    // 현재 프로젝트: 이미 메모리의 projectParts 사용 (확실히 데이터 있음)
-                    // 나머지: DB에서 projectId 인덱스 쿼리로 로드
-                    const allParts = [];
-                    for (const proj of projects.value) {
-                        if (proj.id === currentProject.value?.id && projectParts.value.length > 0) {
-                            allParts.push(...projectParts.value);
-                        } else {
-                            const parts = await db.parts.where('projectId').equals(proj.id).toArray();
-                            allParts.push(...parts);
-                        }
-                    }
-                    allReportParts.value = allParts;
-                    // 현재 선택된 프로젝트로 초기화 (없으면 전체)
+                    // 모달 먼저 열기 (클릭 즉시 피드백)
                     reportProjectId.value = currentProject.value ? currentProject.value.id : null;
                     showReportModal.value = true;
+
+                    // 모든 프로젝트의 파트 로드
+                    const allParts = [];
+                    try {
+                        for (const proj of projects.value) {
+                            if (proj.id === currentProject.value?.id && projectParts.value.length > 0) {
+                                allParts.push(...projectParts.value);
+                            } else {
+                                const parts = await db.parts.where('projectId').equals(proj.id).toArray();
+                                allParts.push(...parts);
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Report data load error:', e);
+                    }
+                    allReportParts.value = allParts;
                     generateReport();
                 };
 
