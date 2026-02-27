@@ -609,6 +609,36 @@
                     </div>
                 </div>
 
+                <!-- 출고 기록 섹션 -->
+                <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.4); border-radius:12px; padding:14px; margin:14px 0 4px;">
+                    <div style="color:#f87171; font-weight:bold; font-size:13px; margin-bottom:10px;">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> 출고 기록 (Registro de Salida)
+                    </div>
+                    <div class="row2" style="margin-bottom:8px;">
+                        <div>
+                            <label class="field-label">출고 날짜 (Fecha)</label>
+                            <input type="date" v-model="outDate" style="margin-bottom:0;">
+                        </div>
+                        <div>
+                            <label class="field-label">출고 수량 (Cantidad)</label>
+                            <input type="number" v-model.number="outQty" placeholder="0" min="1" style="margin-bottom:0;">
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-danger" @click="addOutTx">
+                        <i class="fa-solid fa-minus-circle"></i> 출고 추가 (Agregar Salida)
+                    </button>
+
+                    <!-- 최근 출고 이력 -->
+                    <div v-if="recentOutTx.length > 0" style="margin-top:10px;">
+                        <div style="font-size:11px; color:#9ca3af; margin-bottom:5px;">최근 출고 이력 (Historial):</div>
+                        <div v-for="tx in recentOutTx" :key="tx.date+'-'+tx.qty"
+                            style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:4px 0; border-bottom:1px solid #374151;">
+                            <span style="color:#d1d5db;">{{ tx.date }}</span>
+                            <span style="color:#f87171; font-weight:bold;">-{{ tx.qty }} ea</span>
+                        </div>
+                    </div>
+                </div>
+
                 <button class="btn btn-accent" style="margin-top:12px;" @click="saveEdit">
                     <i class="fa-solid fa-cloud-arrow-up"></i> 저장 & 클라우드 업로드 (Guardar y Subir)
                 </button>
@@ -622,7 +652,7 @@
 
     <script>
         const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxb8Th7X8XkZACfEdg9EW6lJdpD_gp5qZ1Gs8FolNyP2T-iyCY48_im-902fkCBBblZVw/exec";
-        const { createApp, ref, reactive, nextTick } = Vue;
+        const { createApp, ref, reactive, computed, nextTick } = Vue;
 
         createApp({
             setup() {
@@ -647,6 +677,9 @@
 
                 // ── Editing ──
                 const editingItem = ref(null);
+                // ── Outgoing transaction ──
+                const outDate = ref(new Date().toISOString().split('T')[0]);
+                const outQty = ref(1);
 
                 // ── New Part form ──
                 const showNewForm = ref(false);
@@ -782,10 +815,31 @@
                     }
                 };
 
+                // ── Outgoing transaction functions ──
+                const recentOutTx = computed(() => {
+                    if (!editingItem.value || !editingItem.value.transactions) return [];
+                    return [...(editingItem.value.transactions)]
+                        .filter(t => t.type === 'OUT')
+                        .sort((a, b) => b.date.localeCompare(a.date))
+                        .slice(0, 5);
+                });
+
+                const addOutTx = () => {
+                    if (!editingItem.value) return;
+                    const qty = parseInt(outQty.value);
+                    if (!qty || qty <= 0) return alert('출고 수량을 입력하세요.\n(Ingrese la cantidad de salida.)');
+                    if (!editingItem.value.transactions) editingItem.value.transactions = [];
+                    editingItem.value.transactions.push({ date: outDate.value, type: 'OUT', qty });
+                    editingItem.value.stock = Math.max(0, (parseInt(editingItem.value.stock) || 0) - qty);
+                    outQty.value = 1;
+                };
+
                 // ── Open edit modal (deep clone) ──
                 const openEdit = (item) => {
                     saveStatus.value = null;
-                    editingItem.value = { ...item };
+                    outDate.value = new Date().toISOString().split('T')[0];
+                    outQty.value = 1;
+                    editingItem.value = JSON.parse(JSON.stringify(item));
                 };
                 const closeEdit = () => { editingItem.value = null; saveStatus.value = null; };
 
@@ -908,6 +962,7 @@
                     isScanning, startScanner, stopScanner,
                     searchCode, searchResults, didSearch, doSearch,
                     editingItem, openEdit, closeEdit, adjustStock, saveEdit,
+                    outDate, outQty, recentOutTx, addOutTx,
                     showNewForm, newPart, openNewForm, submitNew,
                     newPartImg, photoFileInput, capturePhoto, removePhoto, onPhotoSelected,
                 };

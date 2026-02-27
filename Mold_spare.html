@@ -1034,6 +1034,12 @@
                                 <option v-for="y in [2023, 2024, 2025, 2026]" :value="y">{{ y }}</option>
                             </select>
 
+                            <!-- Project Filter -->
+                            <select v-model="reportProjectId" class="input" style="width:160px; font-weight:bold; margin-left:10px;">
+                                <option :value="null">전체 프로젝트 (All)</option>
+                                <option v-for="p in projects" :key="p.id" :value="p.id">{{ p.name }}</option>
+                            </select>
+
                             <!-- Search & View Options -->
                             <select v-model="reportType" class="input"
                                 style="width:120px; font-weight:bold; margin-left:10px;">
@@ -1072,45 +1078,41 @@
                         <h2 style="text-align:center; margin-bottom:20px; color:black;">설비 예비부품 리포트 (Reporte de
                             Repuestos) - {{
                             reportYear }} ({{ reportType }})</h2>
-                        <!-- QUARTERLY TABLE -->
+
+                        <!-- 데이터 없을 때 안내 -->
+                        <div v-if="reportFilteredData.length === 0"
+                            style="text-align:center; padding:40px; color:#666; border:2px dashed #ccc; border-radius:8px; margin:20px 0;">
+                            <div style="font-size:32px; margin-bottom:10px;">📭</div>
+                            <div style="font-size:16px; font-weight:bold; margin-bottom:6px;">표시할 데이터가 없습니다</div>
+                            <div style="font-size:13px; color:#999;">
+                                부품 데이터를 먼저 입력하거나 엑셀 파일을 가져오세요.<br>
+                                (No hay datos. Ingrese partes o importe un archivo Excel.)
+                            </div>
+                        </div>
+
+                        <!-- QUARTERLY TABLE - 사용량(OUT)만 표시 -->
                         <table v-if="reportType === 'Quarterly'"
                             style="width:100%; border-collapse:collapse; font-size:11px; text-align:center; border:1px solid #000;">
                             <thead style="position:sticky; top:0; z-index:10; display:table-header-group;">
-                                <tr style="background:#eee; border-bottom:1px solid #000; color:black;">
-                                    <th rowspan="2" style="border:1px solid #000; padding:5px; width:30px;"
-                                        class="no-print">
+                                <tr style="background:#eee; border-bottom:2px solid #000; color:black;">
+                                    <th style="border:1px solid #000; padding:5px; width:30px;" class="no-print">
                                         <input type="checkbox" @click="toggleSelectAllReport"
                                             :checked="reportSelectedParts.size > 0 && reportSelectedParts.size === reportFilteredData.length">
                                     </th>
-                                    <th rowspan="2" style="border:1px solid #000; padding:5px; cursor:pointer;"
-                                        @click="sortReport('moldCode')">
-                                        금형 코드 (Código) <i v-if="reportSortKey==='moldCode'" class="fa-solid"
-                                            :class="reportSortOrder===1?'fa-caret-up':'fa-caret-down'"></i>
+                                    <th v-if="reportProjectId === null" style="border:1px solid #000; padding:5px; cursor:pointer;" @click="sortReport('projectName')">
+                                        프로젝트 <i v-if="reportSortKey==='projectName'" class="fa-solid" :class="reportSortOrder===1?'fa-caret-up':'fa-caret-down'"></i>
                                     </th>
-                                    <th rowspan="2" style="border:1px solid #000; padding:5px; cursor:pointer;"
-                                        @click="sortReport('spareCode')">예비품 코드 (Repuesto)</th>
-                                    <th rowspan="2" style="border:1px solid #000; padding:5px; cursor:pointer;"
-                                        @click="sortReport('model')">모델 (Modelo)</th>
-
-
-                                    <th colspan="2" style="border:1px solid #000; background:#e0f7fa;">Q1</th>
-                                    <th colspan="2" style="border:1px solid #000; background:#f3e5f5;">Q2</th>
-                                    <th colspan="2" style="border:1px solid #000; background:#fff3e0;">Q3</th>
-                                    <th colspan="2" style="border:1px solid #000; background:#f1f8e9;">Q4</th>
-
-                                    <th colspan="2" style="border:1px solid #000; background:#ffcdd2; cursor:pointer;"
-                                        @click="sortReport('totalIn')">합계 (Total)</th>
-                                    <th rowspan="2"
-                                        style="border:1px solid #000; padding:5px; background:#ef9a9a; cursor:pointer;"
-                                        @click="sortReport('currentStock')">재고 (Stock)</th>
-                                </tr>
-                                <tr style="border-bottom:1px solid #000; font-size:10px;">
-                                    <template v-for="q in 4" :key="'qsub'+q">
-                                        <th style="border:1px solid #000; background:#eee; color:black;">In</th>
-                                        <th style="border:1px solid #000; background:#eee; color:black;">Out</th>
-                                    </template>
-                                    <th style="border:1px solid #000; background:#ffcdd2;">In</th>
-                                    <th style="border:1px solid #000; background:#ffcdd2;">Out</th>
+                                    <th style="border:1px solid #000; padding:5px; cursor:pointer;" @click="sortReport('moldCode')">
+                                        금형 코드 <i v-if="reportSortKey==='moldCode'" class="fa-solid" :class="reportSortOrder===1?'fa-caret-up':'fa-caret-down'"></i>
+                                    </th>
+                                    <th style="border:1px solid #000; padding:5px; cursor:pointer;" @click="sortReport('name')">명칭</th>
+                                    <th style="border:1px solid #000; padding:5px;">OP</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#e0f7fa; cursor:pointer;" @click="sortReport('q1out')">Q1 사용</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#f3e5f5; cursor:pointer;" @click="sortReport('q2out')">Q2 사용</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#fff3e0; cursor:pointer;" @click="sortReport('q3out')">Q3 사용</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#f1f8e9; cursor:pointer;" @click="sortReport('q4out')">Q4 사용</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#ffcdd2; cursor:pointer;" @click="sortReport('totalOut')">합계 사용</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#ef9a9a; cursor:pointer;" @click="sortReport('currentStock')">재고</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1120,90 +1122,73 @@
                                         <input type="checkbox" :checked="reportSelectedParts.has(row.id)"
                                             @click="toggleReportSelection(row.id)">
                                     </td>
-                                    <td style="border:1px solid #ccc; padding:2px;">{{ row.moldCode }}</td>
-                                    <td style="border:1px solid #ccc; padding:2px;">{{ row.spareCode }}</td>
-                                    <td style="border:1px solid #ccc; padding:2px;">{{ row.model }}</td>
-
-
-                                    <!-- Quarterly Data -->
-                                    <td style="border:1px solid #ccc;">{{ row.q[1].in }}</td>
-                                    <td style="border:1px solid #ccc;">{{ row.q[1].out }}</td>
-                                    <td style="border:1px solid #ccc;">{{ row.q[2].in }}</td>
-                                    <td style="border:1px #ccc;">{{ row.q[2].out }}</td>
-                                    <td style="border:1px solid #ccc;">{{ row.q[3].in }}</td>
-                                    <td style="border:1px solid #ccc;">{{ row.q[3].out }}</td>
-                                    <td style="border:1px solid #ccc;">{{ row.q[4].in }}</td>
-                                    <td style="border:1px solid #ccc;">{{ row.q[4].out }}</td>
-
-                                    <td style="border:1px solid #ccc; font-weight:bold;">{{ row.total.in }}</td>
-                                    <td style="border:1px solid #ccc; font-weight:bold;">{{ row.total.out }}</td>
-                                    <td style="border:1px solid #000; font-weight:bold; background:#ef9a9a; cursor:pointer; text-decoration:underline;"
-                                        @click="editPartFromReport(row.id)" title="Click to Edit Stock">
+                                    <td v-if="reportProjectId === null" style="border:1px solid #ccc; padding:2px; font-size:10px; color:#555;">{{ row.projectName }}</td>
+                                    <td style="border:1px solid #ccc; padding:2px; font-weight:bold; color:#166534;">{{ row.moldCode }}</td>
+                                    <td style="border:1px solid #ccc; padding:2px; text-align:left;">{{ row.name }}</td>
+                                    <td style="border:1px solid #ccc; padding:2px; font-size:10px;">{{ row.op }}</td>
+                                    <td style="border:1px solid #ccc; background:#e0f7fa33;">{{ row.q[1].out || '' }}</td>
+                                    <td style="border:1px solid #ccc; background:#f3e5f533;">{{ row.q[2].out || '' }}</td>
+                                    <td style="border:1px solid #ccc; background:#fff3e033;">{{ row.q[3].out || '' }}</td>
+                                    <td style="border:1px solid #ccc; background:#f1f8e933;">{{ row.q[4].out || '' }}</td>
+                                    <td style="border:1px solid #ccc; font-weight:bold; background:#ffcdd2;">{{ row.total.out || '' }}</td>
+                                    <td style="border:1px solid #000; font-weight:bold; cursor:pointer; text-decoration:underline;"
+                                        :style="{background: row.currentStock <= row.min ? '#ef9a9a' : (row.currentStock >= row.max ? '#bbdefb' : '#c8e6c9')}"
+                                        @click="editPartFromReport(row.id)" title="클릭하여 편집">
                                         {{ row.currentStock }}
+                                        <div v-if="row.currentStock <= row.min" style="font-size:9px; color:#c62828;">▼ LOW</div>
+                                        <div v-else-if="row.currentStock >= row.max" style="font-size:9px; color:#1565c0;">▲ OVER</div>
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
 
-                        <!-- MONTHLY TABLE -->
+                        <!-- MONTHLY TABLE - 사용량(OUT)만 표시 -->
                         <table v-else
-                            style="width:100%; min-width:1500px; border-collapse:collapse; font-size:10px; text-align:center; border:1px solid #000;">
+                            style="width:100%; border-collapse:collapse; font-size:10px; text-align:center; border:1px solid #000;">
                             <thead style="position:sticky; top:0; z-index:10; display:table-header-group;">
-                                <tr style="background:#eee; border-bottom:1px solid #000; color:black;">
-                                    <th rowspan="2"
-                                        style="border:1px solid #000; padding:5px; width:30px; position:sticky; left:0; background:#eee; z-index:12;"
-                                        class="no-print">
+                                <tr style="background:#eee; border-bottom:2px solid #000; color:black;">
+                                    <th style="border:1px solid #000; padding:5px; width:30px; position:sticky; left:0; background:#eee; z-index:12;" class="no-print">
                                         <input type="checkbox" @click="toggleSelectAllReport"
                                             :checked="reportSelectedParts.size > 0 && reportSelectedParts.size === reportFilteredData.length">
                                     </th>
-                                    <th rowspan="2"
-                                        style="border:1px solid #000; padding:5px; cursor:pointer; min-width:80px; position:sticky; left:30px; background:#eee; z-index:11;"
-                                        @click="sortReport('moldCode')">금형 코드 (Código)</th>
-                                    <th rowspan="2" style="border:1px solid #000; padding:5px; cursor:pointer;"
-                                        @click="sortReport('model')">모델 (Modelo)</th>
-
-
-                                    <th colspan="2" v-for="m in 12" :key="'h'+m" style="border:1px solid #000;"
-                                        :style="{background: (m%2===0 ? '#f5f5f5' : '#e0e0e0')}">{{ m }}월</th>
-
-                                    <th colspan="2" style="border:1px solid #000; background:#ffcdd2;">합계 (Total)</th>
-                                    <th rowspan="2" style="border:1px solid #000; padding:5px; background:#ef9a9a;">
-                                        재고 (Stock)</th>
-                                </tr>
-                                <tr style="border-bottom:1px solid #000;">
-                                    <template v-for="m in 12" :key="'Sub'+m">
-                                        <th style="border:1px solid #000; border-left:2px solid #aaa;">In</th>
-                                        <th style="border:1px solid #000;">Out</th>
-                                    </template>
-                                    <th style="border:1px solid #000; background:#ffcdd2;">In</th>
-                                    <th style="border:1px solid #000; background:#ffcdd2;">Out</th>
+                                    <th v-if="reportProjectId === null"
+                                        style="border:1px solid #000; padding:5px; cursor:pointer; min-width:70px; position:sticky; left:30px; background:#eee; z-index:11;"
+                                        @click="sortReport('projectName')">프로젝트</th>
+                                    <th style="border:1px solid #000; padding:5px; cursor:pointer; min-width:90px; position:sticky; left:30px; background:#eee; z-index:11;"
+                                        @click="sortReport('moldCode')">금형 코드</th>
+                                    <th style="border:1px solid #000; padding:5px; cursor:pointer; min-width:100px;" @click="sortReport('name')">명칭</th>
+                                    <th style="border:1px solid #000; padding:5px;">OP</th>
+                                    <th v-for="m in 12" :key="'h'+m" style="border:1px solid #000; padding:3px; min-width:36px;"
+                                        :style="{background: (m%2===0 ? '#f0f0f0' : '#e8e8e8')}">{{ m }}월</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#ffcdd2; cursor:pointer;" @click="sortReport('totalOut')">합계 사용</th>
+                                    <th style="border:1px solid #000; padding:5px; background:#ef9a9a; cursor:pointer;" @click="sortReport('currentStock')">재고</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr v-for="row in reportFilteredData" :key="row.id"
                                     style="border-bottom:1px solid #ccc; page-break-inside:avoid;">
-                                    <td style="border:1px solid #ccc; padding:2px; position:sticky; left:0; background:white; z-index:2;"
-                                        class="no-print">
+                                    <td style="border:1px solid #ccc; padding:2px; position:sticky; left:0; background:white; z-index:2;" class="no-print">
                                         <input type="checkbox" :checked="reportSelectedParts.has(row.id)"
                                             @click="toggleReportSelection(row.id)">
                                     </td>
-                                    <td
-                                        style="border:1px solid #ccc; padding:2px; position:sticky; left:30px; background:white; z-index:1;">
+                                    <td v-if="reportProjectId === null"
+                                        style="border:1px solid #ccc; padding:2px; font-size:10px; color:#555;">{{ row.projectName }}</td>
+                                    <td style="border:1px solid #ccc; padding:2px; position:sticky; left:30px; background:white; z-index:1; font-weight:bold; color:#166534;">
                                         {{ row.moldCode }}</td>
-                                    <td style="border:1px solid #ccc; padding:2px;">{{ row.model }}</td>
-
-
-                                    <template v-for="m in 12" :key="'d'+m">
-                                        <td style="border:1px solid #ccc; border-left:2px solid #eee;">{{ row.m[m].in ||
-                                            '' }}</td>
-                                        <td style="border:1px solid #ccc;">{{ row.m[m].out || '' }}</td>
-                                    </template>
-
-                                    <td style="border:1px solid #ccc; font-weight:bold;">{{ row.total.in }}</td>
-                                    <td style="border:1px solid #ccc; font-weight:bold;">{{ row.total.out }}</td>
-                                    <td style="border:1px solid #000; font-weight:bold; background:#ef9a9a; cursor:pointer; text-decoration:underline;"
-                                        @click="editPartFromReport(row.id)" title="Click to Edit Stock">
+                                    <td style="border:1px solid #ccc; padding:2px; text-align:left;">{{ row.name }}</td>
+                                    <td style="border:1px solid #ccc; padding:2px; font-size:10px;">{{ row.op }}</td>
+                                    <td v-for="m in 12" :key="'d'+m"
+                                        style="border:1px solid #ccc; padding:2px;"
+                                        :style="{background: row.m[m].out > 0 ? '#fff3e0' : ''}">
+                                        {{ row.m[m].out || '' }}
+                                    </td>
+                                    <td style="border:1px solid #ccc; font-weight:bold; background:#ffcdd2;">{{ row.total.out || '' }}</td>
+                                    <td style="border:1px solid #000; font-weight:bold; cursor:pointer; text-decoration:underline;"
+                                        :style="{background: row.currentStock <= row.min ? '#ef9a9a' : (row.currentStock >= row.max ? '#bbdefb' : '#c8e6c9')}"
+                                        @click="editPartFromReport(row.id)" title="클릭하여 편집">
                                         {{ row.currentStock }}
+                                        <div v-if="row.currentStock <= row.min" style="font-size:9px; color:#c62828;">▼ LOW</div>
+                                        <div v-else-if="row.currentStock >= row.max" style="font-size:9px; color:#1565c0;">▲ OVER</div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -1296,6 +1281,8 @@
                 const showReportModal = ref(false);
                 const reportYear = ref(new Date().getFullYear());
                 const reportData = ref([]);
+                const reportProjectId = ref(null); // null = 전체 프로젝트
+                const allReportParts = ref([]);
 
                 // Report UI State
                 const reportSearch = ref('');
@@ -1496,27 +1483,51 @@
                     alert("트랜잭션 추가됨. (Transacción agregada.)");
                 };
 
-                const openReport = () => {
+                const openReport = async () => {
+                    // 모든 프로젝트의 파트 로드
+                    // 현재 프로젝트: 이미 메모리의 projectParts 사용 (확실히 데이터 있음)
+                    // 나머지: DB에서 projectId 인덱스 쿼리로 로드
+                    const allParts = [];
+                    for (const proj of projects.value) {
+                        if (proj.id === currentProject.value?.id && projectParts.value.length > 0) {
+                            allParts.push(...projectParts.value);
+                        } else {
+                            const parts = await db.parts.where('projectId').equals(proj.id).toArray();
+                            allParts.push(...parts);
+                        }
+                    }
+                    allReportParts.value = allParts;
+                    // 현재 선택된 프로젝트로 초기화 (없으면 전체)
+                    reportProjectId.value = currentProject.value ? currentProject.value.id : null;
                     showReportModal.value = true;
                     generateReport();
                 };
 
                 const generateReport = () => {
-                    // Filter parts for current project
-                    const parts = projectParts.value;
+                    // 선택된 프로젝트 또는 전체 프로젝트 파트 사용
+                    // Number vs String 타입 불일치 방지를 위해 == 사용
+                    const parts = reportProjectId.value === null
+                        ? allReportParts.value
+                        : allReportParts.value.filter(p => p.projectId == reportProjectId.value);
                     const year = reportYear.value;
 
                     reportData.value = parts.map(p => {
+                        const proj = projects.value.find(pr => pr.id === p.projectId);
                         const row = {
                             id: p.id,
-                            moldCode: p.moldCode,
-                            spareCode: p.spareCode,
-                            model: p.model,
+                            projectName: proj?.name || '',
+                            moldCode: p.moldCode || '',
+                            spareCode: p.spareCode || '',
+                            name: p.name || '',
+                            spec: p.spec || '',
+                            op: p.op || '',
+                            model: p.model || '',
                             type: p.moldType,
                             carryover: p.carryover || 0,
                             m: {}, // 1..12
                             q: {}, // 1..4
                             total: { in: 0, out: 0 },
+                            actualStock: p.stock || 0, // 실제 DB 재고
                             currentStock: 0,
                             lastRecordQty: p.lastRecord?.qty ?? null, // UI binding
                             lastRecordDate: p.lastRecord?.date ?? null,
@@ -1565,17 +1576,19 @@
                             }
                         });
 
-                        // Calculate Current Stock
-                        // If using lastRecord, effectiveCarryover is the record qty.
-                        // Transactions are only those AFTER the record.
-                        row.currentStock = row.effectiveCarryover + row.total.in - row.total.out;
+                        // 현재고: 실제 DB stock 값 우선 표시 (트랜잭션이 없어도 정확한 재고 표시)
+                        // actualStock = p.stock (직접 입력된 현재 재고)
+                        // calcStock = effectiveCarryover + IN - OUT (트랜잭션 기반 계산값)
+                        const calcStock = row.effectiveCarryover + row.total.in - row.total.out;
+                        row.currentStock = row.actualStock; // 실재고 기준 표시
 
                         return row;
                     });
                 };
 
-                // Re-generate report when year changes
+                // Re-generate report when year or project selection changes
                 watch(reportYear, generateReport);
+                watch(reportProjectId, generateReport);
 
 
 
@@ -2396,6 +2409,7 @@
                     showCloudModal, showSaveModal, cloudProjectsList, loadProjectsSelected, saveProjectsSelected, editingPart, uniqueModels, uniqueMolds,
                     filteredParts, stats, zoomedImage, columns, visibleColumns, showColMenu, sortKey, sortOrder,
                     monthStats, newTx, showReportModal, reportYear, reportData,
+                    reportProjectId, allReportParts,
                     reportSearch, reportType, reportSortKey, reportSortOrder, reportFilteredData, sortReport,
                     reportSelectedParts, showSelectedOnly, toggleReportSelection, toggleSelectAllReport, reportStockFilter,
                     createProject, selectProject, deleteProject,
