@@ -1234,7 +1234,11 @@
             const startSelect = document.getElementById('acc-start-week');
             const endSelect = document.getElementById('acc-end-week');
 
-            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort((a, b) => {
+                const [ay, aw] = a.split('-').map(Number);
+                const [by, bw] = b.split('-').map(Number);
+                return ay !== by ? ay - by : aw - bw;
+            });
 
             if (startSelect.options.length === weeks.length) return; // 이미 업데이트됨
 
@@ -1262,7 +1266,11 @@
             const equipments = [...new Set(data.flatMap(d => d.items.map(it => it.machine || "Unknown")))].sort();
 
             // 2. 주차 목록 (X축용)
-            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort((a, b) => {
+                const [ay, aw] = a.split('-').map(Number);
+                const [by, bw] = b.split('-').map(Number);
+                return ay !== by ? ay - by : aw - bw;
+            });
             const weekHeaders = weeks.map(w => {
                 const [y, wk] = w.split('-');
                 return { label: `${wk}W`, key: w };
@@ -1498,7 +1506,11 @@
 
             if (!startStr || !endStr) return;
 
-            const weeks = [...new Set(allData.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+            const weeks = [...new Set(allData.map(d => `${d.calYear}-${d.calWeek}`))].sort((a, b) => {
+                const [ay, aw] = a.split('-').map(Number);
+                const [by, bw] = b.split('-').map(Number);
+                return ay !== by ? ay - by : aw - bw;
+            });
             const startIdx = weeks.indexOf(startStr);
             const endIdx = weeks.indexOf(endStr);
             const targetWeeks = weeks.slice(Math.min(startIdx, endIdx), Math.max(startIdx, endIdx) + 1);

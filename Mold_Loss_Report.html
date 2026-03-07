@@ -1210,7 +1210,11 @@
             const molds = [...new Set(data.flatMap(d => d.items.map(it => it.machine || "Unknown")))].sort();
 
             // 2. 주차 목록 (X축용)
-            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+            const weeks = [...new Set(data.map(d => `${d.calYear}-${d.calWeek}`))].sort((a, b) => {
+                const [ay, aw] = a.split('-').map(Number);
+                const [by, bw] = b.split('-').map(Number);
+                return ay !== by ? ay - by : aw - bw;
+            });
             const weekHeaders = weeks.map(w => {
                 const [y, wk] = w.split('-');
                 return { label: `${wk}W`, key: w };
@@ -1474,7 +1478,11 @@
             const ei = weeks.indexOf(endStr);
             const targetWeeks = weeks.slice(Math.min(si, ei), Math.max(si, ei) + 1);
 
-            const sortedWeeksRaw = [...new Set(allData.map(d => `${d.calYear}-${d.calWeek}`))].sort();
+            const sortedWeeksRaw = [...new Set(allData.map(d => `${d.calYear}-${d.calWeek}`))].sort((a, b) => {
+                const [ay, aw] = a.split('-').map(Number);
+                const [by, bw] = b.split('-').map(Number);
+                return ay !== by ? ay - by : aw - bw;
+            });
             const last3WeeksRaw = sortedWeeksRaw.slice(-3);
 
             // 금형별 집계: moldMap[machine][key] = { sub, reason, loss, lastWeek }
